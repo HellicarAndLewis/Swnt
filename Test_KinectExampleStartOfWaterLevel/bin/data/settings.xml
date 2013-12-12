@@ -1,0 +1,19 @@
+<Swynt_by_Hellicar_and_Lewis>
+	<tide_radius>140</tide_radius>
+	<tide_res>5</tide_res>
+	<show_Blobs>0</show_Blobs>
+	<show_Spirals>0</show_Spirals>
+	<show_Tide_mask>0</show_Tide_mask>
+	<show_Noise>1</show_Noise>
+	<show_Extra_GUI>1</show_Extra_GUI>
+<Swynt_by_Hellicar_and_Lewis/>
+<Swynt>
+		<tide_radius>300</tide_radius>
+		<tide_res>47</tide_res>
+		<show_Blobs>1</show_Blobs>
+		<show_Spirals>1</show_Spirals>
+		<show_Tide_mask>1</show_Tide_mask>
+		<show_Noise>1</show_Noise>
+		<show_Extra_GUI>0</show_Extra_GUI>
+	</Swynt>
+</Swynt_by_Hellicar_and_Lewis>
