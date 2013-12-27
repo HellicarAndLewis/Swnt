@@ -35,14 +35,33 @@ static const char* SPIRAL_FS = ""
   "uniform sampler2D u_diffuse_tex;"
   "uniform vec3 u_col_from;"
   "uniform vec3 u_col_to;"
+  "uniform float u_alpha;"
   "out vec4 fragcolor; "
   "in float v_age_perc;"
   "in float v_pos_perc;"
   "in vec2 v_tex;"
   "void main() {"
   "  vec4 diffuse_tc = texture(u_diffuse_tex, v_tex);"
-  "  fragcolor.a = diffuse_tc.a * (1.0 - (pow(v_age_perc, 4.0)));"
-  "  fragcolor.rgb = mix(u_col_from, u_col_to, v_tex.s) * diffuse_tc.a;"
+  "  fragcolor.a = diffuse_tc.r * (1.0 - (pow(v_age_perc, 4.0))) * u_alpha;"
+  "  fragcolor.rgb = mix(u_col_from, u_col_to, v_tex.s);"
+  "}"
+  "";
+
+static const char* SPIRAL_DISPLACEMENT_FS = ""
+  "#version 150\n"
+  "uniform sampler2D u_diffuse_tex;"
+  "uniform vec3 u_col_from;"
+  "uniform vec3 u_col_to;"
+  "uniform float u_alpha;"
+  "out vec4 fragcolor; "
+  "in float v_age_perc;"
+  "in float v_pos_perc;"
+  "in vec2 v_tex;"
+  "void main() {"
+  "  vec4 diffuse_tc = texture(u_diffuse_tex, v_tex);"
+  "  fragcolor.a = diffuse_tc.r * (1.0 - (pow(v_age_perc, 4.0))) * u_alpha;"
+  "  fragcolor.rgb = diffuse_tc.rgb;"
+  "  fragcolor.a = 1.0;"
   "}"
   "";
 
@@ -61,16 +80,18 @@ class Spirals {
   bool setup();
   void update(float dt);
   void draw();
+  void drawDisplacement();
   void refresh();                            /* will change to the current setting values */
 
-  private: 
-   void spawnParticles();                     /* spawn particles around blobs and tracked objects */
-   void updateVertices();                     /* update the vertices of the spirals, triangle strips */
-   bool setupGraphics();                      /* setup opengl state */
-   void applyVelocityField();                 /* apply the velocity field of the flow object to the particles */
-   void applyCenterForce();                   /* make sure that all particles are attracted to the center */
-   void applyPerlinToField();                 /* use perlin noise to influence the vector field; we' use the perlin value as angle */
-   void applyVortexToField();                 /* creates a vortex force where we found something that we can track */
+ private: 
+  void draw(float alpha);
+  void spawnParticles();                     /* spawn particles around blobs and tracked objects */
+  void updateVertices();                     /* update the vertices of the spirals, triangle strips */
+  bool setupGraphics();                      /* setup opengl state */
+  void applyVelocityField();                 /* apply the velocity field of the flow object to the particles */
+  void applyCenterForce();                   /* make sure that all particles are attracted to the center */
+  void applyPerlinToField();                 /* use perlin noise to influence the vector field; we' use the perlin value as angle */
+  void applyVortexToField();                 /* creates a vortex force where we found something that we can track */
 
  public:
   Settings& settings;
@@ -94,6 +115,12 @@ class Spirals {
   GLuint diffuse_tex;                          /* the diffuse texture used for the spirals */
   mat4 pm;                                     /* projection matrix .. ortho graphic projection */
   mat4 vm;                                     /* view matrix */
+
+  /* Displacement test */
+  GLuint displacement_frag;
+  GLuint displacement_prog;
+  GLuint displacement_fbo;
+  GLuint displacement_tex;
 
   /* Physics */
   Particle* center_particle;

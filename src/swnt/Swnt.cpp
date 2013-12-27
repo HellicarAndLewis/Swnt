@@ -23,6 +23,9 @@ Swnt::Swnt(Settings& settings)
   ,draw_spirals(true)
   ,draw_threshold(true)
   ,draw_water(false)
+#if USE_EFFECTS
+  ,effects(settings, graphics, spirals)
+#endif
 {
 }
 
@@ -93,6 +96,19 @@ bool Swnt::setup() {
     return false;
   }
 
+#if USE_EFFECTS
+  if(!effects.setup()) {
+    printf("Error: cannot setup the effects.\n");
+    return false;
+  }
+#endif
+#if USE_RGB_SHIFT
+  if(!rgb_shift.setup()) {
+    printf("Error: cannot setup rgb shift.\n");
+    return false;
+  }
+#endif
+
   // matrices for rendering the ocean
   persp_matrix.perspective(65.0f, settings.win_w/settings.win_h, 0.01f, 1000.0f);
   settings.ocean.cam_pos.set(0.0, 100.0, 100.0f);
@@ -160,6 +176,7 @@ void Swnt::update() {
 
 void Swnt::draw() {
 
+
   if(state == STATE_RENDER_ALIGN) {
     vec3 red(1.0f, 0.0f, 0.0f);
     vec3 green(0.0f, 1.0f, 0.0f);
@@ -200,6 +217,7 @@ void Swnt::draw() {
       if(draw_water) {
          ocean.draw();
       }
+
       if(draw_flow) {
         flow.draw();
       }
@@ -216,18 +234,21 @@ void Swnt::draw() {
         water.draw();
       }
       #endif
-      
+
+      effects.drawFloor();
+
       if(draw_flow) {
         flow.draw();
       }
       if(draw_spirals) {
         spirals.draw();
       }
+      spirals.drawDisplacement();
     }
-
     mask.endSceneGrab();
 #endif
 
+    
     // this is where we mask out the depth image using the previously grabbed mask.
     mask.maskOutDepth();
 
@@ -240,11 +261,17 @@ void Swnt::draw() {
     mask.draw_hand = draw_threshold;
     mask.maskOutScene();
 
+
+
+    //effects.displace(spirals.displacement_tex, mask.scene_tex);
     //graphics.drawTexture(rgb_tex, 0.0f, 0.0f, 320.0f, 240.0f);  
     //graphics.drawDepth(depth_tex, 320.0f, 0.0f, settings.image_processing_w, settings.image_processing_h);
     //  #endif
     //tracking.draw(0.0f, 0.0f);
-
+    #if USE_RGB_SHIFT
+    rgb_shift.apply();
+    rgb_shift.draw();
+    #endif
   }
 #endif  
 

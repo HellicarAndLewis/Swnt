@@ -73,6 +73,36 @@ bool Spirals::setupGraphics() {
   glUseProgram(prog);
   glUniform1i(glGetUniformLocation(prog, "u_diffuse_tex"), 0);
 
+  // Displacement pass 
+  // --
+  displacement_frag = rx_create_shader(GL_FRAGMENT_SHADER, SPIRAL_DISPLACEMENT_FS);
+  displacement_prog = rx_create_program(vert, displacement_frag);
+  glBindAttribLocation(displacement_prog, 0, "a_pos");
+  glBindAttribLocation(displacement_prog, 1, "a_tex");
+  glBindAttribLocation(displacement_prog, 2, "a_age_perc");
+  glBindAttribLocation(displacement_prog, 3, "a_pos_perc");
+  glLinkProgram(displacement_prog);
+  rx_print_shader_link_info(displacement_prog);
+  glUseProgram(displacement_prog);
+  glUniform1i(glGetUniformLocation(displacement_prog, "u_diffuse_tex"), 0);
+
+  glGenFramebuffers(1, &displacement_fbo);
+  glBindFramebuffer(GL_FRAMEBUFFER, displacement_fbo);
+  glGenTextures(1, &displacement_tex);
+  glBindTexture(GL_TEXTURE_2D, displacement_tex);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, settings.win_w, settings.win_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, displacement_tex, 0);
+  if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    printf("Error: the displacement framebuffer is not complete.\n");
+    return false;
+  }
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  // -- 
+
   glGenVertexArrays(1, &vao);
   glBindVertexArray(vao);
 
@@ -195,7 +225,7 @@ void Spirals::spawnParticles() {
   #endif
 
   // Spawn from contour
-  spawn_per_tracked = 160;
+  spawn_per_tracked = 360;
   if(tracker.contour_vertices.size()) {
 
     for(int i = 0; i < spawn_per_tracked; ++i) {
@@ -208,6 +238,8 @@ void Spirals::spawnParticles() {
       p->forces.set(0.0f, 0.0f, 0.0f);
       p->vel.set(0.0f, 0.0f, 0.0f);
       p->lifetime = rx_random(20.0f, 30.0f);
+      p->strip_width = rx_random(1.4f,2.5f);
+      // p->strip_width = rx_random(46.4f,123.5f);
       p->strip_width = rx_random(2.4f,3.5f);
       p->setMass(0.2);
       particles.push_back(p);
@@ -293,18 +325,42 @@ void Spirals::draw() {
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   //glBlendFunc(GL_ONE, GL_ONE);
+  draw(1.0f);
+  glDisable(GL_BLEND);
+}
 
+void Spirals::draw(float alpha) {
   glBindVertexArray(vao);
   glUseProgram(prog);
   glUniformMatrix4fv(glGetUniformLocation(prog, "u_pm"), 1, GL_FALSE, pm.ptr());
   glUniformMatrix4fv(glGetUniformLocation(prog, "u_vm"), 1, GL_FALSE, vm.ptr());
+  glUniform1f(glGetUniformLocation(prog, "u_alpha"), alpha);
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, diffuse_tex);
 
   glMultiDrawArrays(GL_TRIANGLE_STRIP, &vertex_offsets[0], &vertex_counts[0], vertex_counts.size());
 
-  glDisable(GL_BLEND);
+}
+
+
+void Spirals::drawDisplacement() {
+  GLenum db[] = { GL_COLOR_ATTACHMENT0 } ;
+  glBindFramebuffer(GL_FRAMEBUFFER, displacement_fbo);
+  glDrawBuffers(1, db);
+  glClear(GL_COLOR_BUFFER_BIT);
+
+  glBindVertexArray(vao);
+  glUseProgram(displacement_prog);
+  glUniformMatrix4fv(glGetUniformLocation(displacement_prog, "u_pm"), 1, GL_FALSE, pm.ptr());
+  glUniformMatrix4fv(glGetUniformLocation(displacement_prog, "u_vm"), 1, GL_FALSE, vm.ptr());
+
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, diffuse_tex);
+
+  glMultiDrawArrays(GL_TRIANGLE_STRIP, &vertex_offsets[0], &vertex_counts[0], vertex_counts.size());
+
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void Spirals::applyVortexToField() {

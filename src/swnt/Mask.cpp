@@ -258,7 +258,6 @@ void Mask::beginSceneGrab() {
   GLenum drawbufs[] = { GL_COLOR_ATTACHMENT0 } ;
   glBindFramebuffer(GL_FRAMEBUFFER, scene_fbo);
   glDrawBuffers(1, drawbufs);
-  glClearColor(0.094f, 0.074f, 0.184f, 0.5f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glViewport(0.0f, 0.0f, settings.win_w, settings.win_h);
 }
