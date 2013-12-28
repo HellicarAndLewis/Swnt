@@ -18,12 +18,18 @@
 #define GLFW_INCLUDE_GLCOREARB
 #include <GLFW/glfw3.h>
 
+void cursor_callback(GLFWwindow* win, double x, double y);
+void button_callback(GLFWwindow* win, int bt, int action, int mods);
 void key_callback(GLFWwindow* win, int key, int scancode, int action, int mods);
 void error_callback(int err, const char* desc);
 void resize_callback(GLFWwindow* window, int width, int height);
 
 Settings settings;
 Swnt swnt(settings);
+
+bool draw_forces = false;
+float force_x = 0.0f;
+float force_y = 0.0f;
 
 int main() {
 
@@ -56,6 +62,8 @@ int main() {
 
   glfwSetFramebufferSizeCallback(win, resize_callback);
   glfwSetKeyCallback(win, key_callback);
+  glfwSetMouseButtonCallback(win, button_callback);
+  glfwSetCursorPosCallback(win, cursor_callback);
   glfwMakeContextCurrent(win);
   glfwSwapInterval(1);
 
@@ -86,6 +94,14 @@ int main() {
     glClearColor(0.094f, 0.074f, 0.184f, 1.0f);
     glClearColor(0,0,0,1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+    if(draw_forces) { 
+      swnt.height_field.beginDrawForces();
+      swnt.height_field.drawForceTexture(swnt.water.force_tex0, force_x, force_y, 0.4, 0.4);
+      swnt.height_field.endDrawForces();
+      draw_forces = false;
+    }
 
     swnt.update();
     swnt.draw();
@@ -155,4 +171,19 @@ void key_callback(GLFWwindow* win, int key, int scancode, int action, int mods) 
 
 void resize_callback(GLFWwindow* window, int width, int height) {
 
+}
+
+void button_callback(GLFWwindow* win, int bt, int action, int mods) {
+  if(action == GLFW_PRESS) {
+    draw_forces = true;
+  }
+}
+
+void cursor_callback(GLFWwindow* win, double x, double y) {
+  force_x = x/1280.0;
+  force_y = (720-y)/720.0;
+  int b = glfwGetMouseButton(win, 0);
+  if(b) {
+    draw_forces = true;
+  }
 }

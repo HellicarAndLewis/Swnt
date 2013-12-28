@@ -15,6 +15,7 @@ Water::Water(HeightField& hf)
   ,diffuse_tex(0)
   ,foam_tex(0)
   ,force_tex0(0)
+  ,color_tex(0)
 {
 
 }
@@ -68,11 +69,13 @@ bool Water::setup(int w, int h) {
   glUniform1i(glGetUniformLocation(prog, "u_tex_pos"),       0);  // VS
   glUniform1i(glGetUniformLocation(prog, "u_tex_norm"),      1);  // VS
   glUniform1i(glGetUniformLocation(prog, "u_tex_texcoord"),  2);  // VS
-  glUniform1i(glGetUniformLocation(prog, "u_noise_tex"),     3);  // FS
-  glUniform1i(glGetUniformLocation(prog, "u_norm_tex"),      4);  // FS
-  glUniform1i(glGetUniformLocation(prog, "u_flow_tex"),      5);  // FS
-  glUniform1i(glGetUniformLocation(prog, "u_diffuse_tex"),   6);  // FS
-  glUniform1i(glGetUniformLocation(prog, "u_foam_tex"),      7);  // FS
+  glUniform1i(glGetUniformLocation(prog, "u_tex_tang"),      3);  // VS
+  glUniform1i(glGetUniformLocation(prog, "u_noise_tex"),     4);  // FS
+  glUniform1i(glGetUniformLocation(prog, "u_norm_tex"),      5);  // FS
+  glUniform1i(glGetUniformLocation(prog, "u_flow_tex"),      6);  // FS
+  glUniform1i(glGetUniformLocation(prog, "u_diffuse_tex"),   7);  // FS
+  glUniform1i(glGetUniformLocation(prog, "u_foam_tex"),      8);  // FS
+  glUniform1i(glGetUniformLocation(prog, "u_color_tex"),     9);  // FS
 
   glUniformMatrix4fv(glGetUniformLocation(prog, "u_pm"), 1, GL_FALSE, height_field.pm.ptr());
   glUniformMatrix4fv(glGetUniformLocation(prog, "u_vm"), 1, GL_FALSE, height_field.vm.ptr());
@@ -84,6 +87,25 @@ bool Water::setup(int w, int h) {
   diffuse_tex = createTexture("images/water_diffuse.png");
   foam_tex = createTexture("images/water_foam.png");
   force_tex0 = createTexture("images/force.png");
+
+  // load color ramp
+  unsigned char* img_pix = NULL;
+  int img_w, img_h,img_channels = 0;
+  if(!rx_load_png(rx_to_data_path("images/water_color.png"), &img_pix, img_w, img_h, img_channels)) {
+    printf("Error: cannot load the water_color.png image.\n");
+    return false;
+  }
+
+  glGenTextures(1, &color_tex);
+  glBindTexture(GL_TEXTURE_1D, color_tex);
+  glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, img_w, 0, GL_RGB, GL_UNSIGNED_BYTE, img_pix);
+  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  delete[] img_pix;
+  printf("water.color_tex: %d\n", color_tex);
+  
 
   glBindTexture(GL_TEXTURE_2D, flow_tex);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -111,19 +133,25 @@ void Water::draw() {
     glBindTexture(GL_TEXTURE_2D, height_field.tex_texcoord);
 
     glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, noise_tex);
+    glBindTexture(GL_TEXTURE_2D, height_field.tex_tang);
 
     glActiveTexture(GL_TEXTURE4);
-    glBindTexture(GL_TEXTURE_2D, normals_tex);
+    glBindTexture(GL_TEXTURE_2D, noise_tex);
 
     glActiveTexture(GL_TEXTURE5);
-    glBindTexture(GL_TEXTURE_2D, flow_tex);
+    glBindTexture(GL_TEXTURE_2D, normals_tex);
 
     glActiveTexture(GL_TEXTURE6);
-    glBindTexture(GL_TEXTURE_2D, diffuse_tex);
+    glBindTexture(GL_TEXTURE_2D, flow_tex);
 
     glActiveTexture(GL_TEXTURE7);
+    glBindTexture(GL_TEXTURE_2D, diffuse_tex);
+
+    glActiveTexture(GL_TEXTURE8);
     glBindTexture(GL_TEXTURE_2D, foam_tex);
+
+    glActiveTexture(GL_TEXTURE9);
+    glBindTexture(GL_TEXTURE_1D, color_tex);
   }
 
   static float t = 0.0;

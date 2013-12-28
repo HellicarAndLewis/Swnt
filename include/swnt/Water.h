@@ -29,17 +29,19 @@ static const char* WATER_VS = ""
   "uniform sampler2D u_tex_pos;"
   "uniform sampler2D u_tex_norm;"
   "uniform sampler2D u_tex_texcoord;"
+  "uniform sampler2D u_tex_tang;" // input texture which contains the tangents
   "in ivec3 a_tex;"
   "out vec3 v_norm;"
   "out vec3 v_pos;"
   "out vec2 v_tex;"
+  "out vec3 v_tang;"
 
   "void main() {"
   "  v_norm = texelFetch(u_tex_norm, ivec2(a_tex), 0).rgb;"
   "  v_tex = texelFetch(u_tex_texcoord, ivec2(a_tex), 0).rg;"
   "  v_pos = texelFetch(u_tex_pos, ivec2(a_tex), 0).rgb;"
+  "  v_tang = texelFetch(u_tex_tang, ivec2(a_tex), 0).rgb;"
   "  gl_Position = u_pm * u_vm * vec4(v_pos, 1.0);"
-
   "}"
   "";
 
@@ -54,31 +56,31 @@ static const char* WATER_FS = ""
   "uniform sampler2D u_norm_tex;" // not the same as the norm in WATER_VS 
   "uniform sampler2D u_diffuse_tex;"
   "uniform sampler2D u_foam_tex;"
+  "uniform sampler1D u_color_tex;"  // used to colorize by depth 
 
   "in vec3 v_norm;"
+  "in vec3 v_tang;"
   "in vec3 v_pos;"
   "in vec2 v_tex;"
   "out vec4 fragcolor;"
   
   "void main() {"
-  //"  vec2 flow_color = texture(u_flow_tex, vec2(gl_FragCoord.x / 1024.0,gl_FragCoord.y / 768.0)).rg;"
-  //" vec2 flow_color = texture(u_flow_tex, v_tex).rg;"
   "  vec2 flow_color = texture(u_flow_tex, vec2(1.0 - v_tex.s, v_tex.t)).rg;"
+  //"  vec2 flow_color = texture(u_flow_tex, v_tex).rg;"
+
   "  vec3 normal_color = texture(u_norm_tex, v_tex).rgb;"   // bump mapping
   "  vec3 diffuse_color = texture(u_diffuse_tex, v_tex).rgb;"
   "  float noise_color = texture(u_noise_tex, v_tex).r;"
+  "  vec3 depth_color = texture(u_color_tex, v_pos.y/5.0).rgb;"
 
+  "  flow_color = -1.0 + 2.0 * flow_color;"
   "  float gradient = 1.0 - dot(v_norm, vec3(0,1,0));"
 
   "  float phase0 = (noise_color * 0.4 + u_time0);"
   "  float phase1 = (noise_color * 0.4 + u_time1);"
-  //"  flow_color = vec2(flow_color.g, flow_color.r);"
-  //  "  flow_color = normalize(v_norm.xz + flow_color);"  // move the texture in the direction of the normal
-  //  "  flow_color = (v_norm.xz * 0.4 + flow_color * 0.7);"  // move the texture in the direction of the normal
-  "  flow_color = -1.0 + 2.0 * flow_color;"
 
   "  float tex_scale = 1.0;"
-   " float flow_k = 0.2;"
+  "  float flow_k = 0.2;"
   "  vec2 texcoord0 = (v_tex * tex_scale) + (flow_color * phase0 * flow_k);"
   "  vec2 texcoord1 = (v_tex * tex_scale) + (flow_color * phase1 * flow_k);"
 
@@ -95,70 +97,92 @@ static const char* WATER_FS = ""
   "  vec3 foam1 = texture(u_foam_tex, texcoord1 * 4.0).rgb;"
   "  vec3 moved_foam = mix(foam0, foam1, lerp);"
 
-  "  vec3 N = normalize((-1.0 + 2.0 * moved_normal) + v_norm);"    // @todo - is this correct
-  "  vec3 L = vec3(-60,1,0);"
-  "  float ndl = max(dot(N, L), 0.0);"
+  " vec3 Ka = vec3(-0.1, -0.1, 0.1);"
+  " vec3 Kd = vec3(0.0, 0.3, 0.4);"
+  " vec3 Ks = vec3(0.5, 0.5, 0.0);"
+  " vec3 spec = vec3(0.0);"
+  " vec3 n  = v_norm; "
 
-  "  fragcolor = vec4(v_norm * 0.5 + 0.5, 1.0);"
-  "  fragcolor.rgb = moved_normal;"
-  "  fragcolor.rgb = diffuse_color;"
-  
-  "  vec3 spec = vec3(0.0);"
+  " vec3 perturbed_normal = normalize((-1.0 + 2.0 * moved_normal) + v_norm);"
+  " n = perturbed_normal;"
+
+  " vec3 l     = vec3(-8.0, 15.0, 0.0);" 
+  " vec3 eye_l = mat3(u_vm) * l;"
+  " vec3 eye_p = mat3(u_vm) * v_pos;"
+  " vec3 eye_s = normalize(eye_l - eye_p);"
+  " vec3 eye_n = normalize(mat3(u_vm) * n);"
+  " float ndl  = max(dot(eye_n,eye_s), 0.0);"
+
+  " vec3 eye_sun = mat3(u_vm) * vec3(0.0, 10.0, -300);"
+  " eye_s = normalize(eye_sun - eye_p);"
+  " vec3 eye_v = normalize(-eye_p);"
+  " vec3 eye_r = normalize(reflect(-eye_s, eye_n));"
+  " float sun_ndl = max(dot(eye_s, eye_n), 0.0);"
+  " if(sun_ndl > 0.0) {"
+  "   spec = Ks * pow(max(dot(eye_r, eye_v), 0.0), 4.0);"
+  " } "
+
+#if 1
+  " vec3 b = (cross(v_tang, n));"
+  " vec3 eye_b = (mat3(u_vm) * b);"
+  " vec3 eye_t = (mat3(u_vm) * v_tang);"
+  " mat3 to_object = mat3("
+  "      eye_t.x, eye_b.x, eye_n.x, "
+  "      eye_t.y, eye_b.y, eye_n.y, "
+  "      eye_t.z, eye_b.z, eye_n.z  " 
+  " );"
+
+  " vec3 object_p = (to_object * eye_p);"
+  " vec3 object_l = (to_object * eye_sun);"
+  " vec3 object_s = normalize(object_l - object_p);"
+  " sun_ndl = max(dot(object_s, perturbed_normal), 0.0);"
+  " if(sun_ndl > 0.0) {"
+  "   spec = Ks * pow(max(dot(eye_r, eye_v), 0.0), 4.0);"
+  " } "
+  " object_l = to_object * eye_l;"
+  " object_s = normalize(object_l - object_s);"
+  " ndl = max(dot(perturbed_normal, object_s), 0.0);"
+#endif
+
+  " float foam_level = 4.5;"
+  " float foam_k = v_pos.y / foam_level;"
+  " if(foam_k > 1.0) { foam_k = 1.0; } else if (foam_k <= 0.2) { foam_k = 0.2; } "
+  " vec3 foam = foam_k * moved_foam;"
+
+  // http://blog.elmindreda.org/2011/06/oceans-of-fun/ 
+ " vec3 fake_sun = vec3(4.0, 3.0, 1.0) * pow(clamp(dot(eye_r, eye_v), 0.0, 1.0), 4.0);"
+
+  //   " vec3 fake_sun = vec3(4.0, 4.0, 4.0) * pow(clamp(dot(eye_r, eye_v), 0.0, 1.0), 4.0);"
+
+  " vec3 K = Ka + Kd * ndl + spec + fake_sun;"
+  " fragcolor.rgb = mix(K, (1.0 - foam_k) * moved_diffuse + foam, 0.4);"  
+  //  " fragcolor.rgb = mix(K, (1.0 - foam_k) * (mix(moved_diffuse, depth_color, 0.9)) + foam, 0.6);"  
+  //" fragcolor.rgb = mix(K, (1.0 - foam_k) * depth_color + foam, 0.8) ;"  
+  // "fragcolor.rgb = K;"
+  //"fragcolor.rgb = depth_color;"
+  // "fragcolor.rgb = foam;"
+  //"fragcolor.rgb = mix(moved_diffuse, foam,0.5);"
 
 
-  // test normal mapping
-  #if 1
-  "  vec3 tang = vec3(1.0, 0.0, 0.0);"
-  "  vec3 binorm = cross(tang, N);"
-  "  mat3 to_object = mat3(tang.x, binorm.x, N.x,"
-  "                        tang.y, binorm.y, N.y, "
-  "                        tang.z, binorm.z, N.z);"
-  "  vec3 L_object = to_object * L;"
-  "  vec3 V_object = to_object * normalize(-v_pos);"
-  "  ndl = max(dot(N, L_object), 0.0);"
-
-  #endif
+  //" fragcolor.rgb = max(dot(eye_n, eye_s), 0.0) * vec3(1);"
+  //" vec3 n = normalize((-1.0 + 2.0 * normal_color) + v_norm);"
+  //  "  vec3 N = normalize((-1.0 + 2.0 * moved_normal) + v_norm);"    // @todo - is this correct
+  //  "  vec3 N = normalize(-1.0 + 2.0 * normal_color);"
 
 
 #if 0
-  // specular (it looks like my 
-  "  vec3 P_eye = normalize(mat3(u_vm) * v_pos);"
-  "  vec3 V_eye = normalize(-P_eye);"
-  "  vec3 L_eye = normalize(mat3(u_vm) * L);"
-  "  vec3 S_eye = normalize(L_eye - P_eye);"
-  "  vec3 N_eye = normalize(mat3(u_vm) * N);"
-  "  vec3 R = reflect(-S_eye, N_eye);"
-  "  if(ndl > 0.0) { "
-  "    spec = pow(max(dot(R, V_eye), 0.0), 4.0) * vec3(1.0);"
-  "  }"
-#endif
-
-#if 1
-  // normal mapping
-  // @todo
-#endif
+  "  fragcolor = vec4(v_norm * 0.5 + 0.5, 1.0);"
+  "  fragcolor.rgb = moved_normal;"
+  "  fragcolor.rgb = diffuse_color;"
+  "  vec3 spec = vec3(0.0);"
   "  float height = v_pos.y / 0.1;"
   "  float foam_k = (height + gradient) * 0.4; "
   "  foam_k = v_pos.y;"
   "  if(foam_k > 1.0) { foam_k = 1.0; } else if (foam_k < 0.2) { foam_k = 0.2; } "
   "  fragcolor.rgb = spec + moved_foam * foam_k  + (1.0 - foam_k) *  moved_diffuse  + 0.001 * (ndl * vec3(1.0));"
-  // "  fragcolor.rgb = vec3(0.0)  +  (ndl * vec3(0.0, 0.0, 0.43));"
-#if 0
-  "  if(gl_FragCoord.x < 640) {"
-  "     fragcolor.rgb = vec3(ndl);"
-  "     fragcolor.rgb = v_norm * 0.5 + 0.5;"
-  "     fragcolor.rgb = vec3(gradient);"
-  "     fragcolor.rgb = 0.5 * N_eye + 0.5;"
-  "     fragcolor.rgb = 0.5 + 0.5 * N;"
-  "     fragcolor.rgb = spec;"
-  "  }"
+  "  fragcolor.rgb = 0.5 + 0.5 * n;"
+  "  fragcolor.rgb = vec3(1.0, 0.0, 0.0) * max(dot(n, s), 0.0);"
 #endif
-
-  //"fragcolor = vec4(0.5 + 0.5 * flow_color, 0.0, 1.0);"
-  // " fragcolor = vec4(v_tex, 0.0, 1.0);"
-  // " fragcolor = vec4(v_tex.r,0.0, 0.0, 1.0);"
-  //" fragcolor = vec4(gl_FragCoord.x / 1024.0,0.0, 0.0, 1.0);"
-  //"fragcolor = vec4(flow_color, 0, 1) ;"
   "}"
 
   "";
@@ -192,6 +216,7 @@ class Water {
   GLuint noise_tex;
   GLuint diffuse_tex;
   GLuint foam_tex;
+  GLuint color_tex; /* 1D color ramp. */
 
   GLuint force_tex0; 
 };

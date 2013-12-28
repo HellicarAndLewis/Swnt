@@ -187,8 +187,8 @@ void Swnt::update() {
 
 void Swnt::draw() {
 
-  //   water.draw();
-   //   return;
+  water.draw();
+  return;
 
   if(state == STATE_RENDER_ALIGN) {
     vec3 red(1.0f, 0.0f, 0.0f);

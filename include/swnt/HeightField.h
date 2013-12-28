@@ -40,7 +40,7 @@ static const char* HF_DIFFUSE_VERT = ""
   "uniform sampler2D u_tex_u;     "
   "uniform sampler2D u_tex_forces;"
   "uniform sampler2D u_tex_v;     "
-  "const float dt = 0.17;         "
+  "const float dt = 0.16;         "
   "out float v_new_u_value;       "
   "out float v_new_v_value;       "
 
@@ -75,7 +75,7 @@ static const char* HF_DIFFUSE_VERT = ""
   "  float v = texelFetch(u_tex_v, a_tex, 0).r;"
   "  v_new_v_value = (v + f * dt); "
   "  v_new_u_value = u_center + v_new_v_value * dt;"
-  //  "  int lower = 70; int upper = 90; if(a_tex.s > lower && a_tex.s < upper && a_tex.t > lower && a_tex.t < upper) {  v_new_u_value = 1.5; }"
+  //   "  int lower = 70; int upper = 90; if(a_tex.s > lower && a_tex.s < upper && a_tex.t > lower && a_tex.t < upper) {  v_new_u_value = 3.5; }"
   "  v_new_v_value = v_new_v_value * 0.975;"
   "}"
   "";
@@ -144,6 +144,7 @@ static const char* HF_NORMALS_VS = ""
   "uniform sampler2D u_tex_pos;"
   "in ivec2 a_tex;"
   "out vec3 v_norm;"
+  "out vec3 v_tang;"
   "const float size_y = " QUOTE(DRAW_WIDTH) ";"
   "const float size_x = " QUOTE(DRAW_HEIGHT) ";"
   "const float step_y = size_y / " QUOTE(N) ";"
@@ -172,21 +173,20 @@ static const char* HF_NORMALS_VS = ""
   "  vec3 to_top          = top_pos - current_pos;"
 #endif
   "  v_norm = normalize(cross(to_right, to_top));"
+  "  v_tang = normalize(to_top);"
   "}"
   "";
 
 static const char* HF_NORMALS_FS = ""
   "#version 150\n"
   "in vec3 v_norm;"
+  "in vec3 v_tang;"
   "out vec4 norm_out;"
-  "out vec4 grad_out;"
+  "out vec4 tang_out;"
 
   "void main() {"
   "  norm_out = vec4(v_norm, 1.0);"
-  "  float a = atan(v_norm.z, v_norm.x);"
-  "  vec3 up = vec3(0.0, 1.0, 0.0);"
-  "  vec3 grad = cross(cross(v_norm, up),up);"
-  "  grad_out = vec4(grad, 1.0);"
+  "  tang_out = vec4(v_tang, 1.0);"
   "}"
   "";
 
@@ -326,9 +326,10 @@ class HeightField {
   GLuint tex_v0;                     /* contains the velocity values for state 0 */
   GLuint tex_v1;                     /* contains the velocity values for state 1 */
   GLuint tex_norm;                   /* contains the normals of the height field */
+  GLuint tex_tang;                   /* contains the tangents of the height field */
   GLuint tex_pos;                    /* contains the positions in world space of the vertices */
   GLuint tex_texcoord;               /* contains the texture coords in a range from 0-1 for the final render, see the position shader */
-  GLuint tex_gradient;               /* contains the gradients for the current positions */
+  //  GLuint tex_gradient;               /* contains the gradients for the current positions */
   GLuint tex_noise;                  /* we load a simple grayscale image with some perlin noise that is used to offset the height values a little bit.. based on time */
   int state_diffuse;                 /* toggles between 0 and 1 to ping/pong the read/write buffers */
                      

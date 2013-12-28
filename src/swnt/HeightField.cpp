@@ -13,9 +13,10 @@ HeightField::HeightField()
   ,tex_v0(0)
   ,tex_v1(0)
   ,tex_norm(0)
+  ,tex_tang(0)
   ,tex_pos(0)
   ,tex_texcoord(0)
-  ,tex_gradient(0)
+   //  ,tex_gradient(0)
   ,tex_forces(0)
   ,tex_noise(0)
   ,state_diffuse(0)
@@ -41,11 +42,11 @@ HeightField::HeightField()
 bool HeightField::setup() {
 
   pm.perspective(60.0f, float(W)/H, 0.01, 100.0);
-#if 1
+#if 0
   vm.lookAt(vec3(0.0, 20.0, 0.0), vec3(0.0, 0.0, 0.1), vec3(0.0, 1.0, 0.0));
 #else
-  vm.rotateX(DEG_TO_RAD * 35);
-  vm.translate(0.0, -4.0, -14.0);
+  vm.rotateX(DEG_TO_RAD * 25);
+  vm.translate(0.0, -10.0, -14.0);
   //vm.translate(0.0, -4.0, -24.0);
 #endif
 
@@ -109,7 +110,8 @@ bool HeightField::setup() {
   prog_norm = rx_create_program(vert_norm, frag_norm);
   glBindAttribLocation(prog_norm, 0, "a_tex");
   glBindFragDataLocation(prog_norm, 0, "norm_out");
-  glBindFragDataLocation(prog_norm, 1, "grad_out");
+  //  glBindFragDataLocation(prog_norm, 1, "grad_out");
+  glBindFragDataLocation(prog_norm, 1, "tang_out");
   glLinkProgram(prog_norm);
   rx_print_shader_link_info(prog_norm);
   glUseProgram(prog_norm);
@@ -178,6 +180,12 @@ bool HeightField::setup() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+  glGenTextures(1, &tex_tang);
+  glBindTexture(GL_TEXTURE_2D, tex_tang);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, N, N, 0, GL_RGB, GL_FLOAT, 0);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
   glGenTextures(1, &tex_pos);
   glBindTexture(GL_TEXTURE_2D, tex_pos);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, N, N, 0, GL_RGB, GL_FLOAT, 0);
@@ -190,11 +198,13 @@ bool HeightField::setup() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+  /*
   glGenTextures(1, &tex_gradient);
   glBindTexture(GL_TEXTURE_2D, tex_gradient);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, N, N, 0, GL_RGB, GL_FLOAT, 0);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  */
 
   // fbo for the diffuse math, normals, positions, etc..
   glGenFramebuffers(1, &fbo);
@@ -206,7 +216,8 @@ bool HeightField::setup() {
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, tex_norm,     0);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT5, GL_TEXTURE_2D, tex_pos,      0);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT6, GL_TEXTURE_2D, tex_texcoord, 0);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT7, GL_TEXTURE_2D, tex_gradient, 0);
+  // glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT7, GL_TEXTURE_2D, tex_gradient, 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT7, GL_TEXTURE_2D, tex_tang,     0);
                 
   if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
     printf("Error: framebuffer is not complete.\n");
@@ -271,7 +282,7 @@ bool HeightField::setup() {
   printf("height_field.tex_v1: %d\n", tex_v1);
   printf("height_field.tex_norm: %d\n", tex_norm);
   printf("height_field.tex_noise: %d\n", tex_noise);
-    
+  printf("height_field.tex_tang: %d\n", tex_tang);
   return true;
 }
 
