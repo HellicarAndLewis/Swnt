@@ -117,7 +117,7 @@ void Graphics::drawCircle(float x, float y, float radius, vec3 color) {
 
 GLuint Graphics::createTexture(std::string filepath) {
   unsigned char* pixels = NULL;
-  uint32_t w, h, nchannels = 0;
+  int w, h, nchannels = 0;
 
   if(!rx_load_png(filepath, &pixels, w, h, nchannels)) {
     if(pixels) {

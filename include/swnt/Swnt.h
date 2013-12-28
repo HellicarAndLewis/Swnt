@@ -21,8 +21,8 @@
 #define SWNT_H
 
 #define USE_KINECT 1
-#define USE_OCEAN 1
-#define USE_WATER 0
+#define USE_OCEAN 0
+#define USE_WATER 1
 #define USE_EFFECTS 0
 #define USE_RGB_SHIFT 0
 
@@ -33,6 +33,7 @@
 #include <swnt/Tracking.h>
 #include <swnt/Spirals.h>
 #include <swnt/Flow.h>
+#include <swnt/HeightField.h>
 #include <swnt/Water.h>
 #include <swnt/Effects.h>
 #include <swnt/RGBShift.h>
@@ -87,6 +88,7 @@ class Swnt {
 #endif
 
 #if USE_WATER
+  HeightField height_field;
   Water water;
 #endif
 

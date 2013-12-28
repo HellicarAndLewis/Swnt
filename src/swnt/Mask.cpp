@@ -11,7 +11,7 @@ Mask::Mask(Settings& settings, Graphics& graphics)
   ,scene_fbo(0)
   ,scene_depth(0)
   ,scene_tex(0)
-  ,resolution(20)
+  ,resolution(60)
   ,mask_vert(0)
   ,mask_frag(0)
   ,mask_prog(0)
@@ -121,6 +121,8 @@ void Mask::updateVertices() {
     else if(i == resolution) {
       change = first_change;
     }
+
+    change = 0;
 
     vec2 p(center.x + cos(a * i) * (settings.radius + change), center.y + sin(a * i) * (settings.radius + change));
     vertices.push_back(p);

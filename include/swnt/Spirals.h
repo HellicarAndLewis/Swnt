@@ -1,3 +1,12 @@
+/*
+
+  Spirals
+  -------
+  Renders and simulates the spirals coming from the blobs
+  which have been detected using a kinect.
+
+ */
+
 #ifndef SWNT_SPIRALS_H
 #define SWNT_SPIRALS_H
 

@@ -30,6 +30,7 @@ set(app_sources
   ${sd}/swnt/Flow.cpp
   ${sd}/swnt/Particles.cpp
   ${sd}/swnt/Water.cpp
+  ${sd}/swnt/HeightField.cpp
   ${sd}/swnt/Effects.cpp
   ${sd}/swnt/RGBShift.cpp
   ${sd}/ocean/WaterGraphics.cpp

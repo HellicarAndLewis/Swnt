@@ -1,3 +1,10 @@
+/*
+  
+  Flow
+  ----
+  Creates a velocity/vectory field
+
+ */
 #ifndef SWNT_FLOW_H
 #define SWNT_FLOW_H
 
@@ -22,6 +29,7 @@ class Flow {
   void draw();
   void createVortex(float px, float py);            /* create a vortex at the given percentages, 0.5,0.5 is the center of the field */
   void applyPerlinToField();                        /* apply a perlin noise force to the field */
+  void updateFlowTexture();                         /* uploads the current velocities into a texture */
   
  private:
   bool setupGraphics();
@@ -46,6 +54,7 @@ class Flow {
   std::vector<vec2> velocities;                   /* the velocities */
   std::vector<float> heights;                     /* the actual perlin values */
   Perlin perlin;
+  GLuint flow_tex; 
 
   /* GL */
   GLuint field_vao;

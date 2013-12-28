@@ -10,7 +10,7 @@ Swnt::Swnt(Settings& settings)
   ,flow(settings, graphics)
   ,spirals(settings, tracking, graphics, flow)
 #if USE_WATER
-  ,water(settings, flow)
+  ,water(height_field)
 #endif
 #if USE_KINECT
   ,rgb_tex(0)
@@ -22,7 +22,7 @@ Swnt::Swnt(Settings& settings)
   ,draw_flow(true)
   ,draw_spirals(true)
   ,draw_threshold(true)
-  ,draw_water(false)
+  ,draw_water(true)
 #if USE_EFFECTS
   ,effects(settings, graphics, spirals)
 #endif
@@ -59,10 +59,17 @@ bool Swnt::setup() {
 #endif
 
 #if USE_WATER
-  if(!water.setup()) {
+  if(!height_field.setup()) {
+    printf("Error: cannot setupthe height field.\n");
+    return false;
+  }
+
+  if(!water.setup(settings.win_w, settings.win_h)) {
     printf("Error: cannot setup water.\n");
     return false;
   }
+
+
 #endif
 
   if(!graphics.setup()) {
@@ -95,6 +102,8 @@ bool Swnt::setup() {
     printf("Error: cannot setup the flow.\n");
     return false;
   }
+
+  //water.flow_tex = flow.flow_tex;
 
 #if USE_EFFECTS
   if(!effects.setup()) {
@@ -164,18 +173,22 @@ void Swnt::update() {
   updateKinect();
 #endif
 
-#if USE_WATER 
-  if(draw_water) {
-    water.update();
-  }
-#endif
-
   spirals.update(1.0f/60.0f);
   mask.update();
+
+#if USE_WATER
+  height_field.calculateHeights();
+  height_field.calculatePositions();
+  height_field.calculateNormals();
+  water.update(1.0f/60.0f);
+#endif
+
 }
 
 void Swnt::draw() {
 
+  //   water.draw();
+   //   return;
 
   if(state == STATE_RENDER_ALIGN) {
     vec3 red(1.0f, 0.0f, 0.0f);
@@ -227,6 +240,16 @@ void Swnt::draw() {
     }
     mask.endSceneGrab();
 #else 
+    #if USE_WATER
+    if(draw_water) {
+      /*
+      height_field.beginDrawForces();
+      height_field.drawForceTexture(water.force_tex0, 0.5, 0.5, 0.1, 0.1);
+      height_field.endDrawForces();
+      */
+    }
+    #endif
+
     mask.beginSceneGrab();
     {
       #if USE_WATER
@@ -235,17 +258,17 @@ void Swnt::draw() {
       }
       #endif
 
-      effects.drawFloor();
-
       if(draw_flow) {
         flow.draw();
       }
+
       if(draw_spirals) {
         spirals.draw();
       }
       spirals.drawDisplacement();
     }
     mask.endSceneGrab();
+
 #endif
 
     
@@ -254,13 +277,13 @@ void Swnt::draw() {
 
     // graphics.drawTexture(mask.masked_out_tex, 320.0f, 0.0f, 320.0f, 240.0f);
     flow.calc(mask.masked_out_pixels);
+    //flow.updateFlowTexture();
     tracking.track(mask.masked_out_pixels);
 
     //  #if USE_OCEAN
     // draw the final masked out scene
     mask.draw_hand = draw_threshold;
     mask.maskOutScene();
-
 
 
     //effects.displace(spirals.displacement_tex, mask.scene_tex);

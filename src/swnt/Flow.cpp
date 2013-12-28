@@ -10,8 +10,9 @@ Flow::Flow(Settings& settings, Graphics& graphics)
   ,field_vao(0)
   ,field_vbo(0)
   ,field_bytes_allocated(0)
-  ,field_size(64)
+  ,field_size(128)
   ,perlin(4, 4, TWO_PI, 94)
+  ,flow_tex(0)
 {
 }
 
@@ -39,6 +40,15 @@ bool Flow::setup() {
 
   velocities.assign((field_size * field_size), vec2());
   heights.assign((field_size * field_size), 0.0f);
+
+  glGenTextures(1, &flow_tex);
+  glBindTexture(GL_TEXTURE_2D, flow_tex);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, field_size, field_size, 0, GL_RG, GL_FLOAT, NULL);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  printf("flow.flow_tex: %d\n", flow_tex);
   return true;
 }
 
@@ -54,7 +64,13 @@ bool Flow::setupGraphics() {
   return true;
 }
 
+void Flow::updateFlowTexture() {
+  glBindTexture(GL_TEXTURE_2D, flow_tex);
+  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, field_size, field_size, GL_RG, GL_FLOAT, velocities[0].ptr());
+}
+
 void Flow::draw(){
+
   assert(settings.color_dx < settings.colors.size());
 
   if(field_vertices.size()) {

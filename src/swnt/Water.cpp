@@ -1,144 +1,141 @@
+#include <assert.h>
 #include <swnt/Water.h>
-#include <swnt/Settings.h>
-#include <swnt/Flow.h>
+#include <swnt/HeightField.h>
 
-Water::Water(Settings& settings, Flow& flow)
-  :settings(settings)
-  ,flow(flow)
-  ,vbo(0)
-  ,vao(0)
+Water::Water(HeightField& hf)
+  :height_field(hf)
+  ,win_w(0)
+  ,win_h(0)
+  ,prog(0)
   ,vert(0)
   ,frag(0)
-  ,prog(0)
-  ,height_tex(0)
+  ,flow_tex(0)
+  ,normals_tex(0)
+  ,noise_tex(0)
+  ,diffuse_tex(0)
+  ,foam_tex(0)
+  ,force_tex0(0)
 {
+
 }
 
-bool Water::setup() {
-  assert(flow.field_size);
-  
-  // matrices
-  pm.perspective(45.0, float(settings.win_w)/settings.win_h, 0.01, 100.0f);
-  vm.lookAt(vec3(0.0f, 7.0f, 0.0f), vec3(0.01f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
+GLuint Water::createTexture(std::string filename) {
+ 
+  int w, h, n;
+  unsigned char* pix;
+ 
+  if(!rx_load_png(rx_to_data_path(filename), &pix, w, h, n)) {
+    printf("Error: cannot find: %s\n", filename.c_str());
+    return 0;
+  }
+ 
+  GLuint tex;
+  GLenum format = GL_RGB;
+ 
+  if(n == 4) {
+    format = GL_RGBA;
+  }
+ 
+  glGenTextures(1, &tex);
+  glBindTexture(GL_TEXTURE_2D, tex);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, format, GL_UNSIGNED_BYTE, pix);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  printf("Texture, w: %d, h: %d, n: %d\n", w, h, n);
+ 
+  delete[] pix;
+  pix = NULL;
+  return tex;
+}
 
-  nm[0] = vm[0];
-  nm[1] = vm[4];
-  nm[2] = vm[8];
 
-  nm[3] = vm[1];
-  nm[4] = vm[5];
-  nm[5] = vm[9];
+bool Water::setup(int w, int h) {
+  assert(w && h);
 
-  nm[6] = vm[2];
-  nm[7] = vm[6];
-  nm[8] = vm[10];
+  win_w = w;
+  win_h = h;
 
-  // shaders
+  // create shader
   vert = rx_create_shader(GL_VERTEX_SHADER, WATER_VS);
   frag = rx_create_shader(GL_FRAGMENT_SHADER, WATER_FS);
   prog = rx_create_program(vert, frag);
-  glBindAttribLocation(prog, 0, "a_pos");
+  glBindAttribLocation(prog, 0, "a_tex");
   glLinkProgram(prog);
   rx_print_shader_link_info(prog);
   glUseProgram(prog);
-  glUniform1i(glGetUniformLocation(prog, "u_height_tex"), 0);
-  
-  // data
-  std::vector<vec3> vertices;
-  std::vector<GLuint> indices;
-  vertices.assign(flow.field_size * flow.field_size, vec3());
-  float size = 0.1; 
-  float hs = (flow.field_size * size) * 0.5;
+  glUniform1i(glGetUniformLocation(prog, "u_tex_pos"),       0);  // VS
+  glUniform1i(glGetUniformLocation(prog, "u_tex_norm"),      1);  // VS
+  glUniform1i(glGetUniformLocation(prog, "u_tex_texcoord"),  2);  // VS
+  glUniform1i(glGetUniformLocation(prog, "u_noise_tex"),     3);  // FS
+  glUniform1i(glGetUniformLocation(prog, "u_norm_tex"),      4);  // FS
+  glUniform1i(glGetUniformLocation(prog, "u_flow_tex"),      5);  // FS
+  glUniform1i(glGetUniformLocation(prog, "u_diffuse_tex"),   6);  // FS
+  glUniform1i(glGetUniformLocation(prog, "u_foam_tex"),      7);  // FS
 
-  for(int j = 0; j < flow.field_size; ++j) {
-    for(int i = 0; i < flow.field_size; ++i) {
-      int dx = (j * flow.field_size) + i;
-      vertices[dx].set(-hs + (i * size), 0.0, -hs + (j * size));
-    }
-  }
+  glUniformMatrix4fv(glGetUniformLocation(prog, "u_pm"), 1, GL_FALSE, height_field.pm.ptr());
+  glUniformMatrix4fv(glGetUniformLocation(prog, "u_vm"), 1, GL_FALSE, height_field.vm.ptr());
 
-  for(int j = 0; j < flow.field_size-1; ++j) {
-    for(int i = 0; i < flow.field_size-1; ++i) {
-      GLuint a = ((j + 0) * flow.field_size) + (i + 0);  // bottom left
-      GLuint b = ((j + 0) * flow.field_size) + (i + 1);  // bottom right
-      GLuint c = ((j + 1) * flow.field_size) + (i + 1);  // top right 
-      GLuint d = ((j + 1) * flow.field_size) + (i + 0);  // top left
+  // load textures
+  normals_tex = createTexture("images/water_normals.png");
+  flow_tex = createTexture("images/water_flow.png");
+  noise_tex = createTexture("images/water_noise.png");
+  diffuse_tex = createTexture("images/water_diffuse.png");
+  foam_tex = createTexture("images/water_foam.png");
+  force_tex0 = createTexture("images/force.png");
 
-      indices.push_back(a);
-      indices.push_back(b);
-      indices.push_back(c);
-      
-      indices.push_back(a);
-      indices.push_back(c);
-      indices.push_back(d);
-    }
-  }
-
-  glGenVertexArrays(1, &vao);
-  glGenBuffers(1, &vbo);
-  glGenBuffers(1, &vbo_els);
-  glBindVertexArray(vao);
-  glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_els);
-
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * vertices.size(), vertices[0].ptr(), GL_STATIC_DRAW);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * indices.size(), &indices[0], GL_STATIC_DRAW);
-
-
-  glEnableVertexAttribArray(0); // pos
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (GLvoid*)0);
-
-  // texture for the height values.
-  glGenTextures(1, &height_tex);
-  glBindTexture(GL_TEXTURE_2D, height_tex);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, flow.field_size, flow.field_size, 0, GL_RED, GL_FLOAT, NULL);
+  glBindTexture(GL_TEXTURE_2D, flow_tex);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
   return true;
 }
 
-void Water::update() {
-  assert(flow.heights.size());
-
-  glBindTexture(GL_TEXTURE_2D, height_tex);
-  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, flow.field_size, flow.field_size, GL_RED, GL_FLOAT, (GLvoid*)&flow.heights[0]);
+void Water::update(float dt) {
 }
 
 void Water::draw() {
 
+  glEnable(GL_DEPTH_TEST);
+
   glUseProgram(prog);
-  glUniformMatrix4fv(glGetUniformLocation(prog, "u_pm"), 1, GL_FALSE, pm.ptr());
-  glUniformMatrix4fv(glGetUniformLocation(prog, "u_vm"), 1, GL_FALSE, vm.ptr());
-  glUniformMatrix3fv(glGetUniformLocation(prog, "u_nm"), 1, GL_FALSE, nm.ptr());
 
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, height_tex);
+  {
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, height_field.tex_pos);
 
-  glBindVertexArray(vao);
-#if USE_SIMPLE_SHADER
-  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  glDrawElements(GL_TRIANGLES, flow.field_size * flow.field_size * 6, GL_UNSIGNED_INT, 0);
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, height_field.tex_norm);
 
-#else
-#  if 1
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-  glDrawElements(GL_TRIANGLES, flow.field_size * flow.field_size * 6, GL_UNSIGNED_INT, 0);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, height_field.tex_texcoord);
 
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_ONE, GL_ONE);
-  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  glDrawElements(GL_TRIANGLES, flow.field_size * flow.field_size * 6, GL_UNSIGNED_INT, 0);
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, noise_tex);
 
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-  glDisable(GL_BLEND);
+    glActiveTexture(GL_TEXTURE4);
+    glBindTexture(GL_TEXTURE_2D, normals_tex);
 
-#  else
-  glDrawElements(GL_TRIANGLES, flow.field_size * flow.field_size * 6, GL_UNSIGNED_INT, 0);
-#  endif
-#endif
+    glActiveTexture(GL_TEXTURE5);
+    glBindTexture(GL_TEXTURE_2D, flow_tex);
 
+    glActiveTexture(GL_TEXTURE6);
+    glBindTexture(GL_TEXTURE_2D, diffuse_tex);
+
+    glActiveTexture(GL_TEXTURE7);
+    glBindTexture(GL_TEXTURE_2D, foam_tex);
+  }
+
+  static float t = 0.0;
+  float time0 = fmod(t, 1.0);
+  float time1 = fmod(t + 0.5, 1.0);
+  t += 0.002;
+  
+  glUniform1f(glGetUniformLocation(prog, "u_time"), t);
+  glUniform1f(glGetUniformLocation(prog, "u_time0"), time0);
+  glUniform1f(glGetUniformLocation(prog, "u_time1"), time1);
+
+  //  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glBindVertexArray(height_field.vao);
+  glDrawElements(GL_TRIANGLES, height_field.indices.size(), GL_UNSIGNED_INT, NULL);
 }

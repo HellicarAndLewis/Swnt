@@ -58,7 +58,7 @@ void Tracking::track(unsigned char* pixels) {
 }
 
 void Tracking::draw(float tx, float ty) {
-  
+
   if(!contour_vertices.size()) {
     return;
   }

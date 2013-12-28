@@ -1,3 +1,12 @@
+/*
+
+
+  Tracking
+  --------
+
+  Uses the thresholded kinect image to do tracking using K-means.
+
+ */
 #ifndef SWNT_TRACKING_H
 #define SWNT_TRACKING_H
 

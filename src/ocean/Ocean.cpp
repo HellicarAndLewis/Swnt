@@ -294,8 +294,8 @@ void Ocean::draw() {
     //pm.perspective(60, 16.0/9.0, 1, 10000);
     pm.perspective(60, 4.0/3.0, 1, 10000);
     mat4 vm;
-    vm.lookAt(vec3(cam_pos.x, -cam_pos.y, cam_pos.z), vec3(0.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0));
-    vm.scale(1.0, -1.0, 1.0);
+    vm.lookAt(vec3(cam_pos.x, cam_pos.y, cam_pos.z), vec3(0.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0));
+    //vm.scale(1.0, -1.0, 1.0);
 
 
     // using hardcoded view matrix and projection matrix 

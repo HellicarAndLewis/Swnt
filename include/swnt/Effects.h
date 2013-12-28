@@ -64,7 +64,7 @@ static const char* DISP_FRAG_FS = ""
   "";
 
 // ------------------------------------------
-
+/*
 struct VertexPT {
   VertexPT(){}
   VertexPT(vec3 pos, vec2 tex):pos(pos),tex(tex) {};
@@ -72,6 +72,8 @@ struct VertexPT {
   vec3 pos;
   vec2 tex;
 };
+
+*/
 
 // ------------------------------------------
 
