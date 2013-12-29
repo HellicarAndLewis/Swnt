@@ -16,8 +16,22 @@ Water::Water(HeightField& hf)
   ,foam_tex(0)
   ,force_tex0(0)
   ,color_tex(0)
+  ,max_depth(9.5)
+  ,sun_shininess(4.0)
+  ,foam_depth(2.4)
 {
-
+  sun_pos[0] = 0.0;
+  sun_pos[1] = 15.0;
+  sun_pos[2] = -300.0;
+  sun_color[0] = 4;
+  sun_color[1] = 3;
+  sun_color[2] = 1;
+  ads_intensities[0] = 0.1; // ambient
+  ads_intensities[1] = 0.4; // diffuse
+  ads_intensities[2] = 0.4; // spec
+  ads_intensities[3] = 1.0; // sun  
+  ads_intensities[4] = 1.0; // foam
+  ads_intensities[5] = 0.3; // texture
 }
 
 GLuint Water::createTexture(std::string filename) {
@@ -162,6 +176,13 @@ void Water::draw() {
   glUniform1f(glGetUniformLocation(prog, "u_time"), t);
   glUniform1f(glGetUniformLocation(prog, "u_time0"), time0);
   glUniform1f(glGetUniformLocation(prog, "u_time1"), time1);
+  glUniform3fv(glGetUniformLocation(prog, "u_sun_pos"), 1, sun_pos);
+  glUniform3fv(glGetUniformLocation(prog, "u_sun_color"), 1, sun_color);
+  glUniform1f(glGetUniformLocation(prog, "u_max_depth"), max_depth);
+  glUniform1f(glGetUniformLocation(prog, "u_foam_depth"), foam_depth);
+  glUniform1f(glGetUniformLocation(prog, "u_sun_shininess"), sun_shininess);
+  glUniform1fv(glGetUniformLocation(prog, "u_ads_intensities"), 6, ads_intensities);
+  glUniform3fv(glGetUniformLocation(prog, "u_ambient_color"), 1, ambient_color);
 
   //  glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glBindVertexArray(height_field.vao);

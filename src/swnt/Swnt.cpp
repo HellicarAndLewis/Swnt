@@ -26,6 +26,9 @@ Swnt::Swnt(Settings& settings)
 #if USE_EFFECTS
   ,effects(settings, graphics, spirals)
 #endif
+#if USE_GUI
+  ,gui(water)
+#endif
 {
 }
 
@@ -124,6 +127,13 @@ bool Swnt::setup() {
   }
 #endif
 
+#if USE_GUI
+  if(!gui.setup(settings.win_w, settings.win_h)) {
+    printf("Error: cannot setup the GUI.\n");
+    return false;
+  }
+#endif
+
   // matrices for rendering the ocean
   persp_matrix.perspective(65.0f, settings.win_w/settings.win_h, 0.01f, 1000.0f);
   settings.ocean.cam_pos.set(0.0, 100.0, 100.0f);
@@ -193,7 +203,9 @@ void Swnt::update() {
 
 void Swnt::draw() {
   //scene.draw(height_field.pm.ptr(), height_field.vm.ptr());
+
   water.draw();
+  gui.draw();
   return;
 
   if(state == STATE_RENDER_ALIGN) {

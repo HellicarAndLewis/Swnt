@@ -20,12 +20,13 @@
 #ifndef SWNT_H
 #define SWNT_H
 
-#define USE_KINECT 1
+#define USE_KINECT 0
 #define USE_OCEAN 0
 #define USE_WATER 1
 #define USE_EFFECTS 0
 #define USE_RGB_SHIFT 0
 #define USE_SCENE 0
+#define USE_GUI 1
 
 #include <swnt/Settings.h>
 #include <swnt/Kinect.h>
@@ -38,6 +39,7 @@
 #include <swnt/Water.h>
 #include <swnt/Effects.h>
 #include <swnt/RGBShift.h>
+#include <swnt/GUI.h>
 #include <swnt/Scene.h>
 #include <ocean/Ocean.h>
 #include <ocean/WaterGraphics.h>
@@ -104,6 +106,10 @@ class Swnt {
 
 #if USE_SCENE
   Scene scene;
+#endif
+
+#if USE_GUI
+  GUI gui;
 #endif
 
   /* matrices for rendering the ocean */

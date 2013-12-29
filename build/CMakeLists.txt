@@ -33,6 +33,7 @@ set(app_sources
   ${sd}/swnt/HeightField.cpp
   ${sd}/swnt/Effects.cpp
   ${sd}/swnt/Scene.cpp
+  ${sd}/swnt/GUI.cpp
   ${sd}/swnt/RGBShift.cpp
   ${sd}/ocean/WaterGraphics.cpp
   ${sd}/ocean/Ocean.cpp
@@ -65,6 +66,7 @@ if(APPLE)
     ${extern_lib_dir}/libopencv_core.a
     ${extern_lib_dir}/libopencv_imgproc.a
     ${extern_lib_dir}/libopencv_video.a
+    ${extern_lib_dir}/libAntTweakBar.a
     ${fr_corefoundation}
     ${fr_cocoa}
     ${fr_opengl}
@@ -96,3 +98,4 @@ elseif(UNIX)
 endif()
 
 install(TARGETS ${app} DESTINATION bin)
+

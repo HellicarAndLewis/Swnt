@@ -62,6 +62,14 @@ static const char* WATER_FS = ""
   "uniform sampler2D u_foam_tex;"
   "uniform sampler1D u_color_tex;"  // used to colorize by depth 
 
+  "uniform vec3 u_sun_pos;"
+  "uniform vec3 u_sun_color;"
+  "uniform float u_sun_shininess;"  
+  "uniform vec3 u_ambient_color;"
+  "uniform float u_max_depth;" // used to offset into the depth color texture 
+  "uniform float u_foam_depth;" // how much of the foam should be visible
+  "uniform float u_ads_intensities[6];" // ambient, diffuse, specular, fake sun, moved_foam, texture intensities
+
   "in vec3 v_norm;"
   "in vec3 v_tang;"
   "in vec3 v_pos;"
@@ -76,7 +84,7 @@ static const char* WATER_FS = ""
   "  vec3 normal_color = texture(u_norm_tex, v_tex).rgb;"   // bump mapping
   "  vec3 diffuse_color = texture(u_diffuse_tex, v_tex).rgb;"
   "  float noise_color = texture(u_noise_tex, v_tex).r;"
-  "  vec3 depth_color = texture(u_color_tex, v_pos.y/9.5).rgb;"
+  "  vec3 depth_color = texture(u_color_tex, v_pos.y/u_max_depth).rgb;"
   // "  vec3 depth_color = texture(u_color_tex, 0.9).rgb;"
 
   "  flow_color = -1.0 + 2.0 * flow_color;"
@@ -103,7 +111,7 @@ static const char* WATER_FS = ""
   "  vec3 foam1 = texture(u_foam_tex, texcoord1 * 4.0).rgb;"
   "  vec3 moved_foam = mix(foam0, foam1, lerp);"
 
-  " vec3 Ka = vec3(-0.1, -0.1, -0.1);"
+  " vec3 Ka = u_ambient_color;"
   " vec3 Kd = vec3(0.0, 0.1, 0.2);"
   " vec3 Ks = vec3(0.5, 0.5, 0.0);"
   " vec3 spec = vec3(0.0);"
@@ -119,7 +127,7 @@ static const char* WATER_FS = ""
   " vec3 eye_n = normalize(mat3(u_vm) * n);"
   " float ndl  = max(dot(eye_n,eye_s), 0.0);"
 
-  " vec3 eye_sun = mat3(u_vm) * vec3(0.0, 10.0, -300);"
+  " vec3 eye_sun = mat3(u_vm) * u_sun_pos;" 
   " eye_s = normalize(eye_sun - eye_p);"
   " vec3 eye_v = normalize(-eye_p);"
   " vec3 eye_r = normalize(reflect(-eye_s, eye_n));"
@@ -150,26 +158,33 @@ static const char* WATER_FS = ""
   " ndl = max(dot(perturbed_normal, object_s), 0.0);"
 #endif
 
-  " float foam_level = 2.5;"
+  " float foam_level = u_foam_depth;"
   " float foam_k = v_pos.y / foam_level;"
-  " if(foam_k > 1.0) { foam_k = 1.0; } else if (foam_k <= 0.2) { foam_k = 0.2; } "
+  " if(foam_k > 1.0) { foam_k = 1.0; } "//  else if (foam_k <= 0.2) { foam_k = 0.0; } "
   " vec3 foam = foam_k * moved_foam;"
 
   // http://blog.elmindreda.org/2011/06/oceans-of-fun/ 
-  " vec3 fake_sun = vec3(4.0, 3.0, 1.0) * pow(clamp(dot(eye_r, eye_v), 0.0, 1.0), 4.0);"
+  " vec3 fake_sun = u_sun_color * pow(clamp(dot(eye_r, eye_v), 0.0, 1.0), u_sun_shininess);"
 
   //   " vec3 fake_sun = vec3(4.0, 4.0, 4.0) * pow(clamp(dot(eye_r, eye_v), 0.0, 1.0), 4.0);"
 
-  " vec3 K = Ka + Kd * ndl + spec + fake_sun;"
-  " fragcolor.rgb = mix(K, (1.0 - foam_k) * (mix(moved_diffuse,depth_color, 0.3)) + moved_foam, 0.4);"  
-  " fragcolor.rgb = mix(vec3(0.0),(1.0 - foam_k) * moved_diffuse + moved_foam * foam_k + fake_sun * 0.1, v_fog);"
+  " vec3 K = u_ads_intensities[0] * Ka;"
+  " K     += u_ads_intensities[1] * Kd * ndl ;"
+  " K     += u_ads_intensities[2] * spec ;"
+  " K     += u_ads_intensities[3] * fake_sun;"
+  " K     += depth_color;"
+  " K     += mix(u_ads_intensities[5] * moved_diffuse, u_ads_intensities[4] * foam, foam_k);"
+
+  //" fragcolor.rgb = mix(K, (1.0 - foam_k) * (mix(moved_diffuse,depth_color, 0.3)) + moved_foam, 0.4);"  
+  "fragcolor.rgb = K;"
+  // " fragcolor.rgb = mix(vec3(0.0),(1.0 - foam_k) * moved_diffuse + moved_foam * foam_k + fake_sun * 0.1, v_fog);" // NICE
   // " fragcolor.rgb = vec3(v_fog);"
   //  " fragcolor.rgb = mix(K, (1.0 - foam_k) * (mix(moved_diffuse, depth_color, 0.9)) + foam, 0.6);"  
   //  " fragcolor.rgb = mix(K, (1.0 - foam_k) * depth_color + foam, 0.8) ;"  
   //  " fragcolor.rgb = K;"
-  //  " fragcolor.rgb = depth_color;"
+  //" fragcolor.rgb = depth_color;"
   //  " fragcolor.rgb = foam;"
-    " fragcolor.rgb = mix(moved_diffuse, moved_foam, foam_k) * 0.5 + Ka +  Kd * ndl + fake_sun;"
+  //  " fragcolor.rgb = mix(moved_diffuse, moved_foam, foam_k) * 0.5 + Ka +  Kd * ndl + fake_sun;" // NICE!
   //  " fragcolor.rgb = max(dot(eye_n, eye_s), 0.0) * vec3(1);"
   //  " vec3 n = normalize((-1.0 + 2.0 * normal_color) + v_norm);"
   //  " vec3 N = normalize((-1.0 + 2.0 * moved_normal) + v_norm);"    // @todo - is this correct
@@ -223,7 +238,16 @@ class Water {
   GLuint foam_tex;
   GLuint color_tex; /* 1D color ramp. */
 
-  GLuint force_tex0; 
+  GLuint force_tex0;  /* used to apply a force to the height field */
+
+  /* uniforms */
+  float sun_pos[3];
+  float sun_color[3];
+  float sun_shininess;
+  float max_depth;
+  float foam_depth;
+  float ads_intensities[6]; /* ambient, diffuse, specular  intensity, sun, foam, texture */
+  float ambient_color[3];
 };
 
 #endif

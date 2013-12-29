@@ -122,7 +122,11 @@ void error_callback(int err, const char* desc) {
 }
 
 void key_callback(GLFWwindow* win, int key, int scancode, int action, int mods) {
-  
+
+  if(action == GLFW_PRESS) {
+    swnt.gui.onKeyPressed(key, mods);
+  }
+
   if(action != GLFW_PRESS) {
     return;
   }
@@ -170,20 +174,23 @@ void key_callback(GLFWwindow* win, int key, int scancode, int action, int mods) 
 }
 
 void resize_callback(GLFWwindow* window, int width, int height) {
-
+  swnt.gui.onResize(width, height);
 }
 
 void button_callback(GLFWwindow* win, int bt, int action, int mods) {
   if(action == GLFW_PRESS) {
     draw_forces = true;
   }
+  swnt.gui.onMouseClicked(bt, action);
 }
 
 void cursor_callback(GLFWwindow* win, double x, double y) {
+  swnt.gui.onMouseMoved(x, y);
+
   force_x = x/1280.0;
   force_y = (720-y)/720.0;
   int b = glfwGetMouseButton(win, 0);
   if(b) {
-    draw_forces = true;
+    //    draw_forces = true;
   }
 }
