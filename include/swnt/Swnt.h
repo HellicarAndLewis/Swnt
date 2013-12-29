@@ -25,6 +25,7 @@
 #define USE_WATER 1
 #define USE_EFFECTS 0
 #define USE_RGB_SHIFT 0
+#define USE_SCENE 0
 
 #include <swnt/Settings.h>
 #include <swnt/Kinect.h>
@@ -37,6 +38,7 @@
 #include <swnt/Water.h>
 #include <swnt/Effects.h>
 #include <swnt/RGBShift.h>
+#include <swnt/Scene.h>
 #include <ocean/Ocean.h>
 #include <ocean/WaterGraphics.h>
 
@@ -95,8 +97,13 @@ class Swnt {
 #if USE_EFFECTS
   Effects effects;
 #endif
+
 #if USE_RGB_SHIFT
   RGBShift rgb_shift;
+#endif
+
+#if USE_SCENE
+  Scene scene;
 #endif
 
   /* matrices for rendering the ocean */

@@ -68,8 +68,6 @@ bool Swnt::setup() {
     printf("Error: cannot setup water.\n");
     return false;
   }
-
-
 #endif
 
   if(!graphics.setup()) {
@@ -111,9 +109,17 @@ bool Swnt::setup() {
     return false;
   }
 #endif
+
 #if USE_RGB_SHIFT
   if(!rgb_shift.setup()) {
     printf("Error: cannot setup rgb shift.\n");
+    return false;
+  }
+#endif
+
+#if USE_SCENE
+  if(!scene.setup(settings.win_w, settings.win_h)) {
+    printf("Error: cannot setup the scene.\n");
     return false;
   }
 #endif
@@ -186,7 +192,7 @@ void Swnt::update() {
 }
 
 void Swnt::draw() {
-
+  //scene.draw(height_field.pm.ptr(), height_field.vm.ptr());
   water.draw();
   return;
 

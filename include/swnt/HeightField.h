@@ -116,7 +116,7 @@ static const char* HF_POSITION_VS = ""
   "  float current_height = texelFetch(u_tex_u, ivec2(a_tex.s + 0, a_tex.t + 0), 0).r;"
   "  v_tex = vec2(a_tex.s * (1.0 / " QUOTE(N) "), a_tex.t * (1.0 / " QUOTE(N) "));"
   //  "  v_tex = vec2(1.0 - a_tex.s / 128.0, 1.0 - a_tex.t / 128.0);"
-  "  float noise_height = texture(u_tex_noise, vec2(v_tex.s, v_tex.t + u_time)).r;"
+  "  float noise_height = texture(u_tex_noise, vec2(v_tex.s, v_tex.t + u_time)).r * 3.2;"
   "  v_pos = vec3(-hx + (a_tex.s + 0) * step_x, current_height + noise_height, -hy + a_tex.t * step_y + 0);"
   "}"
 
