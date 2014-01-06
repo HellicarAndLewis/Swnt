@@ -36,6 +36,7 @@ set(app_sources
   ${sd}/swnt/GUI.cpp
   ${sd}/swnt/RGBShift.cpp
   ${sd}/swnt/Weather.cpp
+  ${sd}/swnt/Audio.cpp
   ${sd}/ocean/WaterGraphics.cpp
   ${sd}/ocean/Ocean.cpp
 )
@@ -71,6 +72,8 @@ if(APPLE)
     ${extern_lib_dir}/libcurl.a
     ${extern_lib_dir}/libcrypto.a
     ${extern_lib_dir}/libssl.a
+    ${extern_lib_dir}/libao.a
+    ${extern_lib_dir}/libmpg123.a
     ${fr_corefoundation}
     ${fr_cocoa}
     ${fr_opengl}

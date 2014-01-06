@@ -78,8 +78,8 @@ static const char* WATER_FS = ""
   "out vec4 fragcolor;"
   
   "void main() {"
-  // "  vec2 flow_color = texture(u_flow_tex, vec2(1.0 - v_tex.s, v_tex.t)).rg;"
- "  vec2 flow_color = texture(u_flow_tex, v_tex).rg;"
+ "  vec2 flow_color = texture(u_flow_tex, vec2(1.0 - v_tex.s, v_tex.t)).rg;"
+  // "  vec2 flow_color = texture(u_flow_tex, v_tex).rg;"
 
   "  vec3 normal_color = texture(u_norm_tex, v_tex).rgb;"   // bump mapping
   "  vec3 diffuse_color = texture(u_diffuse_tex, v_tex).rgb;"

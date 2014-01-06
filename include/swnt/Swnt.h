@@ -20,15 +20,7 @@
 #ifndef SWNT_H
 #define SWNT_H
 
-#define USE_KINECT 0
-#define USE_OCEAN 0
-#define USE_WATER 1
-#define USE_EFFECTS 0
-#define USE_RGB_SHIFT 0
-#define USE_SCENE 0
-#define USE_GUI 1
-#define USE_WEATHER 1
-
+#include <swnt/Types.h>
 #include <swnt/Settings.h>
 #include <swnt/Kinect.h>
 #include <swnt/Graphics.h>
@@ -43,6 +35,7 @@
 #include <swnt/GUI.h>
 #include <swnt/Weather.h>
 #include <swnt/Scene.h>
+#include <swnt/Audio.h>
 #include <ocean/Ocean.h>
 #include <ocean/WaterGraphics.h>
 
@@ -116,6 +109,10 @@ class Swnt {
 
 #if USE_WEATHER
   Weather weather;
+#endif
+
+#if USE_AUDIO
+  Audio audio;
 #endif
 
   /* matrices for rendering the ocean */

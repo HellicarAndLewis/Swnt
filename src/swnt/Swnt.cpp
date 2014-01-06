@@ -33,7 +33,7 @@ Swnt::Swnt(Settings& settings)
 }
 
 Swnt::~Swnt() {
-
+  printf("~SWNT()\n");
 #if USE_KINECT
   if(rgb_image) {
     delete[] rgb_image;
@@ -141,6 +141,22 @@ bool Swnt::setup() {
   }
 #endif
 
+#if USE_AUDIO
+  if(!audio.setup()) {
+    printf("Error: cannot setup the audio player.\n");
+    return false;
+  }
+  //  if(!audio.add(SOUND_OCEAN, rx_to_data_path("audio/ocean.mp2"))) {
+  if(!audio.add(SOUND_OCEAN, rx_to_data_path("audio/short.mp3"))) {
+    printf("Error while loading ocean sound");
+    return false;
+  }
+  if(!audio.add(SOUND_WATER, rx_to_data_path("audio/water.mp2"))) {
+    printf("Error while loading water sound");
+    return false;
+  }
+#endif
+
   // matrices for rendering the ocean
   persp_matrix.perspective(65.0f, settings.win_w/settings.win_h, 0.01f, 1000.0f);
   settings.ocean.cam_pos.set(0.0, 100.0, 100.0f);
@@ -208,6 +224,10 @@ void Swnt::update() {
 
 #if USE_WEATHER
   weather.update();
+#endif
+
+#if USE_AUDIO
+  audio.update();
 #endif
 
 }
