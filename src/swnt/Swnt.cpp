@@ -134,6 +134,13 @@ bool Swnt::setup() {
   }
 #endif
 
+#if USE_WEATHER
+  if(!weather.setup()) {
+    printf("Error: cannot setup the weather tool.\n");
+    return false;
+  }
+#endif
+
   // matrices for rendering the ocean
   persp_matrix.perspective(65.0f, settings.win_w/settings.win_h, 0.01f, 1000.0f);
   settings.ocean.cam_pos.set(0.0, 100.0, 100.0f);
@@ -197,6 +204,10 @@ void Swnt::update() {
   height_field.calculatePositions();
   height_field.calculateNormals();
   water.update(1.0f/60.0f);
+#endif
+
+#if USE_WEATHER
+  weather.update();
 #endif
 
 }

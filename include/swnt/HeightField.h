@@ -69,14 +69,14 @@ static const char* HF_DIFFUSE_VERT = ""
 #endif
   "  float f = 8.4 * ((u_right + u_left + u_bottom + u_top) - (4.0 * u_center));"
   "  { "
-  "    float max = 0.5;"
+  "    float max = 1.5;" // set to 0.5 for slow/stable water
   "    if(f > max) { f = max; } else if( f < -max) { f = -max; } "
   "  } "
   "  float v = texelFetch(u_tex_v, a_tex, 0).r;"
   "  v_new_v_value = (v + f * dt); "
   "  v_new_u_value = u_center + v_new_v_value * dt;"
   //   "  int lower = 70; int upper = 90; if(a_tex.s > lower && a_tex.s < upper && a_tex.t > lower && a_tex.t < upper) {  v_new_u_value = 3.5; }"
-  "  v_new_v_value = v_new_v_value * 0.975;"
+  "  v_new_v_value = v_new_v_value * 0.995;" // set to 0.975 when simulation explodes
   "}"
   "";
 

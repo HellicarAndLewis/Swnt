@@ -35,6 +35,7 @@ set(app_sources
   ${sd}/swnt/Scene.cpp
   ${sd}/swnt/GUI.cpp
   ${sd}/swnt/RGBShift.cpp
+  ${sd}/swnt/Weather.cpp
   ${sd}/ocean/WaterGraphics.cpp
   ${sd}/ocean/Ocean.cpp
 )
@@ -67,6 +68,9 @@ if(APPLE)
     ${extern_lib_dir}/libopencv_imgproc.a
     ${extern_lib_dir}/libopencv_video.a
     ${extern_lib_dir}/libAntTweakBar.a
+    ${extern_lib_dir}/libcurl.a
+    ${extern_lib_dir}/libcrypto.a
+    ${extern_lib_dir}/libssl.a
     ${fr_corefoundation}
     ${fr_cocoa}
     ${fr_opengl}

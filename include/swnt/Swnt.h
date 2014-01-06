@@ -27,6 +27,7 @@
 #define USE_RGB_SHIFT 0
 #define USE_SCENE 0
 #define USE_GUI 1
+#define USE_WEATHER 1
 
 #include <swnt/Settings.h>
 #include <swnt/Kinect.h>
@@ -40,6 +41,7 @@
 #include <swnt/Effects.h>
 #include <swnt/RGBShift.h>
 #include <swnt/GUI.h>
+#include <swnt/Weather.h>
 #include <swnt/Scene.h>
 #include <ocean/Ocean.h>
 #include <ocean/WaterGraphics.h>
@@ -110,6 +112,10 @@ class Swnt {
 
 #if USE_GUI
   GUI gui;
+#endif
+
+#if USE_WEATHER
+  Weather weather;
 #endif
 
   /* matrices for rendering the ocean */
