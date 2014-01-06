@@ -16,8 +16,8 @@ Water::Water(HeightField& hf)
   ,foam_tex(0)
   ,force_tex0(0)
   ,color_tex(0)
-  ,max_depth(9.5)
-  ,sun_shininess(4.0)
+  ,max_depth(5.0)
+  ,sun_shininess(4.6)
   ,foam_depth(2.4)
 {
   sun_pos[0] = 0.0;
@@ -26,12 +26,15 @@ Water::Water(HeightField& hf)
   sun_color[0] = 4;
   sun_color[1] = 3;
   sun_color[2] = 1;
-  ads_intensities[0] = 0.1; // ambient
-  ads_intensities[1] = 0.4; // diffuse
-  ads_intensities[2] = 0.4; // spec
-  ads_intensities[3] = 1.0; // sun  
-  ads_intensities[4] = 1.0; // foam
-  ads_intensities[5] = 0.3; // texture
+  ads_intensities[0] = -0.75f;// ambient
+  ads_intensities[1] = 0.0f;  // diffuse
+  ads_intensities[2] = 0.75f; // spec
+  ads_intensities[3] = 0.57;  // sun  
+  ads_intensities[4] = 0.64;  // foam
+  ads_intensities[5] = 1.09;  // texture
+  ambient_color[0] = 46.0/255.0f;
+  ambient_color[1] = 72.0/255.0f;
+  ambient_color[2] = 96.0/255.0f;
 }
 
 GLuint Water::createTexture(std::string filename) {
