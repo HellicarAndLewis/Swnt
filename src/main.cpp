@@ -96,13 +96,14 @@ int main() {
     glClearColor(0,0,0,1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
+#if USE_WATER
     if(draw_forces) { 
       swnt.height_field.beginDrawForces();
       swnt.height_field.drawForceTexture(swnt.water.force_tex0, force_x, force_y, 0.4, 0.4);
       swnt.height_field.endDrawForces();
       draw_forces = false;
     }
+#endif
 
     swnt.update();
     swnt.draw();
@@ -125,7 +126,9 @@ void error_callback(int err, const char* desc) {
 void key_callback(GLFWwindow* win, int key, int scancode, int action, int mods) {
 
   if(action == GLFW_PRESS) {
+#if USE_GUI
     swnt.gui.onKeyPressed(key, mods);
+#endif
   }
 
   if(action != GLFW_PRESS) {
@@ -159,10 +162,6 @@ void key_callback(GLFWwindow* win, int key, int scancode, int action, int mods) 
       break;
     }
     case GLFW_KEY_3: {
-      swnt.draw_spirals = !swnt.draw_spirals;
-      break;
-    }
-    case GLFW_KEY_4: {
       swnt.draw_threshold = !swnt.draw_threshold;
       break;
     }
@@ -196,23 +195,28 @@ void key_callback(GLFWwindow* win, int key, int scancode, int action, int mods) 
 }
 
 void resize_callback(GLFWwindow* window, int width, int height) {
+#if USE_GUI
   swnt.gui.onResize(width, height);
+#endif
 }
 
 void button_callback(GLFWwindow* win, int bt, int action, int mods) {
   if(action == GLFW_PRESS) {
     draw_forces = true;
   }
+
+#if USE_GUI
   swnt.gui.onMouseClicked(bt, action);
+#endif
 }
 
 void cursor_callback(GLFWwindow* win, double x, double y) {
+
+#if USE_GUI
   swnt.gui.onMouseMoved(x, y);
+#endif
 
   force_x = x/1280.0;
   force_y = (720-y)/720.0;
-  int b = glfwGetMouseButton(win, 0);
-  if(b) {
-    //    draw_forces = true;
-  }
+
 }

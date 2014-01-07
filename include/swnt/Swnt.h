@@ -27,7 +27,6 @@
 #include <swnt/Graphics.h>
 #include <swnt/Mask.h>
 #include <swnt/Tracking.h>
-#include <swnt/Spirals.h>
 #include <swnt/Flow.h>
 #include <swnt/HeightField.h>
 #include <swnt/Water.h>
@@ -37,8 +36,6 @@
 #include <swnt/Weather.h>
 #include <swnt/Scene.h>
 #include <swnt/Audio.h>
-#include <ocean/Ocean.h>
-#include <ocean/WaterGraphics.h>
 
 #define ROXLU_USE_OPENGL
 #define ROXLU_USE_MATH
@@ -56,6 +53,7 @@ class Swnt {
   bool setup();
   void update();
   void draw();
+  void print();                      /* print some debug info */
 
  private:
 #if USE_KINECT
@@ -65,16 +63,12 @@ class Swnt {
 
  public:
   Settings& settings;
-  WaterGraphics water_graphics;
-  Ocean ocean;
   Graphics graphics;                 /* generic helper for rendering GL stuff */
   Mask mask;                         /* does all of the thresholding and masking */
-  Spirals spirals;                   /* draws the spirals and apples forces to particles */
   Tracking tracking;                 /* trackes found blobs using k-means */
   Flow flow;                         /* optical flow that drives the spirals*/
   int state;                         /* used to swith the way and what we draw */
   bool draw_flow;                    /* flag that toggles drawing of the flow field */
-  bool draw_spirals;                 /* flag that toggles drawing of the spirals */
   bool draw_threshold;               /* flag that toggles drawing of the hand/found blobs */
   bool draw_water;
 
@@ -90,10 +84,6 @@ class Swnt {
 #if USE_WATER
   HeightField height_field;
   Water water;
-#endif
-
-#if USE_EFFECTS
-  Effects effects;
 #endif
 
 #if USE_RGB_SHIFT

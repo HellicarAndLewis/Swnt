@@ -392,10 +392,10 @@ void Mask::maskOutScene() {
 }
 
 void Mask::print() {
-  printf("--\n");
   printf("mask.scene_tex: %d\n", scene_tex);
   printf("mask.mask_tex: %d\n", mask_tex);
   printf("mask.masked_out_tex: %d\n", masked_out_tex);
+  printf("mask.depth_tex: %d\n", depth_tex);
   printf("mask.thresh.output_tex: %d\n", thresh.output_tex);
   printf("--\n");
 }

@@ -30,7 +30,8 @@ class Flow {
   void createVortex(float px, float py);            /* create a vortex at the given percentages, 0.5,0.5 is the center of the field */
   void applyPerlinToField();                        /* apply a perlin noise force to the field */
   void updateFlowTexture();                         /* uploads the current velocities into a texture */
-  
+  void print();                                     /* prints some debug info */
+
  private:
   bool setupGraphics();
   void updateFieldVertices();                       /* update the vertices that are used to draw the vector field */

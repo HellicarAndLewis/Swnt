@@ -2,13 +2,10 @@
 
 Swnt::Swnt(Settings& settings) 
   :settings(settings)
-  ,water_graphics(settings.ocean)
-  ,ocean(settings.ocean, water_graphics)
   ,graphics(settings)
   ,mask(settings, graphics)
   ,tracking(settings, graphics)
   ,flow(settings, graphics)
-  ,spirals(settings, tracking, graphics, flow)
 #if USE_WATER
   ,water(height_field)
 #endif
@@ -20,12 +17,8 @@ Swnt::Swnt(Settings& settings)
 #endif
   ,state(STATE_RENDER_SCENE)
   ,draw_flow(true)
-  ,draw_spirals(true)
   ,draw_threshold(true)
   ,draw_water(true)
-#if USE_EFFECTS
-  ,effects(settings, graphics, spirals)
-#endif
 #if USE_GUI
   ,gui(water)
 #endif
@@ -33,7 +26,7 @@ Swnt::Swnt(Settings& settings)
 }
 
 Swnt::~Swnt() {
-  printf("~SWNT()\n");
+
 #if USE_KINECT
   if(rgb_image) {
     delete[] rgb_image;
@@ -48,18 +41,6 @@ Swnt::~Swnt() {
 }
 
 bool Swnt::setup() {
-
-#if USE_OCEAN
-  if(!water_graphics.setup(settings.win_w, settings.win_h)) {
-    printf("Error: cannot setup the water graphics.\n");
-    return false;
-  }
-
-  if(!ocean.setup()) {
-    printf("Error: cannot setup the ocean.\n");
-    return false;
-  }
-#endif
 
 #if USE_WATER
   if(!height_field.setup()) {
@@ -94,24 +75,13 @@ bool Swnt::setup() {
     return false;
   }
 
-  if(!spirals.setup()) {
-    printf("Error: cannot setup the spirals.\n");
-    return false;
-  }
-
   if(!flow.setup()) {
     printf("Error: cannot setup the flow.\n");
     return false;
   }
+  flow.print();
 
   //water.flow_tex = flow.flow_tex;
-
-#if USE_EFFECTS
-  if(!effects.setup()) {
-    printf("Error: cannot setup the effects.\n");
-    return false;
-  }
-#endif
 
 #if USE_RGB_SHIFT
   if(!rgb_shift.setup()) {
@@ -163,7 +133,7 @@ bool Swnt::setup() {
   view_matrix.lookAt(settings.ocean.cam_pos, vec3(), vec3(0.0f, 1.0f, 0.0f));
 
   mask.print();
-
+  print();
   return true;
 }
 
@@ -212,7 +182,6 @@ void Swnt::update() {
   updateKinect();
 #endif
 
-  spirals.update(1.0f/60.0f);
   mask.update();
 
 #if USE_WATER
@@ -243,101 +212,45 @@ void Swnt::draw() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     graphics.drawCircle(settings.win_w * 0.5, settings.win_h * 0.5, settings.radius, red);
     graphics.drawCircle(settings.win_w * 0.5, settings.win_h * 0.5, 20, green);
-
   }
   else if(state == STATE_RENDER_SCENE) {
-
-#if USE_OCEAN
-    ocean.pm = persp_matrix.ptr();
-    ocean.vm = view_matrix.ptr();
-    ocean.update(1.0f/30.0f);
-#endif
-
-#if !USE_KINECT && USE_OCEAN
-    ocean.draw();
-    return;
-#endif  
   
 #if USE_KINECT
 
-    // here we grab the mask shape into a texture that is later used to pre-process the image for image processing
+    // capture the mask shape
     mask.beginMaskGrab();
-    mask.drawMask();
+       mask.drawMask();
     mask.endMaskGrab();
-
-    // here we draw the raw depth buffer from the kinect and make sure the values are correctl transformed to distance values (in a shader)
+    
+    // capture the depth buffer from kinect 
     mask.beginDepthGrab();
-    graphics.drawDepth(depth_tex, 0.0f, 0.0f, settings.image_processing_w, settings.image_processing_h);
+       graphics.drawDepth(depth_tex, 0.0f, 0.0f, settings.image_processing_w, settings.image_processing_h);
     mask.endDepthGrab();
-
-
-#  if USE_OCEAN
+    
+    // capture the scene
     mask.beginSceneGrab();
     {
-      if(draw_water) {
-         ocean.draw();
-      }
-
-      if(draw_flow) {
-        flow.draw();
-      }
-      if(draw_spirals) {
-        spirals.draw();
-      }
-    }
-    mask.endSceneGrab();
-#  else 
 #    if USE_WATER
-    if(draw_water) {
-      /*
-      height_field.beginDrawForces();
-      height_field.drawForceTexture(water.force_tex0, 0.5, 0.5, 0.1, 0.1);
-      height_field.endDrawForces();
-      */
-    }
-#    endif
-
-    mask.beginSceneGrab();
-    {
-#     if USE_WATER
       if(draw_water) {
         water.draw();
       }
-#     endif
+#    endif
 
       if(draw_flow) {
         flow.draw();
       }
-
-      if(draw_spirals) {
-        spirals.draw();
-      }
-      spirals.drawDisplacement();
     }
     mask.endSceneGrab();
 
-#endif // USE_OCEAN
-
-    
-    // this is where we mask out the depth image using the previously grabbed mask.
     mask.maskOutDepth();
 
-    // graphics.drawTexture(mask.masked_out_tex, 320.0f, 0.0f, 320.0f, 240.0f);
-    flow.calc(mask.masked_out_pixels);
-    //flow.updateFlowTexture();
+    // flow.calc(mask.masked_out_pixels);
     tracking.track(mask.masked_out_pixels);
 
-    //  #if USE_OCEAN
     // draw the final masked out scene
     mask.draw_hand = draw_threshold;
     mask.maskOutScene();
 
-
-    //effects.displace(spirals.displacement_tex, mask.scene_tex);
-    //graphics.drawTexture(rgb_tex, 0.0f, 0.0f, 320.0f, 240.0f);  
-    //graphics.drawDepth(depth_tex, 320.0f, 0.0f, settings.image_processing_w, settings.image_processing_h);
-    //  #endif
-    //tracking.draw(0.0f, 0.0f);
     #if USE_RGB_SHIFT
     rgb_shift.apply();
     rgb_shift.draw();
@@ -345,6 +258,9 @@ void Swnt::draw() {
   }
 #endif  // USE_KINECT
 
+#if USE_GUI
+  gui.draw();
+#endif
 
 }
 
@@ -395,3 +311,8 @@ void Swnt::updateKinect() {
  
 }
 
+void Swnt::print() {
+  printf("swnt.rgb_tex: %d\n", rgb_tex);
+  printf("swnt.depth_tex: %d\n", depth_tex);
+  printf("-\n");
+}

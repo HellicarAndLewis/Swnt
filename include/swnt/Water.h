@@ -203,6 +203,7 @@ static const char* WATER_FS = ""
   "  fragcolor.rgb = 0.5 + 0.5 * n;"
   "  fragcolor.rgb = vec3(1.0, 0.0, 0.0) * max(dot(n, s), 0.0);"
 #endif
+  " fragcolor.a = 1.0;"
   "}"
 
   "";

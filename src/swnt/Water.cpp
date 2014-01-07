@@ -136,6 +136,7 @@ void Water::update(float dt) {
 void Water::draw() {
   
   glEnable(GL_DEPTH_TEST);
+  
 
   glUseProgram(prog);
 

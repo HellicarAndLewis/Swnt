@@ -48,7 +48,7 @@ bool Flow::setup() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  printf("flow.flow_tex: %d\n", flow_tex);
+
   return true;
 }
 
@@ -254,4 +254,9 @@ void Flow::applyPerlinToField() {
     }
   }
   t += 0.001;
+}
+
+void Flow::print() {
+  printf("flow.flow_tex: %d\n", flow_tex);
+  printf("-\n");
 }
