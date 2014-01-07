@@ -87,6 +87,9 @@ Audio::~Audio() {
   if(loop) {
     uv_loop_delete(loop);
   }
+
+  mpg123_exit();
+  ao_shutdown();
 }
 
 void Audio::shutdown() {
@@ -210,6 +213,7 @@ bool Audio::loadFile(std::string filepath, Sound& snd) {
 
  audio_error:
   if(mh) {
+    mpg123_close(mh);
     mpg123_delete(mh);
     mh = NULL;
   }

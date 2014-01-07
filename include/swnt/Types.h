@@ -1,7 +1,7 @@
 #ifndef SWNT_TYPES_H
 #define SWNT_TYPES_H
 
-#define USE_KINECT 0
+#define USE_KINECT 1
 #define USE_OCEAN 0
 #define USE_WATER 1
 #define USE_EFFECTS 0

@@ -234,10 +234,8 @@ void Swnt::update() {
 
 void Swnt::draw() {
   //scene.draw(height_field.pm.ptr(), height_field.vm.ptr());
-
-  water.draw();
-  gui.draw();
-  return;
+  //water.draw();
+  //gui.draw();
 
   if(state == STATE_RENDER_ALIGN) {
     vec3 red(1.0f, 0.0f, 0.0f);
@@ -273,7 +271,7 @@ void Swnt::draw() {
     mask.endDepthGrab();
 
 
-#if USE_OCEAN
+#  if USE_OCEAN
     mask.beginSceneGrab();
     {
       if(draw_water) {
@@ -288,8 +286,8 @@ void Swnt::draw() {
       }
     }
     mask.endSceneGrab();
-#else 
-    #if USE_WATER
+#  else 
+#    if USE_WATER
     if(draw_water) {
       /*
       height_field.beginDrawForces();
@@ -297,15 +295,15 @@ void Swnt::draw() {
       height_field.endDrawForces();
       */
     }
-    #endif
+#    endif
 
     mask.beginSceneGrab();
     {
-      #if USE_WATER
+#     if USE_WATER
       if(draw_water) {
         water.draw();
       }
-      #endif
+#     endif
 
       if(draw_flow) {
         flow.draw();
@@ -318,7 +316,7 @@ void Swnt::draw() {
     }
     mask.endSceneGrab();
 
-#endif
+#endif // USE_OCEAN
 
     
     // this is where we mask out the depth image using the previously grabbed mask.
@@ -345,7 +343,7 @@ void Swnt::draw() {
     rgb_shift.draw();
     #endif
   }
-#endif  
+#endif  // USE_KINECT
 
 
 }

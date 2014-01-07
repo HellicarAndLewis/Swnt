@@ -16,6 +16,7 @@
 // - waterfall in unity http://www.youtube.com/watch?v=xysUQYfW29w
 // - toy story 3: http://www.youtube.com/watch?feature=player_detailpage&v=shr0vprXJm0#t=37
 // - animated dust texture: http://vimeo.com/26084620 
+// - Skylanders, nice circle/texture effect: http://www.youtube.com/watch?feature=player_detailpage&v=4fptHMXlWzs#t=1367
 
 #ifndef SWNT_H
 #define SWNT_H
