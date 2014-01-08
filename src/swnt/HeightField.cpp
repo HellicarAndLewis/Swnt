@@ -42,6 +42,7 @@ HeightField::HeightField()
 bool HeightField::setup() {
 
   pm.perspective(60.0f, float(W)/H, 0.01, 100.0);
+
 #if 1
   vm.lookAt(vec3(0.0, 20.0, 0.0), vec3(0.0, 0.0, 0.1), vec3(0.0, 1.0, 0.0));
 #else
@@ -62,7 +63,7 @@ bool HeightField::setup() {
       init_u[dx] = 0.0f;
 
       if(i > lower && i < upper && j > lower && j < upper) {
-        init_u[dx] = -1.2f;
+        init_u[dx] = 0.0f;
         init_v[dx] = 0.0f;
       }
     }
@@ -325,10 +326,12 @@ void HeightField::render() {
 
 // Diffuses the heights
 void HeightField::calculateHeights() {
+
   glBindFramebuffer(GL_FRAMEBUFFER, fbo);
   glViewport(0, 0, N, N);
   glUseProgram(prog);
   glBindVertexArray(vao);
+  glDisable(GL_BLEND);
 
   state_diffuse = 1 - state_diffuse;
   

@@ -52,6 +52,7 @@ bool Swnt::setup() {
     printf("Error: cannot setup water.\n");
     return false;
   }
+  water.print();
 #endif
 
   if(!graphics.setup()) {
@@ -123,6 +124,13 @@ bool Swnt::setup() {
   }
   if(!audio.add(SOUND_WATER, rx_to_data_path("audio/water.mp2"))) {
     printf("Error while loading water sound");
+    return false;
+  }
+#endif
+
+#if USE_EFFECTS
+  if(!effects.setup(settings.win_w, settings.win_h)) {
+    printf("Error: cannot setup effects.\n");
     return false;
   }
 #endif
@@ -199,12 +207,22 @@ void Swnt::update() {
   audio.update();
 #endif
 
+#if USE_EFFECTS
+  effects.update();
+#endif 
 }
 
 void Swnt::draw() {
-  //scene.draw(height_field.pm.ptr(), height_field.vm.ptr());
-  //water.draw();
-  //gui.draw();
+#if 0  
+  water.draw();
+  gui.draw();
+  return;
+#endif
+
+#if 0
+  effects.draw();
+  return;
+#endif
 
   if(state == STATE_RENDER_ALIGN) {
     vec3 red(1.0f, 0.0f, 0.0f);
@@ -226,6 +244,12 @@ void Swnt::draw() {
     mask.beginDepthGrab();
        graphics.drawDepth(depth_tex, 0.0f, 0.0f, settings.image_processing_w, settings.image_processing_h);
     mask.endDepthGrab();
+
+#if USE_EFFECTS
+  water.beginGrabDiffuse();
+   effects.draw();
+  water.endGrabDiffuse();
+#endif
     
     // capture the scene
     mask.beginSceneGrab();
@@ -239,6 +263,7 @@ void Swnt::draw() {
       if(draw_flow) {
         flow.draw();
       }
+
     }
     mask.endSceneGrab();
 
@@ -261,6 +286,7 @@ void Swnt::draw() {
 #if USE_GUI
   gui.draw();
 #endif
+
 
 }
 

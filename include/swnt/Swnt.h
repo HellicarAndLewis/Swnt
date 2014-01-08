@@ -72,7 +72,10 @@ class Swnt {
   bool draw_threshold;               /* flag that toggles drawing of the hand/found blobs */
   bool draw_water;
 
-  /* kinect input */
+#if USE_EFFECTS
+  Effects effects;
+#endif
+
 #if USE_KINECT
   Kinect kinect;      
   GLuint rgb_tex;
