@@ -16,11 +16,15 @@ Swnt::Swnt(Settings& settings)
   ,depth_image(NULL)
 #endif
   ,state(STATE_RENDER_SCENE)
-  ,draw_flow(true)
+  ,draw_flow(false)
   ,draw_threshold(true)
   ,draw_water(true)
+  ,draw_vortex(false)
 #if USE_GUI
-  ,gui(water)
+  ,gui(*this)
+#endif
+#if USE_EFFECTS
+  ,effects(*this)
 #endif
 {
 }
@@ -220,7 +224,19 @@ void Swnt::draw() {
 #endif
 
 #if 0
-  effects.draw();
+  effects.drawExtraDiffuse();
+  return;
+#endif
+
+#if 0
+  effects.splashes.drawExtraDiffuse();
+  effects.splashes.drawExtraFlow();
+  gui.draw();
+  return;
+#endif
+
+#if 0
+  effects.drawExtraFlow();
   return;
 #endif
 
@@ -246,9 +262,9 @@ void Swnt::draw() {
     mask.endDepthGrab();
 
 #if USE_EFFECTS
-  water.beginGrabDiffuse();
-   effects.draw();
-  water.endGrabDiffuse();
+  water.beginGrabFlow();
+    effects.drawExtraFlow();
+  water.endGrabFlow();
 #endif
     
     // capture the scene
@@ -260,21 +276,27 @@ void Swnt::draw() {
       }
 #    endif
 
-      if(draw_flow) {
+      //      effects.drawExtraDiffuse();
+
+      if(draw_flow){ 
         flow.draw();
       }
-
+      
     }
     mask.endSceneGrab();
 
     mask.maskOutDepth();
 
-    // flow.calc(mask.masked_out_pixels);
+    flow.calc(mask.masked_out_pixels);
     tracking.track(mask.masked_out_pixels);
 
     // draw the final masked out scene
     mask.draw_hand = draw_threshold;
     mask.maskOutScene();
+
+    tracking.draw(0.0f, 0.0f);
+    flow.applyPerlinToField();
+    // flow.draw();
 
     #if USE_RGB_SHIFT
     rgb_shift.apply();
@@ -283,10 +305,17 @@ void Swnt::draw() {
   }
 #endif  // USE_KINECT
 
+  //effects.splashes.drawExtraFlow();
+  if(draw_vortex) {
+    // water.blitFlow(0.0, 0.0, 320.0f, 240.0f);
+    effects.splashes.drawExtraDiffuse();
+    effects.splashes.drawExtraFlow();
+
+  }
+
 #if USE_GUI
   gui.draw();
 #endif
-
 
 }
 

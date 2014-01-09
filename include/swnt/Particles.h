@@ -14,6 +14,7 @@ class Particle {
   void addForce(const vec3& f);
   void update();
   void setMass(float m);
+  void setPosition(vec3 p) { tmp_pos = p; pos = p; } 
  public:
   vec3 tmp_pos;
   vec3 pos;
@@ -25,7 +26,15 @@ class Particle {
   float age_perc;
   float lifetime;
   float strip_width; /* the width of the triangle strip */
+  float size; /* e.g. use this to scale some texture */
+  float size_x; 
+  float size_y;
+  float rotate_speed; /* e.g. to control rotation speed of your particle */
+  float move_speed; /* e.g. use this together with 'dir' to control the force/speed you want for the particle */
   std::vector<vec3> tail;
+
+  /* used for different purposes */
+  vec3 dir; /* if you want a particle to follow a certain direction you could use this with addForce */
 };
 
 // -------------------------------------------------

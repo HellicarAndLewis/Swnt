@@ -10,7 +10,7 @@ Flow::Flow(Settings& settings, Graphics& graphics)
   ,field_vao(0)
   ,field_vbo(0)
   ,field_bytes_allocated(0)
-  ,field_size(128)
+  ,field_size(64)
   ,perlin(4, 4, TWO_PI, 94)
   ,flow_tex(0)
 {
@@ -69,7 +69,7 @@ void Flow::updateFlowTexture() {
   glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, field_size, field_size, GL_RG, GL_FLOAT, velocities[0].ptr());
 }
 
-void Flow::draw(){
+void Flow::draw() {
 
   assert(settings.color_dx < settings.colors.size());
 
@@ -235,6 +235,9 @@ void Flow::createVortex(float px, float py) {
   }
 }
 
+
+#define FLOW_CREATE_TEST_VELOCITIES 0
+
 void Flow::applyPerlinToField() {
   size_t s = field_size;
   float influence = 1.01; // how much influence does the current velocity has?
@@ -249,7 +252,18 @@ void Flow::applyPerlinToField() {
       float vx = cos(a) * scale;
       float vy = sin(a) * scale;
       vec2 force(vx, vy);
+
+#if FLOW_CREATE_TEST_VELOCITIES
+      if(i < (s * 0.5)) {
+        velocities[dx].set(5.0, 0.0);
+      }
+      else {
+        velocities[dx].set(0.0, -5.0);
+      }    
+#else
       velocities[dx] += force;
+
+#endif
       heights[dx] = (TWO_PI + a) / (TWO_PI * 2);
     }
   }

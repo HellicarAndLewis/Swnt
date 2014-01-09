@@ -4,11 +4,11 @@
 #include <stdio.h>
 #include <AntTweakBar.h>
 
-class Water;
+class Swnt;
 
 class GUI {
  public:
-  GUI(Water& water);
+  GUI(Swnt& swnt);
   ~GUI();
   bool setup(int w, int h);
   void onMouseMoved(double x, double y);
@@ -17,7 +17,7 @@ class GUI {
   void onResize(int w, int h);
   void draw();
  public:
-  Water& water;
+  Swnt& swnt;
   int win_w;
   int win_h;
   TwBar* bar;

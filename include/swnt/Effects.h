@@ -15,20 +15,27 @@
 
 #include <swnt/Particles.h>
 #include <swnt/Blur.h>
-#include <swnt/effects/Mist.h>
+#include <swnt/effects/Eddy.h>
+#include <swnt/effects/Splashes.h>
+
+class Swnt;
+class Settings;
 
 class Effects { 
 
  public:
-  Effects();
+  Effects(Swnt& swnt);
   ~Effects();
   bool setup(int w, int h);
   void update();
-  void draw();
-
+  void drawExtraFlow();
+  void drawExtraDiffuse();
  public:
+  Swnt& swnt;
+  Settings& settings;
   mat4 ortho_pm;
-  Mist mist;
+  Eddy eddy;
+  Splashes splashes;
 };
 
 #endif

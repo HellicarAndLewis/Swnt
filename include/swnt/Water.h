@@ -59,7 +59,7 @@ static const char* WATER_FS = ""
   "uniform sampler2D u_flow_tex;"
   "uniform sampler2D u_norm_tex;" // not the same as the norm in WATER_VS 
   "uniform sampler2D u_diffuse_tex;"
-  "uniform sampler2D u_extra_diffuse_tex;" // contains customly rendered colors (e.g. custom streams)
+  "uniform sampler2D u_extra_flow_tex;" // contains customly rendered colors (e.g. custom streams)
   "uniform sampler2D u_foam_tex;"
   "uniform sampler1D u_color_tex;"  // used to colorize by depth 
 
@@ -79,8 +79,8 @@ static const char* WATER_FS = ""
   "out vec4 fragcolor;"
   
   "void main() {"
-
-#if 1
+  " vec2 flipped_tex = vec2(1.0 - v_tex.s, v_tex.t);"
+#if 0
  "  vec2 flow_color = texture(u_flow_tex, vec2(1.0 - v_tex.s, v_tex.t)).rg;"
 #else
  "  vec2 flow_color = texture(u_flow_tex, v_tex).rg;"
@@ -94,12 +94,13 @@ static const char* WATER_FS = ""
   // "  vec3 depth_color = texture(u_color_tex, 0.9).rgb;"
 
   //   "  vec4 extra_color = texture(u_extra_diffuse_tex, vec2(1.0 - v_tex.s, v_tex.t));"
-   "  vec4 extra_color = texture(u_extra_diffuse_tex, v_tex);"
+   "  vec4 extra_color = texture(u_extra_flow_tex, flipped_tex);"
   // This is what really makes the difference between a waterlike rendering
   // or not. By moving the water into the direction of the normal. 
-  "  flow_color = (v_norm.xz * 0.1 + flow_color - (extra_color.rg));"  // move the texture in the direction of the normal
-  "  flow_color = -1.0 + 2.0 * flow_color;" // I'm still not 100% sure if we need to map the normal directly
-  "  float gradient = 1.0 - dot(v_norm, vec3(0,1,0));"
+  "  flow_color = (v_norm.xz * 0.1 + flow_color);"  // move the texture in the direction of the normal
+  // "  flow_color = -1.0 + 2.0 * flow_color;" // I'm still not 100% sure if we need to map the normal directly
+  // "  float gradient = 1.0 - dot(v_norm, vec3(0,1,0));"
+  "  flow_color -= extra_color.rg;"  // move the texture in the direction of the normal
 
   "  float phase0 = (noise_color * 0.4 + u_time0);"
   "  float phase1 = (noise_color * 0.4 + u_time1);"
@@ -122,13 +123,13 @@ static const char* WATER_FS = ""
 #if WATER_USE_EXTRA
   //  "  vec4 extra_color0 = texture(u_extra_diffuse_tex, vec2(1.0 - texcoord0.s, texcoord0.t));"
   //  "  vec4 extra_color1 = texture(u_extra_diffuse_tex, vec2(1.0 - texcoord0.s, texcoord0.t));"
-   "  vec4 extra_color0 = texture(u_extra_diffuse_tex,texcoord0);"
-   "  vec4 extra_color1 = texture(u_extra_diffuse_tex, texcoord1);"
-   "  vec4 moved_extra = mix(extra_color0, extra_color1, lerp);"
-  //    " moved_diffuse = moved_extra.rgb * moved_extra.a;"
-//   "  moved_diffuse += texture(u_extra_diffuse_tex, v_tex).rgb;"
+  //  "  vec4 extra_color0 = texture(u_extra_diffuse_tex,texcoord0);"
+  //  "  vec4 extra_color1 = texture(u_extra_diffuse_tex, texcoord1);"
+  //  "  vec4 moved_extra = mix(extra_color0, extra_color1, lerp);"
+  //  "  moved_diffuse = moved_extra.rgb * moved_extra.a;"
+  //  "  moved_diffuse += texture(u_extra_diffuse_tex, v_tex).rgb;"
   //  "  vec4 extra_color = texture(u_extra_diffuse_tex, v_tex);"
-  //    "  moved_diffuse = extra_color.rgb * extra_color.a;"
+  //  "  moved_diffuse = extra_color.rgb * extra_color.a;"
 #endif
 
   "  vec3 foam0 = texture(u_foam_tex, texcoord0 * 4.0).rgb;"
@@ -201,6 +202,7 @@ static const char* WATER_FS = ""
 
   // "  fragcolor.rgb = mix(K, (1.0 - foam_k) * (mix(moved_diffuse,depth_color, 0.3)) + moved_foam, 0.4);"  
   "fragcolor.rgb = K;"
+
   //  " fragcolor.rgb = mix(vec3(0.0),(1.0 - foam_k) * moved_diffuse + moved_foam * foam_k + fake_sun * 0.1, v_fog);" // NICE
   //  " fragcolor.rgb = vec3(v_fog);"
   //  " fragcolor.rgb = mix(K, (1.0 - foam_k) * (mix(moved_diffuse, depth_color, 0.9)) + foam, 0.6);"  
@@ -255,8 +257,9 @@ class Water {
   void update(float dt);
   void draw();
   void print();               /* prints some debug info */
-  void beginGrabDiffuse();    /* start rendering extra diffuse colors which we mix with the diffuse water texture */
-  void endGrabDiffuse();      /* end rendering the extra diffuse colors */
+  void beginGrabFlow();       /* start rendering extra flow colors which we mix with the diffuse water texture */
+  void endGrabFlow();         /* end rendering the extra flow colors */
+  void blitFlow(float x, float y, float w, float h);
 
  private:
   GLuint createTexture(std::string filename);
@@ -279,9 +282,9 @@ class Water {
 
   GLuint force_tex0;          /* used to apply a force to the height field */
 
-  /* Rendering extra diffuse colors */
+  /* Rendering extra diffuse/flow colors */
   GLuint fbo;
-  GLuint extra_diffuse_tex;
+  GLuint extra_flow_tex;      /* everything that gets rendered between "beginGrabFlow" and "endGrabFlow" is added to the flow forces */
 
   /* uniforms */
   float sun_pos[3];

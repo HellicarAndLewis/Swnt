@@ -1,11 +1,11 @@
 #include <assert.h>
 #include <GLFW/glfw3.h>
 #include <swnt/GUI.h>
-#include <swnt/Water.h>
+#include <swnt/Swnt.h>
 
-GUI::GUI(Water& water) 
-  :water(water),
-   win_w(0)
+GUI::GUI(Swnt& swnt)
+  :swnt(swnt)
+  ,win_w(0)
   ,win_h(0)
   ,bar(NULL)
 {
@@ -23,24 +23,46 @@ bool GUI::setup(int w, int h) {
 
   TwInit(TW_OPENGL_CORE, NULL);
   bar = TwNewBar("SWNT");
-  TwDefine("SWNT size='300 400'");
+  TwDefine("SWNT size='300 750'");
 
-  TwAddVarRW(bar, "Sun Position X", TW_TYPE_FLOAT, &water.sun_pos[0], "min=-300.0 max=300.0 step=0.01 group='Water'");
-  TwAddVarRW(bar, "Sun Position Y", TW_TYPE_FLOAT, &water.sun_pos[1], "min=-300.0 max=300.0 step=0.01 group='Water'");
-  TwAddVarRW(bar, "Sun Position Z", TW_TYPE_FLOAT, &water.sun_pos[2], "min=-300.0 max=300.0 step=0.01 group='Water'");
-  TwAddVarRW(bar, "Sun Color Red", TW_TYPE_FLOAT, &water.sun_color[0], "min=-5.0 max=5.0 step=0.1 group='Water'");
-  TwAddVarRW(bar, "Sun Color Green", TW_TYPE_FLOAT, &water.sun_color[1], "min=-5.0 max=5.0 step=0.1 group='Water'");
-  TwAddVarRW(bar, "Sun Color Blue", TW_TYPE_FLOAT, &water.sun_color[2], "min=-5.0 max=5.0 step=0.1 group='Water'");
-  TwAddVarRW(bar, "Sun Shininess", TW_TYPE_FLOAT, &water.sun_shininess, "min=0.0 max=50.0 step=0.1 group='Water'");
-  TwAddVarRW(bar, "Maximum Foam Depth", TW_TYPE_FLOAT, &water.foam_depth, "min=0.0 max=50.0 step=0.1 group='Water'");
-  TwAddVarRW(bar, "Maximum Water Depth", TW_TYPE_FLOAT, &water.max_depth, "min=0.0 max=5.0 step=0.01 group='Water'");
-  TwAddVarRW(bar, "Ambient Intensity", TW_TYPE_FLOAT, &water.ads_intensities[0], "min=-10.0 max=10.0 step=0.01 group='Water'");
-  TwAddVarRW(bar, "Diffuse Intensity", TW_TYPE_FLOAT, &water.ads_intensities[1], "min=-10.0 max=10.0 step=0.01 group='Water'");
-  TwAddVarRW(bar, "Specular Intensity", TW_TYPE_FLOAT, &water.ads_intensities[2], "min=-10.0 max=10.0 step=0.01 group='Water'");
-  TwAddVarRW(bar, "Sun Intensity", TW_TYPE_FLOAT, &water.ads_intensities[3], "min=-10.0 max=10.0 step=0.01 group='Water'");
-  TwAddVarRW(bar, "Foam Intensity", TW_TYPE_FLOAT, &water.ads_intensities[4], "min=-10.0 max=10.0 step=0.01 group='Water'");
-  TwAddVarRW(bar, "Diffuse Texture Intensity", TW_TYPE_FLOAT, &water.ads_intensities[5], "min=-10.0 max=10.0 step=0.01 group='Water'");
-  TwAddVarRW(bar, "Ambient Color", TW_TYPE_COLOR3F, &water.ambient_color, "group='Water'");
+  // water
+  TwAddVarRW(bar, "Sun Position X", TW_TYPE_FLOAT, &swnt.water.sun_pos[0], "min=-300.0 max=300.0 step=0.01 group='Water'");
+  TwAddVarRW(bar, "Sun Position Y", TW_TYPE_FLOAT, &swnt.water.sun_pos[1], "min=-300.0 max=300.0 step=0.01 group='Water'");
+  TwAddVarRW(bar, "Sun Position Z", TW_TYPE_FLOAT, &swnt.water.sun_pos[2], "min=-300.0 max=300.0 step=0.01 group='Water'");
+  TwAddVarRW(bar, "Sun Color Red", TW_TYPE_FLOAT, &swnt.water.sun_color[0], "min=-5.0 max=5.0 step=0.1 group='Water'");
+  TwAddVarRW(bar, "Sun Color Green", TW_TYPE_FLOAT, &swnt.water.sun_color[1], "min=-5.0 max=5.0 step=0.1 group='Water'");
+  TwAddVarRW(bar, "Sun Color Blue", TW_TYPE_FLOAT, &swnt.water.sun_color[2], "min=-5.0 max=5.0 step=0.1 group='Water'");
+  TwAddVarRW(bar, "Sun Shininess", TW_TYPE_FLOAT, &swnt.water.sun_shininess, "min=0.0 max=50.0 step=0.1 group='Water'");
+  TwAddVarRW(bar, "Maximum Foam Depth", TW_TYPE_FLOAT, &swnt.water.foam_depth, "min=0.0 max=50.0 step=0.1 group='Water'");
+  TwAddVarRW(bar, "Maximum Water Depth", TW_TYPE_FLOAT, &swnt.water.max_depth, "min=0.0 max=5.0 step=0.01 group='Water'");
+  TwAddVarRW(bar, "Ambient Intensity", TW_TYPE_FLOAT, &swnt.water.ads_intensities[0], "min=-10.0 max=10.0 step=0.01 group='Water'");
+  TwAddVarRW(bar, "Diffuse Intensity", TW_TYPE_FLOAT, &swnt.water.ads_intensities[1], "min=-10.0 max=10.0 step=0.01 group='Water'");
+  TwAddVarRW(bar, "Specular Intensity", TW_TYPE_FLOAT, &swnt.water.ads_intensities[2], "min=-10.0 max=10.0 step=0.01 group='Water'");
+  TwAddVarRW(bar, "Sun Intensity", TW_TYPE_FLOAT, &swnt.water.ads_intensities[3], "min=-10.0 max=10.0 step=0.01 group='Water'");
+  TwAddVarRW(bar, "Foam Intensity", TW_TYPE_FLOAT, &swnt.water.ads_intensities[4], "min=-10.0 max=10.0 step=0.01 group='Water'");
+  TwAddVarRW(bar, "Diffuse Texture Intensity", TW_TYPE_FLOAT, &swnt.water.ads_intensities[5], "min=-10.0 max=10.0 step=0.01 group='Water'");
+  TwAddVarRW(bar, "Ambient Color", TW_TYPE_COLOR3F, &swnt.water.ambient_color, "group='Water'");
+
+  // splashes
+  Splashes& sp = swnt.effects.splashes;
+  TwAddVarRW(bar, "Minimum Lifetime", TW_TYPE_FLOAT, &sp.lifetime_min, "min=0.0 max=300.0 step=1.0 group='Splashes'");
+  TwAddVarRW(bar, "Maximum Lifetime", TW_TYPE_FLOAT, &sp.lifetime_max, "min=0.0 max=300.0 step=1.0 group='Splashes'");
+  TwAddVarRW(bar, "Minimum Width", TW_TYPE_FLOAT, &sp.size_x_min, "min=0.0 max=300.0 step=1.0 group='Splashes'");
+  TwAddVarRW(bar, "Maximum Width", TW_TYPE_FLOAT, &sp.size_x_max, "min=0.0 max=300.0 step=1.0 group='Splashes'");
+  TwAddVarRW(bar, "Minimum Height", TW_TYPE_FLOAT, &sp.size_y_min, "min=0.0 max=300.0 step=1.0 group='Splashes'");
+  TwAddVarRW(bar, "Maximum Height", TW_TYPE_FLOAT, &sp.size_y_max, "min=0.0 max=300.0 step=1.0 group='Splashes'");
+  TwAddVarRW(bar, "Minimum Rotation Speed", TW_TYPE_FLOAT, &sp.rotate_speed_min, "min=-10.0 max=10.0 step=0.2 group='Splashes'");
+  TwAddVarRW(bar, "Maximum Rotation Speed", TW_TYPE_FLOAT, &sp.rotate_speed_max, "min=-10.0 max=10.0 step=0.2 group='Splashes'");
+  TwAddVarRW(bar, "Minimum Move Speed", TW_TYPE_FLOAT, &sp.move_speed_min, "min=0.0 max=150.0 step=0.2 group='Splashes'");
+  TwAddVarRW(bar, "Maximum Move Speed", TW_TYPE_FLOAT, &sp.move_speed_max, "min=0.0 max=150.0 step=0.2 group='Splashes'");
+  TwAddVarRW(bar, "Minimum Splash Size", TW_TYPE_FLOAT, &sp.size_min, "min=0.0 max=300.0 step=1.0 group='Splashes'");
+  TwAddVarRW(bar, "Maximum Splash Size", TW_TYPE_FLOAT, &sp.size_max, "min=0.0 max=300.0 step=1.0 group='Splashes'");
+  TwAddVarRW(bar, "Animation Speed Of Texture", TW_TYPE_FLOAT, &sp.texture_anim_speed, "min=0.0 max=2.0 step=0.01 group='Splashes'");
+
+  // general
+  TwAddVarRW(bar, "Draw Flow Field", TW_TYPE_BOOLCPP, &swnt.draw_flow, "group='Rendering'");
+  TwAddVarRW(bar, "Draw Water", TW_TYPE_BOOLCPP, &swnt.draw_water, "group='Rendering'");
+  TwAddVarRW(bar, "Draw Debug Eddy", TW_TYPE_BOOLCPP, &swnt.draw_vortex, "group='Rendering'");
 
   TwWindowSize(win_w, win_h);
   return true;

@@ -33,7 +33,8 @@ set(app_sources
   ${sd}/swnt/HeightField.cpp
   ${sd}/swnt/Effects.cpp
   ${sd}/swnt/effects/BaseEffect.cpp
-  ${sd}/swnt/effects/Mist.cpp
+  ${sd}/swnt/effects/Eddy.cpp
+  ${sd}/swnt/effects/Splashes.cpp
   ${sd}/swnt/Scene.cpp
   ${sd}/swnt/GUI.cpp
   ${sd}/swnt/RGBShift.cpp

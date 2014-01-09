@@ -1,8 +1,13 @@
 #include <swnt/Effects.h>
+#include <swnt/Swnt.h>
+#include <swnt/Settings.h>
 #include <assert.h>
 
-Effects::Effects() 
-  :mist(*this)
+Effects::Effects(Swnt& swnt)
+  :swnt(swnt)
+  ,settings(swnt.settings)
+  ,eddy(*this)
+  ,splashes(*this)
 {
 }
 
@@ -12,8 +17,13 @@ Effects::~Effects() {
 bool Effects::setup(int w, int h) {
   assert(w && h);
 
-  if(!mist.setup()) {
-    printf("Error: cannot setup mist effect.\n");
+  if(!eddy.setup()) {
+    printf("Error: cannot setup eddy effect.\n");
+    return false;
+  }
+
+  if(!splashes.setup()) {
+    printf("Error: cannot setup the splashes effect.\n");
     return false;
   }
 
@@ -23,9 +33,16 @@ bool Effects::setup(int w, int h) {
 }
 
 void Effects::update() {
-  mist.update();
+  eddy.update();
+  splashes.update();
 }
 
-void Effects::draw() {
-  mist.draw();
+void Effects::drawExtraFlow() {
+  eddy.drawExtraFlow();
+  splashes.drawExtraFlow();
+}
+
+void Effects::drawExtraDiffuse() {
+  //  eddy.drawExtraDiffuse();
+  splashes.drawExtraDiffuse();
 }

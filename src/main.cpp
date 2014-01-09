@@ -41,7 +41,7 @@ int main() {
     return false;
   }
 
-  glfwWindowHint(GLFW_SAMPLES, 4);
+  ///  glfwWindowHint(GLFW_SAMPLES, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -188,6 +188,30 @@ void key_callback(GLFWwindow* win, int key, int scancode, int action, int mods) 
       swnt.audio.shutdown();
 #endif
       glfwSetWindowShouldClose(win, GL_TRUE);
+      break;
+    }
+    case GLFW_KEY_T: {
+      int num = 5;
+      vec3 dir(rx_random(-1.0,1.0), rx_random(-1.0f, 1.0f), 0.0);
+      float angle = rx_random(0, TWO_PI);
+      float total_angle = 40 * DEG_TO_RAD;
+      float part_angle = total_angle / num;
+      float radius = 150;
+      vec3 pos(512.0f, 384.0, 0.0);
+      for(int i = 0; i < num; ++i) {
+
+        float c = cos(i*part_angle);
+        float s = sin(i * part_angle);
+        dir.set(c, s, 0.0);
+        vec3 p(pos.x + c * radius, pos.y + s * radius, 0.0);
+      //      dir.set(1.0, 0.0, 0.0);
+        swnt.effects.splashes.createParticle(p, dir);
+      }
+      break;
+    }
+    case GLFW_KEY_R: {
+      printf("Recompiled.\n");
+      swnt.effects.splashes.prog.recompile();
       break;
     }
   };

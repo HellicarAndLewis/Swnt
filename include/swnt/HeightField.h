@@ -329,7 +329,7 @@ class HeightField {
   GLuint tex_tang;                   /* contains the tangents of the height field */
   GLuint tex_pos;                    /* contains the positions in world space of the vertices */
   GLuint tex_texcoord;               /* contains the texture coords in a range from 0-1 for the final render, see the position shader */
-  //  GLuint tex_gradient;               /* contains the gradients for the current positions */
+  GLuint tex_gradient;               /* contains the gradients for the current positions */
   GLuint tex_noise;                  /* we load a simple grayscale image with some perlin noise that is used to offset the height values a little bit.. based on time */
   int state_diffuse;                 /* toggles between 0 and 1 to ping/pong the read/write buffers */
                      

@@ -1,84 +1,80 @@
 #include <swnt/Effects.h>
-#include <swnt/effects/Mist.h>
+#include <swnt/Settings.h>
+#include <swnt/effects/Eddy.h>
 
-void MistShape::reset() {
+void EddyShape::reset() {
   scale_speed = rx_random(1.05f, 1.1f);
   rotate_speed = rx_random(0.1, 0.15f);
   lifetime = rx_random(3.5f, 7.5f);
   die_time = rx_millis() + lifetime;
 }
 
-Mist::Mist(Effects& effects)
-  :BaseEffect(effects, EFFECT_MIST)
+Eddy::Eddy(Effects& effects)
+  :BaseEffect(effects, EFFECT_EDDY)
   ,bytes_allocated(0)
   ,vert(0)
   ,frag(0)
   ,prog(0)
   ,vbo(0)
   ,vao(0)
-  ,mist_tex(0)
+  ,eddy_tex(0)
   ,u_time(0)
-  ,u_perc(0)
+   //  ,u_perc(0)
   ,needs_update(false)
 {
 }
 
-Mist::~Mist() {
+Eddy::~Eddy() {
 }
 
-bool Mist::setup() {
-  vert = rx_create_shader(GL_VERTEX_SHADER, MIST_VS);
-  frag = rx_create_shader(GL_FRAGMENT_SHADER, MIST_FS);
+bool Eddy::setup() {
+  vert = rx_create_shader(GL_VERTEX_SHADER, EDDY_VS);
+  frag = rx_create_shader(GL_FRAGMENT_SHADER, EDDY_FS);
   prog = rx_create_program(vert, frag);
   glBindAttribLocation(prog, 0, "a_pos");
   glBindAttribLocation(prog, 1, "a_tex");
+  glBindAttribLocation(prog, 2, "a_alpha");
   glLinkProgram(prog);
   rx_print_shader_link_info(prog);
 
   glUseProgram(prog);
   glUniform1i(glGetUniformLocation(prog, "u_tex"), 0);
   u_time = glGetUniformLocation(prog, "u_time");
-  u_perc = glGetUniformLocation(prog, "u_perc");
+  //  u_perc = glGetUniformLocation(prog, "u_perc");
 
   assert(u_time >= 0);
-  assert(u_perc >= 0);
+  //  assert(u_perc >= 0);
 
   glGenVertexArrays(1, &vao);
   glBindVertexArray(vao);
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
+  glEnableVertexAttribArray(2);
 
   glGenBuffers(1, &vbo);
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPT3), (GLvoid*)0);
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPT3), (GLvoid*)12);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(EddyVertex), (GLvoid*)0);
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(EddyVertex), (GLvoid*)12);
+  glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(EddyVertex), (GLvoid*)24);
 
-  createRing(effects.win_w * 0.5, effects.win_h * 0.5, 20.0f, 450.0);
+  createRing(effects.settings.win_w * 0.5, effects.settings.win_h * 0.5, 60.0f, 450.0, 0.0f, 1.0f);
 
-  MistShape shape;
-  shape.reset();
-  shape.offset = offsets.back();
-  shape.count = counts.back();
-  shape.x = 1024 * 0.5;
-  shape.y = 768 * 0.5;
-  shapes.push_back(shape);
-
-  mist_tex = rx_create_texture(rx_to_data_path("images/mist.png")); // , GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
-  if(!mist_tex) {
-    printf("Error: cannot create the mist texture.\n");
+  eddy_tex = rx_create_texture(rx_to_data_path("images/eddy.png")); // , GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
+  if(!eddy_tex) {
+    printf("Error: cannot create the eddy texture.\n");
     return false;
   }
-  printf("mist.mist_tex: %d\n", mist_tex);
+  printf("eddy.eddy_tex: %d\n", eddy_tex);
   return true;
 }
 
-void Mist::update() {
+void Eddy::update() {
 
   if(!needs_update) {
     return;
   }
 
-  size_t needed = sizeof(VertexPT3) * vertices.size();
+  size_t needed = sizeof(EddyVertex) * vertices.size();
   if(!needed) {
     return;
   }
@@ -95,9 +91,9 @@ void Mist::update() {
   needs_update = false;
 }
 
-void Mist::draw() {
+void Eddy::drawExtraFlow() {
 
-#if USE_MIST_DEBUG
+#if USE_EDDY_DEBUG
   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 #endif
 
@@ -105,29 +101,29 @@ void Mist::draw() {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, mist_tex);
+  glBindTexture(GL_TEXTURE_2D, eddy_tex);
 
   glUseProgram(prog);
   glBindVertexArray(vao);
   glUniformMatrix4fv(glGetUniformLocation(prog, "u_pm"), 1, GL_FALSE, effects.ortho_pm.ptr());
 
-#define MIST_ROTATE_SHAPES 1
-#define MIST_MULTI_DRAW 0
+#define EDDY_ROTATE_SHAPES 1
+#define EDDY_MULTI_DRAW 0
 
-#if MIST_ROTATE_SHAPES
+#if EDDY_ROTATE_SHAPES
 
-  for(std::vector<MistShape>::iterator it = shapes.begin(); it != shapes.end(); ++it) {
-    MistShape& shape = *it;
+  for(std::vector<EddyShape>::iterator it = shapes.begin(); it != shapes.end(); ++it) {
+    EddyShape& shape = *it;
     float perc = 1.0f;
     glUniform1f(u_time, rx_millis() * shape.rotate_speed);
-    glUniform1f(u_perc, perc);
+    //    glUniform1f(u_perc, perc);
     shape.mm.identity();
     shape.mm.translate(shape.x, shape.y, 0.0f);
 
     glUniformMatrix4fv(glGetUniformLocation(prog, "u_mm"), 1, GL_FALSE, shape.mm.ptr());
     glDrawArrays(GL_TRIANGLES, shape.offset, shape.count);
   }
-#elif MIST_MULTI_DRAW
+#elif EDDY_MULTI_DRAW
   mat4 mm;
   glUniformMatrix4fv(glGetUniformLocation(prog, "u_mm"), 1, GL_FALSE, mm.ptr());
   glUniform1f(u_time, rx_millis() * 0.1);
@@ -144,7 +140,7 @@ void Mist::draw() {
   glDisable(GL_BLEND);
 }
 
-void Mist::createRing(float x, float y, float radius, float width) {
+void Eddy::createRing(float x, float y, float radius, float width, float fromAlpha, float toAlpha) {
   offsets.push_back(vertices.size());
 
   float resolution = 60.0;
@@ -189,10 +185,10 @@ void Mist::createRing(float x, float y, float radius, float width) {
     td = td * ((d3 + d1)/d1);
 
     // store the vertices
-    VertexPT3 a(pa,ta);
-    VertexPT3 b(pb,tb);
-    VertexPT3 c(pc,tc);
-    VertexPT3 d(pd,td);
+    EddyVertex a(pa,ta, fromAlpha);
+    EddyVertex b(pb,tb, fromAlpha);
+    EddyVertex c(pc,tc, toAlpha);
+    EddyVertex d(pd,td, toAlpha);
 
     vertices.push_back(a);
     vertices.push_back(b);
@@ -205,4 +201,12 @@ void Mist::createRing(float x, float y, float radius, float width) {
 
   counts.push_back(vertices.size()-offsets.back());
   needs_update = true;
+
+  EddyShape shape;
+  shape.reset();
+  shape.offset = offsets.back();
+  shape.count = counts.back();
+  shape.x = effects.settings.win_w * 0.5;
+  shape.y = effects.settings.win_h * 0.5;
+  shapes.push_back(shape);
 }

@@ -20,7 +20,7 @@ Water::Water(HeightField& hf)
   ,sun_shininess(4.6)
   ,foam_depth(2.4)
   ,fbo(0)
-  ,extra_diffuse_tex(0)
+  ,extra_flow_tex(0)
 {
   sun_pos[0] = 0.0;
   sun_pos[1] = 15.0;
@@ -95,7 +95,7 @@ bool Water::setup(int w, int h) {
   glUniform1i(glGetUniformLocation(prog, "u_diffuse_tex"),   7);  // FS
   glUniform1i(glGetUniformLocation(prog, "u_foam_tex"),      8);  // FS
   glUniform1i(glGetUniformLocation(prog, "u_color_tex"),     9);  // FS
-  glUniform1i(glGetUniformLocation(prog, "u_extra_diffuse_tex"),     10);  // FS
+  glUniform1i(glGetUniformLocation(prog, "u_extra_flow_tex"),     10);  // FS
 
   
   //GLint texture_units = 0;
@@ -140,15 +140,15 @@ bool Water::setup(int w, int h) {
   glGenFramebuffers(1, &fbo); 
   glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
-  glGenTextures(1, &extra_diffuse_tex);
-  glBindTexture(GL_TEXTURE_2D, extra_diffuse_tex);
+  glGenTextures(1, &extra_flow_tex);
+  glBindTexture(GL_TEXTURE_2D, extra_flow_tex);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, win_w, win_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, extra_diffuse_tex, 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, extra_flow_tex, 0);
 
   if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
     printf("Cannot create the framebuffer for the water diffuse capture.\n");
@@ -197,7 +197,7 @@ void Water::draw() {
     glBindTexture(GL_TEXTURE_2D, foam_tex);
 
     glActiveTexture(GL_TEXTURE10);
-    glBindTexture(GL_TEXTURE_2D, extra_diffuse_tex);
+    glBindTexture(GL_TEXTURE_2D, extra_flow_tex);
 
     glActiveTexture(GL_TEXTURE9);
     glBindTexture(GL_TEXTURE_1D, color_tex);
@@ -225,7 +225,7 @@ void Water::draw() {
 }
 
 
-void Water::beginGrabDiffuse() {
+void Water::beginGrabFlow() {
   GLenum drawbufs[] = { GL_COLOR_ATTACHMENT0 } ;
   glBindFramebuffer(GL_FRAMEBUFFER, fbo);
   glDrawBuffers(1, drawbufs);
@@ -233,8 +233,15 @@ void Water::beginGrabDiffuse() {
   glViewport(0, 0, win_w, win_h);
 }
 
-void Water::endGrabDiffuse() {
+void Water::endGrabFlow() {
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void Water::blitFlow(float x, float y, float w, float h) {
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
+  glReadBuffer(GL_COLOR_ATTACHMENT0);
+  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+  glBlitFramebuffer(0, 0, win_w, win_h, x, y, w, h, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 }
 
 void Water::print() {
@@ -244,5 +251,5 @@ void Water::print() {
   printf("water.diffuse_tex: %d\n", diffuse_tex);
   printf("water.foam_tex: %d\n", foam_tex);
   printf("water.color_tex: %d\n", color_tex);
-  printf("water.extra_diffuse_tex: %d\n", extra_diffuse_tex);
+  printf("water.extra_flow_tex: %d\n", extra_flow_tex);
 }

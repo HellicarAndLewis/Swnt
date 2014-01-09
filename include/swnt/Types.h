@@ -11,7 +11,9 @@
 #define USE_EFFECTS 1
 
 #define EFFECT_NONE 0
-#define EFFECT_MIST 1
+#define EFFECT_MIST 1 // NOT USE ATM
+#define EFFECT_EDDY 2
+#define EFFECT_SPLASHES 3
 
 #define SOUND_WATER 0
 #define SOUND_OCEAN 1

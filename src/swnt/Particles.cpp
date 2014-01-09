@@ -44,6 +44,9 @@ Particle::Particle()
   ,age(0.0f)
   ,age_perc(0.0f)
   ,lifetime(100.0f)
+  ,rotate_speed(0.0f)
+  ,move_speed(0.0f)
+  ,size(0.0f)
 {
   inv_mass = 1.0f;
 }
@@ -87,7 +90,7 @@ void Particles::update(const float dt) {
   // PREDICT NEW LOCATIONS
   for(Particles::iterator it = begin(); it != end(); ++it) {
     Particle* p = *it;
-
+    
     if(!p->enabled) {
       p->tmp_pos = p->pos;
       continue;
