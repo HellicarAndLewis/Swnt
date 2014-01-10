@@ -63,6 +63,7 @@ bool GUI::setup(int w, int h) {
   TwAddVarRW(bar, "Draw Flow Field", TW_TYPE_BOOLCPP, &swnt.draw_flow, "group='Rendering'");
   TwAddVarRW(bar, "Draw Water", TW_TYPE_BOOLCPP, &swnt.draw_water, "group='Rendering'");
   TwAddVarRW(bar, "Draw Debug Eddy", TW_TYPE_BOOLCPP, &swnt.draw_vortex, "group='Rendering'");
+  TwAddVarRW(bar, "Draw Contours and Tangents", TW_TYPE_BOOLCPP, &swnt.draw_tracking, "group='Rendering'");
 
   TwWindowSize(win_w, win_h);
   return true;

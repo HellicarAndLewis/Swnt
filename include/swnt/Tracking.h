@@ -62,6 +62,8 @@ class Tracking {
   std::vector<vec2> contour_vertices;                 /* holds all the vertices of the contours */
   std::vector<GLint> contour_offsets;                 /* when we find multiple contours this holds the start */
   std::vector<GLsizei> contour_nvertices;             /* number of vertices per contour */
+  size_t tan_offset;
+  size_t tan_count;
 
   /* GL */
   GLuint vao;                                         /* used to draw the contour lines */

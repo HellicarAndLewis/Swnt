@@ -48,42 +48,43 @@ static const char* HF_DIFFUSE_VERT = ""
   "  float f0 = texelFetch(u_tex_u,      ivec2(a_tex.s + i, a_tex.t + j), 0).r;"
   "  vec2  f1 = texelFetch(u_tex_forces, ivec2(a_tex.s + i, a_tex.t + j), 0).rg;"
   "  return f0 + (f1.r  * 5.2) - (f1.g * 9.2);"
-
   "}"
 
-  
   "void main() {                  "
   "  gl_Position = vec4(-1.0 + float(a_tex.x) * (1.0 / " QUOTE(N) ") * 2.0, -1.0 + float(a_tex.y) * (1.0 / " QUOTE(N) ") * 2.0, 0.0, 1.0);"
-#if 0
-  "  float u_center = texelFetch(u_tex_u, ivec2(a_tex.s + 0, a_tex.t + 0), 0).r;"
-  "  float u_left   = texelFetch(u_tex_u, ivec2(a_tex.s - 1, a_tex.t + 0), 0).r;"
-  "  float u_right  = texelFetch(u_tex_u, ivec2(a_tex.s + 1, a_tex.t + 0), 0).r;"
-  "  float u_top    = texelFetch(u_tex_u, ivec2(a_tex.s + 0, a_tex.t - 1), 0).r;"
-  "  float u_bottom = texelFetch(u_tex_u, ivec2(a_tex.s + 0, a_tex.t + 1), 0).r;"
-#else
+
   "  float u_center = get_force( 0,  0);"
   "  float u_left   = get_force(-1,  0);"
   "  float u_right  = get_force( 1,  0);"
   "  float u_top    = get_force( 0, -1);"
   "  float u_bottom = get_force( 0,  1);"
-#endif
+
   "  float f = 8.4 * ((u_right + u_left + u_bottom + u_top) - (4.0 * u_center));"
   "  { "
-  "    float max = 1.5;" // set to 0.5 for slow/stable water
+  "    float max = 0.5;" // set to 0.5 for slow/stable water
   "    if(f > max) { f = max; } else if( f < -max) { f = -max; } "
   "  } "
+
   "  float v = texelFetch(u_tex_v, a_tex, 0).r;"
   "  v_new_v_value = (v + f * dt); "
   "  v_new_u_value = u_center + v_new_v_value * dt;"
-  //   "  int lower = 70; int upper = 90; if(a_tex.s > lower && a_tex.s < upper && a_tex.t > lower && a_tex.t < upper) {  v_new_u_value = 3.5; }"
   "  v_new_v_value = v_new_v_value * 0.995;" // set to 0.975 when simulation explodes
+
+#if 0
+  "  int low = 50; "
+  "  int high = 60;"
+  "  if(a_tex.s >= low && a_tex.s <= high && a_tex.t >= low && a_tex.t <= high){ "
+  "    v_new_u_value = 6.0; "
+  "  }"
+#endif
+
   "}"
   "";
 
 static const char* HF_DIFFUSE_FRAG = ""
   "#version 150\n"
-  "out vec4 v_out;     "
-  "out vec4 u_out;     "
+  "out vec4 v_out; "
+  "out vec4 u_out; "
   "in float v_new_u_value; "
   "in float v_new_v_value; "
   "void main() {"
@@ -115,11 +116,9 @@ static const char* HF_POSITION_VS = ""
   "  gl_Position = vec4(-1.0 + float(a_tex.s) * step_size, -1.0 + a_tex.t * step_size, 0.0, 1.0);"
   "  float current_height = texelFetch(u_tex_u, ivec2(a_tex.s + 0, a_tex.t + 0), 0).r;"
   "  v_tex = vec2(a_tex.s * (1.0 / " QUOTE(N) "), a_tex.t * (1.0 / " QUOTE(N) "));"
-  //  "  v_tex = vec2(1.0 - a_tex.s / 128.0, 1.0 - a_tex.t / 128.0);"
   "  float noise_height = texture(u_tex_noise, vec2(v_tex.s, v_tex.t + u_time)).r * 3.2;"
   "  v_pos = vec3(-hx + (a_tex.s + 0) * step_x, current_height + noise_height, -hy + a_tex.t * step_y + 0);"
   "}"
-
   "";
 
 static const char* HF_POSITION_FS = ""
@@ -135,7 +134,6 @@ static const char* HF_POSITION_FS = ""
   "}"
   "";
 
-
 // Normals
 // -----------------------------------------------------------
 static const char* HF_NORMALS_VS = ""
@@ -144,7 +142,7 @@ static const char* HF_NORMALS_VS = ""
   "uniform sampler2D u_tex_pos;"
   "in ivec2 a_tex;"
   "out vec3 v_norm;"
-  "out vec3 v_tang;"
+  "out vec3 v_grad;"
   "const float size_y = " QUOTE(DRAW_WIDTH) ";"
   "const float size_x = " QUOTE(DRAW_HEIGHT) ";"
   "const float step_y = size_y / " QUOTE(N) ";"
@@ -153,40 +151,44 @@ static const char* HF_NORMALS_VS = ""
   "const float hy = size_y * 0.5;"
   "const float step_size = 2.0 * (1.0 / " QUOTE(N) ");"
 
+  "float grid(int i, int j) { "
+  "  return texelFetch(u_tex_u, ivec2(a_tex.s + i, a_tex.t + j), 0).r; "
+  "}"
+
   "void main() {"
   "  gl_Position = vec4(-1.0 + float(a_tex.s) * step_size, -1.0 + a_tex.t * step_size, 0.0, 1.0);"
-  "  v_norm = vec3(0.0, 1.0, 0.0);"
-#if 0
-  "  float current_height = texelFetch(u_tex_u, ivec2(a_tex.s + 0, a_tex.t + 0), 0).r;"
-  "  float right_height   = texelFetch(u_tex_u, ivec2(a_tex.s + 1, a_tex.t + 0), 0).r;"
-  "  float top_height     = texelFetch(u_tex_u, ivec2(a_tex.s + 0, a_tex.t - 1), 0).r;"
-  "  vec3 current_pos     = vec3(-hx + (a_tex.s + 0) * step_x, current_height, -hy + a_tex.t * step_y + 0);"
-  "  vec3 right_pos       = vec3(-hx + (a_tex.s + 1) * step_x, right_height,   -hy + a_tex.t * step_y + 0);"
-  "  vec3 top_pos         = vec3(-hx + (a_tex.s + 0) * step_x, top_height,     -hy + a_tex.t * step_y - 1);"
-  "  vec3 to_right        = right_pos - current_pos; "
-  "  vec3 to_top          = top_pos - current_pos;"
-#else
+
   "  vec3 current_pos     = texelFetch(u_tex_pos, ivec2(a_tex.s + 0, a_tex.t + 0), 0).rgb;"
   "  vec3 right_pos       = texelFetch(u_tex_pos, ivec2(a_tex.s + 1, a_tex.t + 0), 0).rgb;"
   "  vec3 top_pos         = texelFetch(u_tex_pos, ivec2(a_tex.s + 0, a_tex.t - 1), 0).rgb;"
   "  vec3 to_right        = right_pos - current_pos; "
   "  vec3 to_top          = top_pos - current_pos;"
-#endif
-  "  v_norm = normalize(cross(to_right, to_top));"
-  "  v_tang = normalize(to_top);"
+  //  "  v_norm = normalize(cross(to_right, to_top));"
+  "  v_norm = (cross(to_right, to_top));"
+
+  "  float center = grid(0, 0);"
+  "  float left   = grid(-1, 0);"
+  "  float right  = grid(1, 0);"
+  "  float top    = grid(0, -1);"
+  "  float bottom = grid(0, 1);"
+  //  "  vec3 diff = vec3( grid(1,0) - grid(0,0),  grid(0,1) - grid(0,0), 0.0);"
+  //"  vec3 diff = vec3( right - center, bottom - center, 0.0);"
+  "vec3 diff = vec3(right - left, top - bottom, 0.0);"
+  // "  v_grad = 0.5 + 0.5 * normalize(diff);"
+  "  v_grad = diff;"
   "}"
   "";
 
 static const char* HF_NORMALS_FS = ""
   "#version 150\n"
   "in vec3 v_norm;"
-  "in vec3 v_tang;"
+  "in vec3 v_grad;"
   "out vec4 norm_out;"
-  "out vec4 tang_out;"
+  "out vec4 grad_out;"
 
   "void main() {"
   "  norm_out = vec4(v_norm, 1.0);"
-  "  tang_out = vec4(v_tang, 1.0);"
+  "  grad_out = vec4(0.5 + 0.5 * v_grad, 1.0);"
   "}"
   "";
 
@@ -315,6 +317,8 @@ class HeightField {
   GLuint vbo_els;                    /* element array buffer */
   std::vector<GLint> indices;        /* indices to render triangles */
 
+  Program diffuse_prog;
+
   /* Diffuse the height field */
   GLuint vert;                       /* vertex shader which performns the diffuse step */
   GLuint frag;                       /* fragment shader which writes/sets the diffused values + velocity */
@@ -326,7 +330,7 @@ class HeightField {
   GLuint tex_v0;                     /* contains the velocity values for state 0 */
   GLuint tex_v1;                     /* contains the velocity values for state 1 */
   GLuint tex_norm;                   /* contains the normals of the height field */
-  GLuint tex_tang;                   /* contains the tangents of the height field */
+  //  GLuint tex_tang;                   /* contains the tangents of the height field */
   GLuint tex_pos;                    /* contains the positions in world space of the vertices */
   GLuint tex_texcoord;               /* contains the texture coords in a range from 0-1 for the final render, see the position shader */
   GLuint tex_gradient;               /* contains the gradients for the current positions */

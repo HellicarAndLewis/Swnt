@@ -45,6 +45,8 @@ class Splashes : public BaseEffect {
   GLuint bubble_tex;
   GLuint smoke_tex;
   GLuint noise_tex; /* used to offset texture coordinates */
+  GLuint normal_tex; /* normals */
+  
   Particles ps;
   std::vector<Particle*> smoke_particles;
   std::vector<Particle*> stroke_particles;

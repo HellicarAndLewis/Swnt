@@ -63,7 +63,6 @@ GLuint Water::createTexture(std::string filename) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  printf("Texture, w: %d, h: %d, n: %d\n", w, h, n);
  
   delete[] pix;
   pix = NULL;
@@ -88,7 +87,8 @@ bool Water::setup(int w, int h) {
   glUniform1i(glGetUniformLocation(prog, "u_tex_pos"),       0);  // VS
   glUniform1i(glGetUniformLocation(prog, "u_tex_norm"),      1);  // VS
   glUniform1i(glGetUniformLocation(prog, "u_tex_texcoord"),  2);  // VS
-  glUniform1i(glGetUniformLocation(prog, "u_tex_tang"),      3);  // VS
+  //  glUniform1i(glGetUniformLocation(prog, "u_tex_tang"),      3);  // VS
+  glUniform1i(glGetUniformLocation(prog, "u_tex_gradient"),      3);  // VS
   glUniform1i(glGetUniformLocation(prog, "u_noise_tex"),     4);  // FS
   glUniform1i(glGetUniformLocation(prog, "u_norm_tex"),      5);  // FS
   glUniform1i(glGetUniformLocation(prog, "u_flow_tex"),      6);  // FS
@@ -164,7 +164,7 @@ void Water::update(float dt) {
 
 void Water::draw() {
   
-  //  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_DEPTH_TEST);
   
   glUseProgram(prog);
 
@@ -178,8 +178,10 @@ void Water::draw() {
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, height_field.tex_texcoord);
 
+    //    glActiveTexture(GL_TEXTURE3);
+    //    glBindTexture(GL_TEXTURE_2D, height_field.tex_tang);
     glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, height_field.tex_tang);
+    glBindTexture(GL_TEXTURE_2D, height_field.tex_gradient);
 
     glActiveTexture(GL_TEXTURE4);
     glBindTexture(GL_TEXTURE_2D,  noise_tex);

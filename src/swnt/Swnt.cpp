@@ -20,6 +20,7 @@ Swnt::Swnt(Settings& settings)
   ,draw_threshold(true)
   ,draw_water(true)
   ,draw_vortex(false)
+  ,draw_tracking(false)
 #if USE_GUI
   ,gui(*this)
 #endif
@@ -217,7 +218,7 @@ void Swnt::update() {
 }
 
 void Swnt::draw() {
-#if 0  
+#if 0 
   water.draw();
   gui.draw();
   return;
@@ -276,10 +277,14 @@ void Swnt::draw() {
       }
 #    endif
 
-      //      effects.drawExtraDiffuse();
+  if(draw_vortex) {
+    // water.blitFlow(0.0, 0.0, 320.0f, 240.0f);
+    effects.splashes.drawExtraDiffuse();
+    effects.splashes.drawExtraFlow();
+  }
 
       if(draw_flow){ 
-        flow.draw();
+        //  flow.draw();
       }
       
     }
@@ -287,15 +292,17 @@ void Swnt::draw() {
 
     mask.maskOutDepth();
 
-    flow.calc(mask.masked_out_pixels);
+    // flow.calc(mask.masked_out_pixels); 
     tracking.track(mask.masked_out_pixels);
 
     // draw the final masked out scene
     mask.draw_hand = draw_threshold;
     mask.maskOutScene();
 
-    tracking.draw(0.0f, 0.0f);
-    flow.applyPerlinToField();
+    if(draw_tracking) {
+      tracking.draw(0.0f, 0.0f);
+    }
+    // flow.applyPerlinToField();
     // flow.draw();
 
     #if USE_RGB_SHIFT
@@ -306,12 +313,7 @@ void Swnt::draw() {
 #endif  // USE_KINECT
 
   //effects.splashes.drawExtraFlow();
-  if(draw_vortex) {
-    // water.blitFlow(0.0, 0.0, 320.0f, 240.0f);
-    effects.splashes.drawExtraDiffuse();
-    effects.splashes.drawExtraFlow();
 
-  }
 
 #if USE_GUI
   gui.draw();

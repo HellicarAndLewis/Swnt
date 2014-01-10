@@ -24,6 +24,7 @@ Splashes::Splashes(Effects& effects)
   ,size_min(60.0f)
   ,size_max(90.0f)
   ,texture_anim_speed(0.3)
+  ,normal_tex(0)
 {
 
 }
@@ -58,13 +59,14 @@ bool Splashes::setup() {
   glBufferData(GL_ARRAY_BUFFER, sizeof(SplashVertex) * vertices.size(), vertices[0].ptr(), GL_STATIC_DRAW);
   
   // tex
-  bubble_tex = rx_create_texture(rx_to_data_path("images/water_splash.png"));
+  bubble_tex = rx_create_texture(rx_to_data_path("images/water_splash_diffuse.png"));
+  normal_tex= rx_create_texture(rx_to_data_path("images/water_splash_normals.png"));
   smoke_tex =  rx_create_texture(rx_to_data_path("images/water_smoke.png"));
   noise_tex =  rx_create_texture(rx_to_data_path("images/water_noise.png"));
 
   glUseProgram(prog.id);
-  rx_uniform_1i(prog.id, "u_water_tex", 0);
-  rx_uniform_1i(prog.id, "u_noise_tex", 1);
+  rx_uniform_1i(prog.id, "u_diffuse_tex", 0);
+  rx_uniform_1i(prog.id, "u_normal_tex", 1);
   return true;
 }
 
@@ -79,6 +81,7 @@ void Splashes::drawExtraFlow() {
 
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glDisable(GL_DEPTH_TEST);
   // glBlendFunc(GL_ONE, GL_ONE);
 
   glBindVertexArray(vao);
@@ -95,6 +98,7 @@ void Splashes::drawExtraFlow() {
 void Splashes::drawExtraDiffuse() {
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glDisable(GL_DEPTH_TEST);
   //  glBlendFunc(GL_ONE, GL_ONE);
 
   glBindVertexArray(vao);
@@ -108,12 +112,18 @@ void Splashes::drawExtraDiffuse() {
   glDisable(GL_BLEND);
 }
 
+#define USE_SPLASH_LINES 0
+
 void Splashes::drawStrokes() {
+#if USE_SPLASH_LINES
+  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+#endif
+
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, bubble_tex); 
 
   glActiveTexture(GL_TEXTURE1);
-  glBindTexture(GL_TEXTURE_2D, noise_tex); 
+  glBindTexture(GL_TEXTURE_2D, normal_tex); 
 
   mat4 mm;
   GLint u_age_perc = glGetUniformLocation(prog.id, "u_age_perc");
@@ -143,14 +153,23 @@ void Splashes::drawStrokes() {
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     ++it;
   }
+#if USE_SPLASH_LINES
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+#endif
 }
 
 void Splashes::drawSmoke() {
+#if USE_SPLASH_LINES
+  return;
+#endif  
+
+  return;
+
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, smoke_tex); 
 
   glActiveTexture(GL_TEXTURE1);
-  glBindTexture(GL_TEXTURE_2D, noise_tex); 
+  glBindTexture(GL_TEXTURE_2D, normal_tex); 
 
   glUniform1f(glGetUniformLocation(prog.id, "u_time"), 1.0);
 
@@ -257,17 +276,22 @@ void Splashes::spawnParticlesAroundContours() {
 #endif
 
 #if USE_SPLASH_PERPENDICULAR
-    for(int i = 0; i < tr.contour_vertices.size()-1; ++i) {
+    int step_size = 30;
+
+    for(int i = 0; i < tr.contour_vertices.size()-(step_size+1); i += step_size) {
+      if( (i + step_size) > tr.contour_vertices.size()) { 
+         break;
+      }
       vec2 p0 = tr.contour_vertices[i + 0];
-      vec2 p1 = tr.contour_vertices[i + 1];
+      vec2 p1 = tr.contour_vertices[i + step_size];
       vec2 dir = p1-p0;
       vec2 crossed(-dir.y, dir.x);
       crossed = normalized(crossed);
 
-      createParticle(vec3(p0.x * scale_x, p0.y * scale_y, 0.0), vec3(crossed.x, crossed.y, 0.0));
-      if(i > 4) { 
-          break;
-      }
+      createParticle(vec3(p0.x * scale_x, p0.y * scale_y, 0.0), -vec3(crossed.x, crossed.y, 0.0));
+      //      if(i > 10) { 
+      //          break;
+      //      }
     }
 #endif
 

@@ -22,6 +22,8 @@ Tracking::Tracking(Settings& settings, Graphics& graphics)
   ,vbo(0)
   ,allocated_bytes(0)
   ,prev_num_points(0)
+  ,tan_count(0)
+  ,tan_offset(0)
 {
 }
 
@@ -70,17 +72,22 @@ void Tracking::draw(float tx, float ty) {
   {
     vec3 line_col(0.0f, 1.0f, 0.0f);
     mat4 mm;
-    //mm.translate(tx, ty, 0.0f);
+
     // scale contour to window size
     mm.scale(sx, sy, 1.0f);
  
-
+    // draw contour
     glBindVertexArray(vao);
     glUseProgram(graphics.v_prog);
     glUniform3fv(glGetUniformLocation(graphics.v_prog, "u_color"), 1, line_col.ptr());
     glUniformMatrix4fv(glGetUniformLocation(graphics.v_prog, "u_mm"), 1, GL_FALSE, mm.ptr());
     glUniformMatrix4fv(glGetUniformLocation(graphics.v_prog, "u_pm"), 1, GL_FALSE, settings.ortho_matrix.ptr());
     glMultiDrawArrays(GL_LINE_STRIP, &contour_offsets[0], &contour_nvertices[0], contour_nvertices.size());
+
+    // draw tangents
+    line_col.set(1.0, 0.0, 0.0);
+    glUniform3fv(glGetUniformLocation(graphics.v_prog, "u_color"), 1, line_col.ptr());
+    glDrawArrays(GL_LINES, tan_offset, tan_count);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -103,7 +110,8 @@ bool Tracking::findContours(unsigned char* pixels) {
   int w = settings.image_processing_w;
   int h = settings.image_processing_h;
   cv::Mat input_image(h, w, CV_8UC1, pixels, cv::Mat::AUTO_STEP);
-  cv::findContours(input_image, contours, cv::RETR_LIST, cv::CHAIN_APPROX_SIMPLE);
+  //cv::findContours(input_image, contours, cv::RETR_LIST, cv::CHAIN_APPROX_SIMPLE);
+  cv::findContours(input_image, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
   return contours.size();
 }
 
@@ -139,7 +147,6 @@ void Tracking::updateVertices() {
         cv::Point& pt = pts[i];
         vec2 v(pt.x, pt.y);
         contour_vertices.push_back(v);
-
       
         vec2 dir_to_center = contour_center - v;
         int dist_to_center = dot(dir_to_center, dir_to_center);
@@ -154,6 +161,29 @@ void Tracking::updateVertices() {
       closest_dist = INT_MAX;
       contour_nvertices.push_back(contour_vertices.size() - start_nvertices);
     }
+  }
+
+  {
+    tan_offset = contour_vertices.size();
+
+    // calculate the tangents
+    std::vector<vec2> tan_vertices;
+    int step_size = 30;
+    for(int i = 0; i < int(contour_vertices.size())-(step_size+1); i += step_size) {
+      if( ( i + step_size) > contour_vertices.size() -1 ) {
+        break;
+      }
+      vec2 p0 = contour_vertices[i];
+      vec2 p1 = contour_vertices[i+step_size];
+      vec2 dir = p1 - p0;
+      vec2 tan(-dir.y, dir.x);
+      tan = normalized(tan) * 30;
+      tan_vertices.push_back(p0);
+      tan_vertices.push_back(p0 + tan);
+    }
+
+    std::copy(tan_vertices.begin(), tan_vertices.end(), std::back_inserter(contour_vertices));
+    tan_count = tan_vertices.size();
   }
 
   if(!contour_vertices.size()) {

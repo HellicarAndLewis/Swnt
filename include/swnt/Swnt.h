@@ -72,6 +72,7 @@ class Swnt {
   bool draw_threshold;               /* flag that toggles drawing of the hand/found blobs */
   bool draw_water;
   bool draw_vortex;
+  bool draw_tracking;
 
 #if USE_EFFECTS
   Effects effects;
