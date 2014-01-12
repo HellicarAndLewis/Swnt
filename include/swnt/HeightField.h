@@ -59,7 +59,7 @@ static const char* HF_DIFFUSE_VERT = ""
   "  float u_top    = get_force( 0, -1);"
   "  float u_bottom = get_force( 0,  1);"
 
-  "  float f = 8.4 * ((u_right + u_left + u_bottom + u_top) - (4.0 * u_center));"
+  "  float f = 1.4 * ((u_right + u_left + u_bottom + u_top) - (4.0 * u_center));"
   "  { "
   "    float max = 0.5;" // set to 0.5 for slow/stable water
   "    if(f > max) { f = max; } else if( f < -max) { f = -max; } "
@@ -287,6 +287,38 @@ static const char* HF_FORCES_FS = ""
   "}"
   "";
 
+
+static const char* HF_FOAM_VS = ""
+  "#version 150\n"
+  "uniform sampler2D u_prev_u_tex;"
+  "uniform sampler2D u_curr_u_tex;"
+  "uniform sampler2D u_prev_foam_tex;"
+  "in ivec2 a_tex;"
+  "out float v_curr_u; "
+  "out float v_prev_u; "
+  "out float v_prev_foam;"
+  "const float step_size = 2.0 * (1.0 / " QUOTE(N) ");"
+  "void main() {"
+  "  gl_Position = vec4(-1.0 + float(a_tex.s) * step_size, -1.0 + a_tex.t * step_size, 0.0, 1.0);"
+  "  v_curr_u = texelFetch(u_prev_u_tex, a_tex, 0).r;"
+  "  v_prev_foam = texelFetch(u_prev_foam_tex, a_tex, 0).r; "
+  "  v_prev_u = texture(u_prev_u_tex, a_tex).r;"
+  "}"
+  "";
+
+static const char* HF_FOAM_FS = ""
+  "#version 150\n"
+  "out vec4 foam_h;"
+  "in float v_curr_u;"
+  "in float v_prev_u;"
+  "in float v_prev_foam;"
+  "void main() {"
+  "  float dh = max(v_curr_u - v_prev_u, 0.0);"
+  // "  dh = pow(max(0, dh-0.1) * 2.0, 6.0);"
+  "  foam_h = vec4((v_prev_foam * 0.97 + pow(dh, 4.0) ) , 0.0, 0.0, 1.0); " 
+  "}"
+  "";
+
 struct FieldVertex {
   FieldVertex(){ tex[0] = 0; tex[1] = 0; }
   FieldVertex(int i, int j) { tex[0] = i; tex[1] = j; }
@@ -294,14 +326,17 @@ struct FieldVertex {
   GLint tex[2];
 };
 
+
 class HeightField {
 
  public:
   HeightField();
   bool setup();
-  void calculateHeights();                   /* diffuse step */
+  void calculateHeights();          /* diffuse step */
   void calculatePositions();        /* after the new heights have been diffused we can update the position buffer */
   void calculateNormals();          /* after calling diffuse() you need to diffuse the normals */
+  void calculateFoam();             /* after all above calculation are done, we do one more step that calculates the foam */
+  void debugDraw();                 /* used while debugging; blits some buffers to screen */
 
   void drawTexture(GLuint tex, float x, float y, float w, float h);
   void render();
@@ -310,6 +345,7 @@ class HeightField {
   void drawForceTexture(GLuint tex, float px, float py, float pw, float ph);  // all in percentages 
   void endDrawForces();
 
+
  public:
 
   /* Shared */
@@ -317,25 +353,35 @@ class HeightField {
   GLuint vbo_els;                    /* element array buffer */
   std::vector<GLint> indices;        /* indices to render triangles */
 
-  Program diffuse_prog;
+  /*  Program diffuse_prog; */
 
   /* Diffuse the height field */
   GLuint vert;                       /* vertex shader which performns the diffuse step */
   GLuint frag;                       /* fragment shader which writes/sets the diffused values + velocity */
   GLuint prog;                       /* program which does the diffuse/velocity updates */
   GLuint vbo;                        /* contains the FieldVertex data that is used to sample from the correct location in the shader */
-  GLuint fbo;                        /* we use a FBO with a couple of destination/source texture into which we write normals, u0, u1, velocities etc.. */
+
+  GLuint fbo0;                        /* we use a FBO with a couple of destination/source texture into which we write normals, u0, u1, velocities etc.. */
   GLuint tex_u0;                     /* contains the height values for state 0 */
   GLuint tex_u1;                     /* contains the height values for state 1 */
   GLuint tex_v0;                     /* contains the velocity values for state 0 */
   GLuint tex_v1;                     /* contains the velocity values for state 1 */
   GLuint tex_norm;                   /* contains the normals of the height field */
-  //  GLuint tex_tang;                   /* contains the tangents of the height field */
+  //  GLuint tex_tang;               /* contains the tangents of the height field */
   GLuint tex_pos;                    /* contains the positions in world space of the vertices */
   GLuint tex_texcoord;               /* contains the texture coords in a range from 0-1 for the final render, see the position shader */
   GLuint tex_gradient;               /* contains the gradients for the current positions */
   GLuint tex_noise;                  /* we load a simple grayscale image with some perlin noise that is used to offset the height values a little bit.. based on time */
   int state_diffuse;                 /* toggles between 0 and 1 to ping/pong the read/write buffers */
+
+  /* Foam */
+  GLuint fbo1;
+  GLuint tex_foam0;                    /* contains the foam intensity, ping ponged with tex_foam1 */
+  GLuint tex_foam1;                    /* contains the foam intensity, ping ponged with tex_foam0 */
+  int state_foam;                      /* toggles between 0 and 1 to ping/pong the read/write buffers for the foam */
+  GLuint foam_prog;
+  GLuint foam_frag;
+  GLuint foam_vert;
                      
   /* Custom forces (testing) */
   GLuint fbo_forces;

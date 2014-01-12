@@ -9,6 +9,8 @@
 Tracked::Tracked()
   :age(0)
   ,matched(false)
+  ,id(0)
+  ,lost(0)
 {
 }
 
@@ -263,12 +265,13 @@ void Tracking::clusterPoints() {
     if(matched) {
       matched->position = cluster_center;
       matched->matched = true;
-      matched->age = 0;
+      matched->age++;
     }
     else {
       Tracked* tr = new Tracked();
       tr->position = cluster_center;
       tr->matched = true;
+      tr->id = ++last_id;
       tracked.push_back(tr);
     }
   }
@@ -278,8 +281,8 @@ void Tracking::clusterPoints() {
   while(it != tracked.end()) {
     Tracked* tr = *it;
     if(!tr->matched) {
-      tr->age++;
-      if(tr->age > 25) {
+      tr->lost++;
+      if(tr->lost > 50) {
         delete tr;
         it = tracked.erase(it);
         continue;

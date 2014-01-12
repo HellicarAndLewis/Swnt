@@ -61,10 +61,14 @@ static const char* MASKED_OUT_SCENE_FS = ""
   "  vec4 thresh_tc = texture(u_thresh_tex, vec2(v_tex.s, 1.0 - v_tex.t));"
   "  fragcolor.a = mask_tc.r * scene_tc.a; "
   "  fragcolor.rgb = scene_tc.rgb;"
+
+#if 0
   "  if(u_draw_hand == 1 && thresh_tc.r > 0.0) {"
   "     fragcolor.rgb = u_hand_col;"
   "     fragcolor.a = 1.0;"
   "  }"
+#endif
+
   "}"
   "";
 

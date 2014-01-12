@@ -40,6 +40,7 @@ set(app_sources
   ${sd}/swnt/RGBShift.cpp
   ${sd}/swnt/Weather.cpp
   ${sd}/swnt/Audio.cpp
+  ${sd}/swnt/WaterBall.cpp
   ${sd}/ocean/WaterGraphics.cpp
   ${sd}/ocean/Ocean.cpp
 )

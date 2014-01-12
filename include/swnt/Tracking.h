@@ -4,7 +4,14 @@
   Tracking
   --------
 
-  Uses the thresholded kinect image to do tracking using K-means.
+  Uses the thresholded kinect image to do tracking using K-means. Each tracked
+  object is stored in Tracking::tracked. We check if a blob was around in the previous
+  frame and if some we will set the "matched" member of Tracked to true and increment
+  it's age member.
+
+  We use a helper variable called "lost" which gets incremented every time we cannot
+  find the blob from a previous frame. When the lost count reaches a certain age we will
+  remove the Tracked object. See Tracking::clusterPoints()
 
  */
 #ifndef SWNT_TRACKING_H
@@ -19,6 +26,8 @@
 #define ROXLU_USE_PNG
 #include "tinylib.h"
 
+#include <swnt/Types.h>
+
 class Settings;
 class Graphics;
 
@@ -31,9 +40,11 @@ class Tracked {
   Tracked();
 
  public:
-  uint32_t age;
+  int32_t age;
+  int32_t lost;
   vec2 position;
   bool matched;                                      /* is set to true when we found a new point which matches this one */
+  uint32_t id;
 };
 
 // ---------------------------------------------------------
@@ -74,7 +85,8 @@ class Tracking {
   std::vector<vec2> closest_points;                   /* closest points in the detected contours.. closest to the center. used to detect peaks in blobs that will be tracked */
   std::vector<vec2> closest_points_history;           /* we keep a history of the closest points which is used with k-means to cluster */
   size_t prev_num_points;                             /* just a helper to make sure the kmeans() function of cv doesn't crash */
-  std::vector<Tracked*> tracked;                      /* tracked objects; we use the 'age' to delete old tracked points. this is what you'll want to use */
+  std::vector<Tracked*> tracked;                      /* tracked objects; we use the 'age' to delete old tracked points. this is what you'll want to use for e.g. forming of water drops*/
+  uint32_t last_id;                                   /* each tracked object gets a new id and this is the last one created */
 };
 
 #endif

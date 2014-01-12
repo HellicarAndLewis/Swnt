@@ -65,7 +65,9 @@ static const char* WATER_FS = ""
   "uniform sampler2D u_extra_flow_tex;" // contains customly rendered colors (e.g. custom streams)
   "uniform sampler2D u_foam_tex;"
   "uniform sampler1D u_color_tex;"  // used to colorize by depth 
-
+  "uniform sampler2D u_foam_delta_tex;" // the foam delta, used to mix foam
+  "uniform sampler2D u_foam_colors;" // the 3 levels of foam 
+  "uniform sampler2D u_foam_ramp;" // used to mix the 3 foam levels
 
   "uniform vec3 u_sun_pos;"
   "uniform vec3 u_sun_color;"
@@ -92,6 +94,7 @@ static const char* WATER_FS = ""
  "  vec2 flow_color = texture(u_flow_tex, v_tex).rg;"
 #endif
 
+  "  float foam_delta = texture(u_foam_delta_tex, v_tex).r;"
   "  vec3 normal_color = texture(u_norm_tex, v_tex).rgb;"   // bump mapping
   "  vec3 diffuse_color = texture(u_diffuse_tex, v_tex).rgb;"
   "  float noise_color = texture(u_noise_tex, v_tex).r;"
@@ -108,7 +111,7 @@ static const char* WATER_FS = ""
   "  float phase1 =  noise_color * 0.2 + u_time1;"
 
   "  float tex_scale = 1.0;"
-  "  float flow_k = 0.5;"
+  "  float flow_k = 0.3;"
   "  vec2 texcoord0 = (v_tex * tex_scale) + (flow_color * phase0 * flow_k);"
   "  vec2 texcoord1 = (v_tex * tex_scale) + (flow_color * phase1 * flow_k);"
 
@@ -150,10 +153,31 @@ static const char* WATER_FS = ""
   "    spec = Ks * pow(max(dot(eye_r, eye_v), 0.0), 4.0);"
   "  } "
 
+
+  //   " foam_delta = 1.0;"
+  "  float foam_flow_k = 0.2;"
+  "  vec2 foam_tc0 = vec2(flipped_tex.x + foam_flow_k * texcoord0.x, flipped_tex.y + foam_flow_k * texcoord0.y);"
+  "  vec2 foam_tc1 = vec2(flipped_tex.x + foam_flow_k * texcoord1.x, flipped_tex.y + foam_flow_k * texcoord1.y);"
+  "  vec3 foam_ramp_color = texture(u_foam_ramp, vec2(clamp(pow(foam_delta * 0.08, 4.0), 0.0, 0.99), 0.0)).rgb;"
+  //  "  vec3 foam_color0 = texture(u_foam_colors, texcoord0).rgb;"
+  //  "  vec3 foam_color1 = texture(u_foam_colors, texcoord1).rgb;"
+  "  vec3 foam_color0 = texture(u_foam_colors, foam_tc0 * 5.0).rgb;"
+  "  vec3 foam_color1 = texture(u_foam_colors, foam_tc1 * 5.0).rgb;"
+  "  vec3 foam_color = mix(foam_color0, foam_color1, lerp);"
+  //  "  foam_color = vec3(foam_color.b, foam_color.g, foam_color.b);"
+  // "  float foam_m = dot(foam_ramp_color, foam_color); " 
+   "  float foam_m = dot(foam_ramp_color, texture(u_foam_colors, flipped_tex * 5.0).rgb); " 
+
+  //"  float foam_k = foam_delta + (v_pos.y / u_foam_depth);"
+  
+  // " foam = vec3(foam_k);"
+
+
   "  float foam_level = u_foam_depth;"
   "  float foam_k = v_pos.y / foam_level;"
   "  if(foam_k > 1.0) { foam_k = 1.0; } "//  else if (foam_k <= 0.2) { foam_k = 0.0; } "
   "  vec3 foam = foam_k * moved_foam;"
+ "  foam += foam_m * 0.5;"
 
   // http://blog.elmindreda.org/2011/06/oceans-of-fun/ 
   "  vec3 fake_sun = u_sun_color * pow(clamp(dot(eye_r, eye_v), 0.0, 1.0), u_sun_shininess);"
@@ -167,6 +191,18 @@ static const char* WATER_FS = ""
 
   "  fragcolor.rgb = K;"
   "  fragcolor.a = 1.0;"
+
+  //  "  fragcolor.rgb = vec3(foam_m);"
+  //  "  foam_delta = 0.0; "
+
+
+  //"  foam_delta = 0.9;"
+
+
+  //  "  vec3 foam_color = texture(u_foam_colors, flipped_tex * 5.0).rgb;"
+  //  "  fragcolor.rgb = texture(u_foam_colors, v_tex).rgb;"
+  //"  fragcolor.rgb += 0.2 * vec3(dot(foam_ramp_color, foam_color));"
+  //  " fragcolor.rgb = foam_ramp_color;"
 #else 
   //  "  float speed = length(v_norm * 0.5 + 0.5);"
   //"  float speed = length(v_gradient);"
@@ -219,6 +255,9 @@ class Water {
   GLuint diffuse_tex;
   GLuint foam_tex;
   GLuint color_tex;           /* 1D color ramp to change the colors of the water */
+
+  GLuint foam_colors_tex; /* R,G,B layers with foam */
+  GLuint foam_ramp_tex;  /* used to mix the R/G/B layers */
 
   GLuint force_tex0;          /* used to apply a force to the height field */
 

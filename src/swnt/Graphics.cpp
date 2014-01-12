@@ -70,6 +70,7 @@ bool Graphics::setup() {
 }
 
 void Graphics::drawTexture(GLuint tex, float x, float y, float w, float h) {
+
   glUseProgram(tex_prog);
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, tex);
@@ -80,7 +81,7 @@ void Graphics::drawTexture(GLuint tex, float x, float y, float w, float h) {
   tex_mm.identity();
   tex_mm.translate(x + hw, y + hh, 0.0f);
   tex_mm.scale(hw, hh, 1.0f);
-
+  return;
   glUniformMatrix4fv(glGetUniformLocation(tex_prog, "u_mm"), 1, GL_FALSE, tex_mm.ptr());
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }

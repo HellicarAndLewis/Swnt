@@ -16,6 +16,8 @@ Water::Water(HeightField& hf)
   ,foam_tex(0)
   ,force_tex0(0)
   ,color_tex(0)
+  ,foam_colors_tex(0)
+  ,foam_ramp_tex(0)
   ,max_depth(5.0)
   ,sun_shininess(4.6)
   ,foam_depth(2.4)
@@ -84,20 +86,22 @@ bool Water::setup(int w, int h) {
   glLinkProgram(prog);
   rx_print_shader_link_info(prog);
   glUseProgram(prog);
-  glUniform1i(glGetUniformLocation(prog, "u_tex_pos"),       0);  // VS
-  glUniform1i(glGetUniformLocation(prog, "u_tex_norm"),      1);  // VS
-  glUniform1i(glGetUniformLocation(prog, "u_tex_texcoord"),  2);  // VS
-  //  glUniform1i(glGetUniformLocation(prog, "u_tex_tang"),      3);  // VS
-  glUniform1i(glGetUniformLocation(prog, "u_tex_gradient"),      3);  // VS
-  glUniform1i(glGetUniformLocation(prog, "u_noise_tex"),     4);  // FS
-  glUniform1i(glGetUniformLocation(prog, "u_norm_tex"),      5);  // FS
-  glUniform1i(glGetUniformLocation(prog, "u_flow_tex"),      6);  // FS
-  glUniform1i(glGetUniformLocation(prog, "u_diffuse_tex"),   7);  // FS
-  glUniform1i(glGetUniformLocation(prog, "u_foam_tex"),      8);  // FS
-  glUniform1i(glGetUniformLocation(prog, "u_color_tex"),     9);  // FS
+  glUniform1i(glGetUniformLocation(prog, "u_tex_pos"),            0);  // VS
+  glUniform1i(glGetUniformLocation(prog, "u_tex_norm"),           1);  // VS
+  glUniform1i(glGetUniformLocation(prog, "u_tex_texcoord"),       2);  // VS
+  //  glUniform1i(glGetUniformLocation(prog, "u_tex_tang"),       3);  // VS
+  glUniform1i(glGetUniformLocation(prog, "u_tex_gradient"),       3);  // VS
+  glUniform1i(glGetUniformLocation(prog, "u_noise_tex"),          4);  // FS
+  glUniform1i(glGetUniformLocation(prog, "u_norm_tex"),           5);  // FS
+  glUniform1i(glGetUniformLocation(prog, "u_flow_tex"),           6);  // FS
+  glUniform1i(glGetUniformLocation(prog, "u_diffuse_tex"),        7);  // FS
+  glUniform1i(glGetUniformLocation(prog, "u_foam_tex"),           8);  // FS
+  glUniform1i(glGetUniformLocation(prog, "u_color_tex"),          9);  // FS
   glUniform1i(glGetUniformLocation(prog, "u_extra_flow_tex"),     10);  // FS
+  glUniform1i(glGetUniformLocation(prog, "u_foam_delta_tex"),     11);  // FS
+  glUniform1i(glGetUniformLocation(prog, "u_foam_colors"),        12);  // FS
+  glUniform1i(glGetUniformLocation(prog, "u_foam_ramp"),          13);  // FS
 
-  
   //GLint texture_units = 0;
   //glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &texture_units);
   //printf("Max units: %d\n", texture_units);
@@ -112,10 +116,23 @@ bool Water::setup(int w, int h) {
   diffuse_tex = createTexture("images/water_diffuse.png");
   foam_tex = createTexture("images/water_foam.png");
   force_tex0 = createTexture("images/force.png");
+  foam_colors_tex = createTexture("images/foam_densities.png");
+  foam_ramp_tex = createTexture("images/foam_ramps.png");
+  
+  glBindTexture(GL_TEXTURE_2D, foam_colors_tex);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-  // load color ramp
+  glBindTexture(GL_TEXTURE_2D, foam_ramp_tex);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
   unsigned char* img_pix = NULL;
-  int img_w, img_h,img_channels = 0;
+  int img_w, img_h,img_channels = 0;  
+
+  // load diffuse color ramp
   if(!rx_load_png(rx_to_data_path("images/water_color.png"), &img_pix, img_w, img_h, img_channels)) {
     printf("Error: cannot load the water_color.png image.\n");
     return false;
@@ -203,6 +220,15 @@ void Water::draw() {
 
     glActiveTexture(GL_TEXTURE9);
     glBindTexture(GL_TEXTURE_1D, color_tex);
+
+    glActiveTexture(GL_TEXTURE11);
+    glBindTexture(GL_TEXTURE_2D, height_field.tex_foam0);
+
+    glActiveTexture(GL_TEXTURE12);
+    glBindTexture(GL_TEXTURE_2D, foam_colors_tex);
+
+    glActiveTexture(GL_TEXTURE13);
+    glBindTexture(GL_TEXTURE_2D, foam_ramp_tex);
   }
 
   static float t = 0.0;

@@ -32,6 +32,10 @@ Swnt::Swnt(Settings& settings)
 
 Swnt::~Swnt() {
 
+#if USE_WATER_BALLS
+  printf("Cleanup tracked balls.\n");
+#endif
+
 #if USE_KINECT
   if(rgb_image) {
     delete[] rgb_image;
@@ -140,6 +144,14 @@ bool Swnt::setup() {
   }
 #endif
 
+#if USE_WATER_BALLS
+  if(!ball_drawer.setup(settings.win_w, settings.win_h)) {
+    printf("Error: cannot setup the water ball drawer.\n");
+    return false;
+  }
+  ball_drawer.addWaterBall(new WaterBall());
+#endif
+
   // matrices for rendering the ocean
   persp_matrix.perspective(65.0f, settings.win_w/settings.win_h, 0.01f, 1000.0f);
   settings.ocean.cam_pos.set(0.0, 100.0, 100.0f);
@@ -201,6 +213,7 @@ void Swnt::update() {
   height_field.calculateHeights();
   height_field.calculatePositions();
   height_field.calculateNormals();
+  height_field.calculateFoam();
   water.update(1.0f/60.0f);
 #endif
 
@@ -215,10 +228,21 @@ void Swnt::update() {
 #if USE_EFFECTS
   effects.update();
 #endif 
+
+#if USE_WATER_BALLS
+  updateWaterBalls();
+#endif  
 }
 
 void Swnt::draw() {
-#if 0 
+
+#if 0
+  ball_drawer.draw();
+  gui.draw();
+  return;
+#endif
+
+#if 0
   water.draw();
   gui.draw();
   return;
@@ -271,21 +295,23 @@ void Swnt::draw() {
     // capture the scene
     mask.beginSceneGrab();
     {
+
 #    if USE_WATER
       if(draw_water) {
         water.draw();
       }
 #    endif
 
-  if(draw_vortex) {
-    // water.blitFlow(0.0, 0.0, 320.0f, 240.0f);
-    effects.splashes.drawExtraDiffuse();
-    effects.splashes.drawExtraFlow();
-  }
+      if(draw_vortex) {
+        // water.blitFlow(0.0, 0.0, 320.0f, 240.0f);
+        effects.splashes.drawExtraDiffuse();
+        effects.splashes.drawExtraFlow();
+      }
 
       if(draw_flow){ 
         //  flow.draw();
       }
+         mask.drawThresholded();
       
     }
     mask.endSceneGrab();
@@ -299,9 +325,15 @@ void Swnt::draw() {
     mask.draw_hand = draw_threshold;
     mask.maskOutScene();
 
+#    if USE_WATER_BALLS
+    //      ball_drawer.draw();
+#    endif
+
+
     if(draw_tracking) {
       tracking.draw(0.0f, 0.0f);
     }
+
     // flow.applyPerlinToField();
     // flow.draw();
 
@@ -319,6 +351,7 @@ void Swnt::draw() {
   gui.draw();
 #endif
 
+  height_field.debugDraw();
 }
 
 
@@ -369,7 +402,94 @@ void Swnt::updateKinect() {
 }
 
 void Swnt::print() {
+#if USE_KINECT  
   printf("swnt.rgb_tex: %d\n", rgb_tex);
   printf("swnt.depth_tex: %d\n", depth_tex);
+#endif
   printf("-\n");
 }
+
+
+#if USE_WATER_BALLS 
+
+void Swnt::updateWaterBalls() {
+
+  ball_drawer.update(0.016f);
+
+  std::vector<Tracked*>& tracked_items = tracking.tracked;
+  std::vector<TrackedWaterBall> free_tracked;
+
+  // Step 1: Find water balls, which don't have a tracked object anymore, so we can reuse them.
+  for(std::vector<TrackedWaterBall>::iterator twit = tracked_balls.begin(); twit != tracked_balls.end(); ++twit) {
+
+    TrackedWaterBall& tracked_ball = *twit;
+    Tracked* found = NULL;
+
+    for(std::vector<Tracked*>::iterator it = tracked_items.begin(); it != tracked_items.end(); ++it) {
+      Tracked* tr = *it;
+      if(tr->id == tracked_ball.tracked_id) {
+        found = tr;
+        break;
+      }
+    }
+
+    if(!found) {
+      free_tracked.push_back(tracked_ball);
+    }
+  }
+
+  // Step: For each tracked object, find the related water ball or create a new one, when it isn't found
+  for(std::vector<Tracked*>::iterator it = tracked_items.begin(); it != tracked_items.end(); ++it) {
+
+    Tracked* tracked = *it;
+    WaterBall* found = NULL;
+    TrackedWaterBall found_tracked_ball;
+    
+    if(!tracked->matched) {
+      continue;
+    }
+
+    for(std::vector<TrackedWaterBall>::iterator twit = tracked_balls.begin(); twit != tracked_balls.end(); ++twit) {
+      TrackedWaterBall& tracked_ball = *twit;
+      if(tracked_ball.tracked_id == tracked->id) {
+        found = tracked_ball.water_ball;
+        found_tracked_ball = tracked_ball;
+        break;
+      }
+    }
+
+    if(!found && free_tracked.size()) {
+      // Reuse a previously tracked waterball that is free
+      TrackedWaterBall free_tracked_ball  = *free_tracked.begin();
+      found_tracked_ball = free_tracked_ball;
+      free_tracked.erase(free_tracked.begin());
+      free_tracked_ball.tracked_id = tracked->id;
+      found = free_tracked_ball.water_ball;
+    }
+
+    if(!found) {
+      found =  new WaterBall();
+      ball_drawer.addWaterBall(found);
+
+      TrackedWaterBall tracked_ball;
+      tracked_ball.water_ball = found;
+      tracked_ball.tracked_id = tracked->id;
+      tracked_balls.push_back(tracked_ball);
+      found_tracked_ball = tracked_ball;
+    }
+
+    if(!found) {
+      printf("Error: we did not find or create a WaterBall. No memory anymore?\n");
+      ::exit(EXIT_FAILURE);
+    }
+
+    printf("Tracking: %d, WaterBall: %p, Number of WaterBalls: %ld, age: %d\n", found_tracked_ball.tracked_id, found_tracked_ball.water_ball, ball_drawer.balls.size(), tracked->age);
+    //printf("Ball found: %p  total tracked now: %ld. Created balls: %ld, age: %d\n", found, tracked_balls.size(), ball_drawer.balls.size());
+
+    found->position = tracked->position; 
+   
+  }
+
+}
+
+#endif

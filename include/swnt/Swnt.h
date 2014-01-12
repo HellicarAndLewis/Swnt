@@ -36,6 +36,7 @@
 #include <swnt/Weather.h>
 #include <swnt/Scene.h>
 #include <swnt/Audio.h>
+#include <swnt/WaterBall.h>
 
 #define ROXLU_USE_OPENGL
 #define ROXLU_USE_MATH
@@ -59,6 +60,10 @@ class Swnt {
 #if USE_KINECT
   bool setupKinect();
   void updateKinect();
+#endif
+
+#if USE_WATER_BALLS
+  void updateWaterBalls();
 #endif
 
  public:
@@ -99,10 +104,6 @@ class Swnt {
   Scene scene;
 #endif
 
-#if USE_GUI
-  GUI gui;
-#endif
-
 #if USE_WEATHER
   Weather weather;
 #endif
@@ -110,6 +111,16 @@ class Swnt {
 #if USE_AUDIO
   Audio audio;
 #endif
+
+#if USE_WATER_BALLS
+  WaterBallDrawer ball_drawer;
+  std::vector<TrackedWaterBall> tracked_balls;
+#endif
+
+#if USE_GUI
+  GUI gui;
+#endif
+
 
   /* matrices for rendering the ocean */
   mat4 view_matrix;                  /* camera view matrix */

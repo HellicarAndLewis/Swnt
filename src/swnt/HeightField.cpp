@@ -7,7 +7,8 @@ HeightField::HeightField()
   ,vao(0)
   ,vbo_els(0)
   ,vbo(0)
-  ,fbo(0)
+  ,fbo0(0)
+
   ,tex_u0(0)
   ,tex_u1(0)
   ,tex_v0(0)
@@ -20,6 +21,10 @@ HeightField::HeightField()
   ,tex_forces(0)
   ,tex_noise(0)
   ,state_diffuse(0)
+  ,fbo1(0)
+  ,tex_foam0(0)
+  ,tex_foam1(0)
+  ,state_foam(0)
   ,fbo_forces(0)
   ,frag_forces(0)
   ,prog_forces(0)
@@ -208,9 +213,9 @@ bool HeightField::setup() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 
-  // fbo for the diffuse math, normals, positions, etc..
-  glGenFramebuffers(1, &fbo);
-  glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+  // fbo0 for the diffuse math, normals, positions, etc..
+  glGenFramebuffers(1, &fbo0);
+  glBindFramebuffer(GL_FRAMEBUFFER, fbo0);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex_u0,       0);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, tex_u1,       0);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, tex_v0,       0);
@@ -226,7 +231,7 @@ bool HeightField::setup() {
     ::exit(EXIT_FAILURE);
   }
 
-  // custom forces (fbo + tex)
+  // custom forces (fbo0 + tex)
   glGenFramebuffers(1, &fbo_forces);
   glBindFramebuffer(GL_FRAMEBUFFER, fbo_forces);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex_forces, 0);
@@ -234,6 +239,40 @@ bool HeightField::setup() {
     printf("Framebuffer for custom forces step not complete.\n");
     ::exit(EXIT_FAILURE);
   }
+
+
+  // +++++++++++++++++++ FOAM +++++++++++++++++++++++++++++++++++++++
+  glGenFramebuffers(1, &fbo1);
+  glBindFramebuffer(GL_FRAMEBUFFER, fbo1);
+
+  glGenTextures(1, &tex_foam0);
+  glBindTexture(GL_TEXTURE_2D, tex_foam0);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, N, N, 0, GL_RED, GL_FLOAT, init_u);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex_foam0, 0);
+
+  glGenTextures(1, &tex_foam1);
+  glBindTexture(GL_TEXTURE_2D, tex_foam1); 
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, N, N, 0, GL_RED, GL_FLOAT, init_u);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, tex_foam1, 0);
+  
+  if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    printf("Error: the foam framebuffer texture is not complete.\n");
+    ::exit(EXIT_FAILURE);
+  }
+
+  const char* attr[] = { "a_tex" };
+  foam_vert = rx_create_shader(GL_VERTEX_SHADER, HF_FOAM_VS);
+  foam_frag = rx_create_shader(GL_FRAGMENT_SHADER, HF_FOAM_FS);
+  foam_prog = rx_create_program_with_attribs(foam_vert, foam_frag, 1, attr);
+  glUseProgram(foam_prog);
+  glUniform1i(glGetUniformLocation(foam_prog, "u_prev_u_tex"), 0); // texture which hold the previous height fields
+  glUniform1i(glGetUniformLocation(foam_prog, "u_curr_u_tex"), 1); // current height fields (curr - prev => delta)
+  glUniform1i(glGetUniformLocation(foam_prog, "u_prev_foam_tex"), 2); // previous foam, to which we add the new foam
+  // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -285,6 +324,8 @@ bool HeightField::setup() {
   printf("height_field.tex_norm: %d\n", tex_norm);
   printf("height_field.tex_noise: %d\n", tex_noise);
   printf("height_field.tex_gradient: %d\n", tex_gradient);
+  printf("height_field.tex_foam0: %d\n", tex_foam0);
+  printf("height_field.tex_foam1: %d\n", tex_foam1);
   //  printf("height_field.tex_tang: %d\n", tex_tang);
   return true;
 }
@@ -329,7 +370,7 @@ void HeightField::render() {
 // Diffuses the heights
 void HeightField::calculateHeights() {
 
-  glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+  glBindFramebuffer(GL_FRAMEBUFFER, fbo0);
   glViewport(0, 0, N, N);
   glUseProgram(prog);
   glBindVertexArray(vao);
@@ -381,7 +422,7 @@ void HeightField::calculatePositions() {
   glViewport(0, 0, N, N);
 
   GLenum drawbufs[] = { GL_COLOR_ATTACHMENT5, GL_COLOR_ATTACHMENT6 } ;
-  glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+  glBindFramebuffer(GL_FRAMEBUFFER, fbo0);
   glDrawBuffers(2, drawbufs);
 
   glUseProgram(prog_pos);
@@ -409,7 +450,7 @@ void HeightField::calculateNormals() {
   GLenum drawbufs[] = { GL_COLOR_ATTACHMENT4, GL_COLOR_ATTACHMENT7 } ;
 
   glViewport(0, 0, N, N);
-  glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+  glBindFramebuffer(GL_FRAMEBUFFER, fbo0);
   glDrawBuffers(2, drawbufs);
 
   glUseProgram(prog_norm);
@@ -425,6 +466,52 @@ void HeightField::calculateNormals() {
   
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glViewport(0, 0, W, H);
+}
+
+void HeightField::calculateFoam() {
+  // GLenum drawbufs[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 } ;
+  
+  glBindFramebuffer(GL_FRAMEBUFFER, fbo1);
+  glViewport(0, 0, N, N);
+  glUseProgram(foam_prog);
+  glBindVertexArray(vao);
+  glDisable(GL_BLEND);
+  
+  if(state_foam == 0) {
+    GLenum drawbufs[] = { GL_COLOR_ATTACHMENT0 } ;
+    glDrawBuffers(1, drawbufs);
+
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, tex_foam1);
+  }
+  else {
+    GLenum drawbufs[] = { GL_COLOR_ATTACHMENT1 } ;
+    glDrawBuffers(1, drawbufs);
+
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, tex_foam0);
+  }
+
+  if(state_diffuse == 1) {
+    glActiveTexture(GL_TEXTURE0);  // prev
+    glBindTexture(GL_TEXTURE_2D, tex_u0);
+    glActiveTexture(GL_TEXTURE1); // curr
+    glBindTexture(GL_TEXTURE_2D, tex_u1);
+  }
+  else {
+    glActiveTexture(GL_TEXTURE0);  // prev
+    glBindTexture(GL_TEXTURE_2D, tex_u1);
+    glActiveTexture(GL_TEXTURE1); // curr
+    glBindTexture(GL_TEXTURE_2D, tex_u0);
+  }
+
+  //  glClear(GL_COLOR_BUFFER_BIT);
+  glDrawArrays(GL_POINTS, 0, NN);
+
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glViewport(0, 0, W, H);
+
+  state_foam = 1 - state_foam;
 }
 
 
@@ -478,4 +565,14 @@ void HeightField::drawForceTexture(GLuint tex, float px, float py, float pw, flo
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
   //glViewport(0, 0, W, H);
+}
+
+
+void HeightField::debugDraw() {
+
+  // Draw the height field delta 
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo1);
+  glReadBuffer(GL_COLOR_ATTACHMENT1);
+  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+  glBlitFramebuffer(0, 0, N, N, 0, 0, N, N, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 }

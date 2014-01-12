@@ -384,6 +384,7 @@ void Mask::maskOutScene() {
   glBindTexture(GL_TEXTURE_2D, mask_tex);
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, scene_tex);
+
   glActiveTexture(GL_TEXTURE2);
   glBindTexture(GL_TEXTURE_2D, thresh.output_tex);
 
