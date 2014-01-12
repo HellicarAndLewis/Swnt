@@ -154,19 +154,19 @@ static const char* WATER_FS = ""
   "  } "
 
 
-  //   " foam_delta = 1.0;"
-  "  float foam_flow_k = 0.2;"
+#define WATER_USE_MOVING_FOAM 1
+  "  vec3 foam_ramp_color = texture(u_foam_ramp, vec2(clamp(pow(foam_delta * 0.08, 0.2), 0.0, 0.99), 0.0)).rgb;"
+#if WATER_USE_MOVING_FOAM
+  "  float foam_flow_k = 0.3;"
   "  vec2 foam_tc0 = vec2(flipped_tex.x + foam_flow_k * texcoord0.x, flipped_tex.y + foam_flow_k * texcoord0.y);"
   "  vec2 foam_tc1 = vec2(flipped_tex.x + foam_flow_k * texcoord1.x, flipped_tex.y + foam_flow_k * texcoord1.y);"
-  "  vec3 foam_ramp_color = texture(u_foam_ramp, vec2(clamp(pow(foam_delta * 0.08, 4.0), 0.0, 0.99), 0.0)).rgb;"
-  //  "  vec3 foam_color0 = texture(u_foam_colors, texcoord0).rgb;"
-  //  "  vec3 foam_color1 = texture(u_foam_colors, texcoord1).rgb;"
-  "  vec3 foam_color0 = texture(u_foam_colors, foam_tc0 * 5.0).rgb;"
-  "  vec3 foam_color1 = texture(u_foam_colors, foam_tc1 * 5.0).rgb;"
+  "  vec3 foam_color0 = texture(u_foam_colors, foam_tc0 * 10.0).rgb;"
+  "  vec3 foam_color1 = texture(u_foam_colors, foam_tc1 * 10.0).rgb;"
   "  vec3 foam_color = mix(foam_color0, foam_color1, lerp);"
-  //  "  foam_color = vec3(foam_color.b, foam_color.g, foam_color.b);"
-  // "  float foam_m = dot(foam_ramp_color, foam_color); " 
-   "  float foam_m = dot(foam_ramp_color, texture(u_foam_colors, flipped_tex * 5.0).rgb); " 
+  "  float foam_m = dot(foam_ramp_color, foam_color); " 
+#else 
+  "  float foam_m = dot(foam_ramp_color, texture(u_foam_colors, flipped_tex * 10.0).rgb); " 
+#endif
 
   //"  float foam_k = foam_delta + (v_pos.y / u_foam_depth);"
   
