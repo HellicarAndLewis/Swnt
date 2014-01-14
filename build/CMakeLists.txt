@@ -14,37 +14,65 @@ include_directories(
   ${CMAKE_CURRENT_LIST_DIR}/../include
   ${extern_include_dir}
   ${CMAKE_CURRENT_LIST_DIR}/../shared/tinylib/src
-)
+  )
 
-set(app_sources
-  ${sd}/main.cpp
-  ${sd}/swnt/Swnt.cpp
-  ${sd}/swnt/Kinect.cpp
-  ${sd}/swnt/Settings.cpp
-  ${sd}/swnt/Graphics.cpp
-  ${sd}/swnt/Mask.cpp
-  ${sd}/swnt/Blur.cpp
-  ${sd}/swnt/Threshold.cpp
-  ${sd}/swnt/Tracking.cpp
-  ${sd}/swnt/Spirals.cpp
-  ${sd}/swnt/Flow.cpp
-  ${sd}/swnt/Particles.cpp
-  ${sd}/swnt/Water.cpp
-  ${sd}/swnt/HeightField.cpp
-  ${sd}/swnt/Tides.cpp
-  ${sd}/swnt/Effects.cpp
-  ${sd}/swnt/effects/BaseEffect.cpp
-  ${sd}/swnt/effects/Eddy.cpp
-  ${sd}/swnt/effects/Splashes.cpp
-  ${sd}/swnt/Scene.cpp
-  ${sd}/swnt/GUI.cpp
-  ${sd}/swnt/RGBShift.cpp
-  ${sd}/swnt/Weather.cpp
-  ${sd}/swnt/Audio.cpp
-  ${sd}/swnt/WaterBall.cpp
-  ${sd}/ocean/WaterGraphics.cpp
-  ${sd}/ocean/Ocean.cpp
-)
+if(NOT WIN32)
+  set(app_sources
+    ${sd}/main.cpp
+    ${sd}/swnt/Swnt.cpp
+    ${sd}/swnt/Kinect.cpp
+    ${sd}/swnt/Settings.cpp
+    ${sd}/swnt/Graphics.cpp
+    ${sd}/swnt/Mask.cpp
+    ${sd}/swnt/Blur.cpp
+    ${sd}/swnt/Threshold.cpp
+    ${sd}/swnt/Tracking.cpp
+    ${sd}/swnt/Spirals.cpp
+    ${sd}/swnt/Flow.cpp
+    ${sd}/swnt/Particles.cpp
+    ${sd}/swnt/Water.cpp
+    ${sd}/swnt/HeightField.cpp
+    ${sd}/swnt/Tides.cpp
+    ${sd}/swnt/Effects.cpp
+    ${sd}/swnt/effects/BaseEffect.cpp
+    ${sd}/swnt/effects/Eddy.cpp
+    ${sd}/swnt/effects/Splashes.cpp
+    ${sd}/swnt/Scene.cpp
+    ${sd}/swnt/GUI.cpp
+    ${sd}/swnt/RGBShift.cpp
+    ${sd}/swnt/Weather.cpp
+    ${sd}/swnt/Audio.cpp
+    ${sd}/swnt/WaterBall.cpp
+    #  ${sd}/ocean/WaterGraphics.cpp
+    #  ${sd}/ocean/Ocean.cpp
+    )
+else()
+  set(app_sources
+    ${sd}/main.cpp
+    ${sd}/swnt/Swnt.cpp
+    ${sd}/swnt/Settings.cpp
+    ${sd}/swnt/Graphics.cpp
+    ${sd}/swnt/Mask.cpp
+    ${sd}/swnt/Blur.cpp
+    ${sd}/swnt/Threshold.cpp
+    ${sd}/swnt/Tracking.cpp
+    ${sd}/swnt/Spirals.cpp
+    ${sd}/swnt/Flow.cpp
+    ${sd}/swnt/Particles.cpp
+    ${sd}/swnt/Water.cpp
+    ${sd}/swnt/HeightField.cpp
+    ${sd}/swnt/Tides.cpp
+    ${sd}/swnt/Effects.cpp
+    ${sd}/swnt/effects/BaseEffect.cpp
+    ${sd}/swnt/effects/Eddy.cpp
+    ${sd}/swnt/effects/Splashes.cpp
+    ${sd}/swnt/Scene.cpp
+    ${sd}/swnt/RGBShift.cpp
+    ${sd}/swnt/Weather.cpp
+    ${sd}/swnt/WaterBall.cpp
+    ${extern_source_dir}/GLXW/glxw.c
+    )
+endif()
 
 if(UNIX AND NOT APPLE)
   list(APPEND app_sources ${extern_source_dir}/GLXW/glxw.c)
@@ -106,6 +134,31 @@ elseif(UNIX)
     pthread
     dl
     Xi
+    )
+elseif(WIN32)
+  message("Extern dir: ${extern_lib_dir}")
+  target_link_libraries(
+     ${app}
+     ${extern_lib_dir}/libpng16.lib
+     ${extern_lib_dir}/glfw3.lib
+     ${extern_lib_dir}/opencv_core300.lib
+     ${extern_lib_dir}/opencv_video300.lib
+     ${extern_lib_dir}/opencv_cudaarithm300.lib
+     ${extern_lib_dir}/opencv_cudabgsegm300.lib
+     ${extern_lib_dir}/opencv_cudafilters300.lib
+     ${extern_lib_dir}/opencv_cudawarping300.lib
+     ${extern_lib_dir}/opencv_imgproc300.lib
+     ${extern_lib_dir}/opencv_optim300.lib
+     ${extern_lib_dir}/opencv_superres300.lib
+     ${extern_lib_dir}/libuv.lib
+     ${extern_lib_dir}/libcurl.lib
+     Opengl32.lib
+     ws2_32.lib
+     psapi.lib
+     iphlpapi.lib
+     )
+  add_definitions(
+    -DWIN32_LEAN_AND_MEAN
     )
 endif()
 

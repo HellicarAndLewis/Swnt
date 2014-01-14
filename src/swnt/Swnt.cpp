@@ -270,6 +270,11 @@ void Swnt::update() {
 
 void Swnt::draw() {
 
+#if 1
+  water.draw();
+  return ;
+#endif
+
 #if 0
   ball_drawer.draw();
   gui.draw();

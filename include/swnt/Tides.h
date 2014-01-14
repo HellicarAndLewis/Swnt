@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <stdint.h>
+#include <algorithm>
 
 #define TIDES_PARSE_STATE_NONE 0
 #define TIDES_PARSE_STATE_HEADER0 1

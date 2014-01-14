@@ -23,21 +23,31 @@
 
 #include <swnt/Types.h>
 #include <swnt/Settings.h>
-#include <swnt/Kinect.h>
+#if USE_KINECT
+#  include <swnt/Kinect.h>
+#endif
 #include <swnt/Graphics.h>
 #include <swnt/Mask.h>
 #include <swnt/Tracking.h>
 #include <swnt/Flow.h>
 #include <swnt/HeightField.h>
 #include <swnt/Water.h>
-#include <swnt/Effects.h>
+#if USE_EFFECTS
+#  include <swnt/Effects.h>
+#endif
 #include <swnt/RGBShift.h>
-#include <swnt/GUI.h>
+#if USE_GUI
+#  include <swnt/GUI.h>
+#endif
 #include <swnt/Weather.h>
 #include <swnt/Scene.h>
-#include <swnt/Audio.h>
+#if USE_AUDIO
+#  include <swnt/Audio.h>
+#endif
 #include <swnt/WaterBall.h>
+#if USE_TIDES
 #include <swnt/Tides.h>
+#endif
 
 #define ROXLU_USE_OPENGL
 #define ROXLU_USE_MATH
@@ -142,7 +152,6 @@ class Swnt {
 #if USE_GUI
   GUI gui;
 #endif
-
 
   /* matrices for rendering the ocean */
   mat4 view_matrix;                  /* camera view matrix */

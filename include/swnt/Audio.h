@@ -2,9 +2,9 @@
 #define SWNT_AUDIO_H
 
 extern "C" {
+#  include <uv.h>
 #  include <mpg123.h>
 #  include <ao/ao.h>
-#  include <uv.h>
 }
 
 #include <vector>

@@ -302,7 +302,7 @@ void Weather::update() {
     fetchYahooRSS();
     printf("TTL: %lld\n", ttl);
     uint64_t minutes = 1;
-    timeout = now + minutes * (1000000LLU * 1000LLU * 60LLU);
+    timeout = now + minutes * (1000000ull * 1000ull * 60ull);
   }
 }
 

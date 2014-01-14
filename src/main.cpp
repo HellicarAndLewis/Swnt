@@ -67,7 +67,7 @@ int main() {
   glfwMakeContextCurrent(win);
   glfwSwapInterval(1);
 
-#if defined(__linux)
+#if defined(__linux) || defined(WIN32)
   if(glxwInit() != 0) {
     printf("error: cannot initialize glxw.\n");
     ::exit(EXIT_FAILURE);
@@ -210,13 +210,17 @@ void key_callback(GLFWwindow* win, int key, int scancode, int action, int mods) 
         dir.set(c, s, 0.0);
         vec3 p(pos.x + c * radius, pos.y + s * radius, 0.0);
       //      dir.set(1.0, 0.0, 0.0);
+#if USE_EFFECTS
         swnt.effects.splashes.createParticle(p, dir);
+#endif
       }
       break;
     }
     case GLFW_KEY_R: {
       printf("Recompiled.\n");
+#if USE_EFFECTS
       swnt.effects.splashes.prog.recompile();
+#endif
       break;
     }
   };

@@ -19,8 +19,6 @@
 #include <vector>
 #include <string>
 
-
-
 // ------------------------------------------------------
 
 static const char* WATER_VS = ""

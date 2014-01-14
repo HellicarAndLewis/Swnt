@@ -1,20 +1,24 @@
 #ifndef HEIGHTFIELD_H
 #define HEIGHTFIELD_H
 
-#define W 1024
-#define H 768
-#define N 128
-#define NN (N * N)
-#define DRAW_WIDTH 35.0
-#define DRAW_HEIGHT 35.0
-#define QUOTE_E(x) # x
-#define QUOTE(x) QUOTE_E(x)
+
+#define HEIGHT_FIELD_W 1024
+#define HEIGHT_FIELD_H 768
+
+#define HEIGHT_FIELD_N 128
+#define HEIGHT_FIELD_NN (HEIGHT_FIELD_N * HEIGHT_FIELD_N)
+
+#define HEIGHT_FIELD_DRAW_WIDTH 35.0
+#define HEIGHT_FIELD_DRAW_HEIGHT 35.0
+#define HEIGHT_FIELD_QUOTE_E(x) # x
+#define HEIGHT_FIELD_QUOTE(x) HEIGHT_FIELD_QUOTE_E(x)
 
 #define ROXLU_USE_OPENGL
 #define ROXLU_USE_MATH
 #define ROXLU_USE_PNG
 #include <tinylib.h>
 #include <vector>
+
 
 /*
 
@@ -51,7 +55,7 @@ static const char* HF_DIFFUSE_VERT = ""
   "}"
 
   "void main() {                  "
-  "  gl_Position = vec4(-1.0 + float(a_tex.x) * (1.0 / " QUOTE(N) ") * 2.0, -1.0 + float(a_tex.y) * (1.0 / " QUOTE(N) ") * 2.0, 0.0, 1.0);"
+  "  gl_Position = vec4(-1.0 + float(a_tex.x) * (1.0 / " HEIGHT_FIELD_QUOTE(HEIGHT_FIELD_N) ") * 2.0, -1.0 + float(a_tex.y) * (1.0 / " HEIGHT_FIELD_QUOTE(HEIGHT_FIELD_N) ") * 2.0, 0.0, 1.0);"
 
   "  float u_center = get_force( 0,  0);"
   "  float u_left   = get_force(-1,  0);"
@@ -104,18 +108,18 @@ static const char* HF_POSITION_VS = ""
   "out vec3 v_pos;" 
   "out vec2 v_tex;"
 
-  "const float size_y = " QUOTE(DRAW_WIDTH) ";"
-  "const float size_x = " QUOTE(DRAW_HEIGHT) ";"
-  "const float step_y = size_y / " QUOTE(N) ";"
-  "const float step_x = size_x / " QUOTE(N) ";"
+  "const float size_y = " HEIGHT_FIELD_QUOTE(HEIGHT_FIELD_DRAW_WIDTH) ";"
+  "const float size_x = " HEIGHT_FIELD_QUOTE(HEIGHT_FIELD_DRAW_HEIGHT) ";"
+  "const float step_y = size_y / " HEIGHT_FIELD_QUOTE(HEIGHT_FIELD_N) ";"
+  "const float step_x = size_x / " HEIGHT_FIELD_QUOTE(HEIGHT_FIELD_N) ";"
   "const float hx = size_x * 0.5;"
   "const float hy = size_y * 0.5;"
-  "const float step_size = 2.0 * (1.0 / " QUOTE(N) ");"
+  "const float step_size = 2.0 * (1.0 / " HEIGHT_FIELD_QUOTE(HEIGHT_FIELD_N) ");"
 
   "void main() {"
   "  gl_Position = vec4(-1.0 + float(a_tex.s) * step_size, -1.0 + a_tex.t * step_size, 0.0, 1.0);"
   "  float current_height = texelFetch(u_tex_u, ivec2(a_tex.s + 0, a_tex.t + 0), 0).r;"
-  "  v_tex = vec2(a_tex.s * (1.0 / " QUOTE(N) "), a_tex.t * (1.0 / " QUOTE(N) "));"
+  "  v_tex = vec2(a_tex.s * (1.0 / " HEIGHT_FIELD_QUOTE(HEIGHT_FIELD_N) "), a_tex.t * (1.0 / " HEIGHT_FIELD_QUOTE(HEIGHT_FIELD_N) "));"
   "  float noise_height = texture(u_tex_noise, vec2(v_tex.s, v_tex.t + u_time)).r * 3.2;"
   "  v_pos = vec3(-hx + (a_tex.s + 0) * step_x, current_height + noise_height, -hy + a_tex.t * step_y + 0);"
   "}"
@@ -143,13 +147,13 @@ static const char* HF_NORMALS_VS = ""
   "in ivec2 a_tex;"
   "out vec3 v_norm;"
   "out vec3 v_grad;"
-  "const float size_y = " QUOTE(DRAW_WIDTH) ";"
-  "const float size_x = " QUOTE(DRAW_HEIGHT) ";"
-  "const float step_y = size_y / " QUOTE(N) ";"
-  "const float step_x = size_x / " QUOTE(N) ";"
+  "const float size_y = " HEIGHT_FIELD_QUOTE(HEIGHT_FIELD_DRAW_WIDTH) ";"
+  "const float size_x = " HEIGHT_FIELD_QUOTE(HEIGHT_FIELD_DRAW_HEIGHT) ";"
+  "const float step_y = size_y / " HEIGHT_FIELD_QUOTE(HEIGHT_FIELD_N) ";"
+  "const float step_x = size_x / " HEIGHT_FIELD_QUOTE(HEIGHT_FIELD_N) ";"
   "const float hx = size_x * 0.5;"
   "const float hy = size_y * 0.5;"
-  "const float step_size = 2.0 * (1.0 / " QUOTE(N) ");"
+  "const float step_size = 2.0 * (1.0 / " HEIGHT_FIELD_QUOTE(HEIGHT_FIELD_N) ");"
 
   "float grid(int i, int j) { "
   "  return texelFetch(u_tex_u, ivec2(a_tex.s + i, a_tex.t + j), 0).r; "
@@ -205,10 +209,10 @@ static const char* HF_RENDER_VS = ""
   "in ivec2 a_tex;"
   "out vec3 v_norm;"
 
-  "const float size_y = " QUOTE(DRAW_WIDTH) ";"
-  "const float size_x = " QUOTE(DRAW_HEIGHT) ";"
-  "const float step_y = size_y / " QUOTE(N) ";"
-  "const float step_x = size_x / " QUOTE(N) ";"
+  "const float size_y = " HEIGHT_FIELD_QUOTE(HEIGHT_FIELD_DRAW_WIDTH) ";"
+  "const float size_x = " HEIGHT_FIELD_QUOTE(HEIGHT_FIELD_DRAW_HEIGHT) ";"
+  "const float step_y = size_y / " HEIGHT_FIELD_QUOTE(HEIGHT_FIELD_N) ";"
+  "const float step_x = size_x / " HEIGHT_FIELD_QUOTE(HEIGHT_FIELD_N) ";"
   "const float hx = size_x * 0.5;"
   "const float hy = size_y * 0.5;"
   
@@ -297,7 +301,7 @@ static const char* HF_FOAM_VS = ""
   "out float v_curr_u; "
   "out float v_prev_u; "
   "out float v_prev_foam;"
-  "const float step_size = 2.0 * (1.0 / " QUOTE(N) ");"
+  "const float step_size = 2.0 * (1.0 / " HEIGHT_FIELD_QUOTE(HEIGHT_FIELD_N) ");"
   "void main() {"
   "  gl_Position = vec4(-1.0 + float(a_tex.s) * step_size, -1.0 + a_tex.t * step_size, 0.0, 1.0);"
   "  v_curr_u = texelFetch(u_prev_u_tex, a_tex, 0).r;"
@@ -319,6 +323,8 @@ static const char* HF_FOAM_FS = ""
   "}"
   "";
 
+
+
 struct FieldVertex {
   FieldVertex(){ tex[0] = 0; tex[1] = 0; }
   FieldVertex(int i, int j) { tex[0] = i; tex[1] = j; }
@@ -331,13 +337,13 @@ class HeightField {
 
  public:
   HeightField();
+
   bool setup();
   void calculateHeights();          /* diffuse step */
   void calculatePositions();        /* after the new heights have been diffused we can update the position buffer */
   void calculateNormals();          /* after calling diffuse() you need to diffuse the normals */
   void calculateFoam();             /* after all above calculation are done, we do one more step that calculates the foam */
   void debugDraw();                 /* used while debugging; blits some buffers to screen */
-
   void drawTexture(GLuint tex, float x, float y, float w, float h);
   void render();
 

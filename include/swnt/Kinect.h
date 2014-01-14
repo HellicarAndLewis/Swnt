@@ -2,10 +2,10 @@
 #define KINECT_H
 
 extern "C" {
+#  include <uv.h>
 #  include <string.h>
 #  include <stdlib.h>
 #  include <stdio.h>
-#  include <uv.h>
 #  include <libfreenect/libfreenect.h>
 }
 

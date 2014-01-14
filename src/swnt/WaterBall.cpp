@@ -70,7 +70,7 @@ void WaterBall::update(float dt) {
     if(drops.size() < 10) {
       uint64_t now = rx_hrtime();
       if(now >= spawn_timeout) {
-        spawn_timeout = now + spawn_delay * 1000000LLU;
+        spawn_timeout = now + spawn_delay * 1000000ull;
 
         addRandomDrop();
     
@@ -93,7 +93,7 @@ void WaterBall::update(float dt) {
     if(now >= flush_timeout) {
       if(drops.size()) {
         drops.erase(drops.begin());
-        flush_timeout = now + flush_delay * 1000000LLU;
+        flush_timeout = now + flush_delay * 1000000ull;
         if(!drops.size()) {
           state = WATERDROP_STATE_FREE;
         }
@@ -172,7 +172,7 @@ void WaterBall::update(float dt) {
         if(now >= flush_timeout) {
           if(drops.size()) {
             it = drops.erase(drops.begin());
-            flush_timeout = now + flush_delay * 1000000LLU;
+            flush_timeout = now + flush_delay * 1000000ull;
 
             if(!drops.size()) {
               state = WATERDROP_STATE_FREE;
