@@ -123,6 +123,8 @@ void Tracking::updateVertices() {
   contour_offsets.clear();
   contour_nvertices.clear();
   closest_points.clear();
+  closest_dirs.clear();
+  closest_centers.clear();
 
   if(!contours.size()) {
     return;
@@ -130,7 +132,9 @@ void Tracking::updateVertices() {
 
   int closest_dist = INT_MAX;
   vec2 closest_point;
+  vec2 closest_dir; 
   vec2 contour_center(settings.image_processing_w * 0.5, settings.image_processing_h * 0.5);
+  float radius = 220;
 
   // Get all valid contours and find peaks
   {
@@ -154,11 +158,20 @@ void Tracking::updateVertices() {
         int dist_to_center = dot(dir_to_center, dir_to_center);
       
         if(dist_to_center < closest_dist) {
+          closest_dir = dir_to_center;
           closest_dist = dist_to_center;
           closest_point = v;
         }
       }
 
+      // adjust the closest point from the center to the contain, so it's between the `radius` and the found point. this will make sure the water drops are nicely on the hands
+      vec2 closest_dir_norm = normalized(closest_dir);
+      vec2 to_radius = closest_dir_norm * radius;
+      vec2 to_radius_d = settings.radius - length(to_radius - closest_dir);
+      float dist_to_radius = length(to_radius_d);
+      closest_point = contour_center - (closest_dir_norm * dist_to_radius * 0.5); 
+
+      closest_dirs.push_back(closest_dir);
       closest_points.push_back(closest_point);
       closest_dist = INT_MAX;
       contour_nvertices.push_back(contour_vertices.size() - start_nvertices);

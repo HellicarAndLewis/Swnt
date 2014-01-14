@@ -53,7 +53,6 @@ int main() {
   }
 
   GLFWwindow* win = NULL;
-
   //win = glfwCreateWindow(settings.win_w, settings.win_h, "Swnt", glfwGetPrimaryMonitor(), NULL);
   win = glfwCreateWindow(settings.win_w, settings.win_h, "Swnt", NULL, NULL);
   if(!win) {
@@ -173,6 +172,12 @@ void key_callback(GLFWwindow* win, int key, int scancode, int action, int mods) 
       swnt.state = STATE_RENDER_SCENE;
       break;
     }
+    case GLFW_KEY_G: { 
+#if USE_GUI
+      swnt.draw_gui = !swnt.draw_gui;
+#endif      
+      break;
+    }
     case GLFW_KEY_SPACE: {
       break;
     }
@@ -242,5 +247,6 @@ void cursor_callback(GLFWwindow* win, double x, double y) {
 
   force_x = x/1280.0;
   force_y = (720-y)/720.0;
+  // printf("force_x: %f, force_y: %f\n", force_x, force_y);
 
 }

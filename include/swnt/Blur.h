@@ -5,11 +5,11 @@
   Simple blur shader which performs 2 passes; a vertical and horizontal blur.
   This class assumes you set the read framebuffer and then call blur(). We read
   the current GL_READ_FRAMEBUFFER into our intermediate scene texture and then 
-  perfrom 2 passes. This means we might have one extra blit which might be considered
+  perfom 2 passes. This means we might have one extra blit which might be considered
   a performance issue; thouh on modern gpus you won't notice anything.
  
   To use the blurred result, call setAsReadBuffer() and either blit it to the
-  default framebuffer or do something else with it 
+  default framebuffer or do something else with it.
  
 */
  
@@ -72,7 +72,7 @@ class Blur {
   GLuint tex1;                   /* intermedia texture */
   int win_w;                     /* width of the window/fbo */
   int win_h;                     /* height of the window/fbo */
-  float blur_amount;             /* the blur amount, 5-8 normal, 8+ heave */
+  float blur_amount;             /* the blur amount, 5-8 normal, 8+ heavy */
   int num_fetches;               /* how many texel fetches (half), the more the heavier for the gpu but more blur  */
 };
  

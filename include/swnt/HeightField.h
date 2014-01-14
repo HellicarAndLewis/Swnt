@@ -59,9 +59,9 @@ static const char* HF_DIFFUSE_VERT = ""
   "  float u_top    = get_force( 0, -1);"
   "  float u_bottom = get_force( 0,  1);"
 
-  "  float f = 1.4 * ((u_right + u_left + u_bottom + u_top) - (4.0 * u_center));"
+  "  float f = 4.4 * ((u_right + u_left + u_bottom + u_top) - (4.0 * u_center));"
   "  { "
-  "    float max = 0.5;" // set to 0.5 for slow/stable water
+  "    float max = 4.5;" // set to 0.5 for slow/stable water
   "    if(f > max) { f = max; } else if( f < -max) { f = -max; } "
   "  } "
 
@@ -163,8 +163,8 @@ static const char* HF_NORMALS_VS = ""
   "  vec3 top_pos         = texelFetch(u_tex_pos, ivec2(a_tex.s + 0, a_tex.t - 1), 0).rgb;"
   "  vec3 to_right        = right_pos - current_pos; "
   "  vec3 to_top          = top_pos - current_pos;"
-  //  "  v_norm = normalize(cross(to_right, to_top));"
-  "  v_norm = (cross(to_right, to_top));"
+  "  v_norm = normalize(cross(to_right, to_top));"
+  //  "  v_norm = (cross(to_right, to_top));"
 
   "  float center = grid(0, 0);"
   "  float left   = grid(-1, 0);"

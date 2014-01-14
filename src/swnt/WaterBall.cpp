@@ -18,7 +18,7 @@ WaterBall::WaterBall()
   :win_w(0)
   ,win_h(0)
   ,spawn_timeout(0)
-  ,spawn_delay(1000)
+  ,spawn_delay(300)
   ,flush_timeout(0)
   ,flush_delay(100)
   ,state(WATERDROP_STATE_NONE)
@@ -30,6 +30,7 @@ WaterBall::WaterBall()
   ,max_drop_size(150.0f)
   ,min_drop_mass(0.1f)
   ,max_drop_mass(5.0f)
+   //,enabled(false)
 {
 }
 
@@ -44,15 +45,17 @@ bool WaterBall::setup(int w, int h) {
 
   position.set(w * 0.5, h * 0.5);
   spawn_timeout = rx_hrtime() + (spawn_delay * 1000);
- 
+
+  /*
   float cx = w * 0.5;
   float cy = h * 0.5;
   int num = 40;
   for(int i = 0; i < num; ++i) {
     addDrop(vec2(rx_random(0, w), rx_random(0, h)), 1.0f);
   }
+  */
 
-  state = WATERDROP_STATE_NORMAL;
+  state = WATERDROP_STATE_FREE;
 
   return true;
 }
@@ -64,22 +67,26 @@ void WaterBall::update(float dt) {
   }
   else if(state == WATERDROP_STATE_FILL) {
   
-    uint64_t now = rx_hrtime();
-    if(now >= spawn_timeout) {
-      spawn_timeout = now + spawn_delay * 1000000LLU;
+    if(drops.size() < 10) {
+      uint64_t now = rx_hrtime();
+      if(now >= spawn_timeout) {
+        spawn_timeout = now + spawn_delay * 1000000LLU;
 
-      addRandomDrop();
+        addRandomDrop();
     
-      if(drops.size() == 50) {
-        printf("We reached 50 drops, flush!\n");
-        state = WATERDROP_STATE_FLUSH;
-        flush_timeout = now + flush_delay * 1000000LLU;
+        /*
+          if(drops.size() == 10) {
+          printf("We reached N drops, flush!\n");
+          state = WATERDROP_STATE_FLUSH;
+          flush_timeout = now + flush_delay * 1000000LLU;
+          }
+        */
       }
     }
   }
-  else {
+  else if(state == WATERDROP_STATE_FLUSH) {
 
-#if 0
+#if 1
     // Remove the water drop when we need to flush (see below for a version where we remove 
     // water drops only when they are in a certain radius.
     uint64_t now = rx_hrtime();
@@ -87,6 +94,9 @@ void WaterBall::update(float dt) {
       if(drops.size()) {
         drops.erase(drops.begin());
         flush_timeout = now + flush_delay * 1000000LLU;
+        if(!drops.size()) {
+          state = WATERDROP_STATE_FREE;
+        }
       }
       else {
         state = WATERDROP_STATE_NORMAL;
@@ -98,7 +108,7 @@ void WaterBall::update(float dt) {
   if(!drops.size()) {
     return ;
   }
-  
+
   vec2 dir;
   float dist = 0.0f;
   float dist_sq = 0.0f;
@@ -109,7 +119,7 @@ void WaterBall::update(float dt) {
   float neighbor_dist_sq = neighbor_dist * neighbor_dist;
 
   // REPEL FORCES:
-#if 0
+#if 1
   for(size_t i = 0; i < drops.size(); ++i) {
 
     WaterDrop& a = drops[i];
@@ -156,21 +166,23 @@ void WaterBall::update(float dt) {
       if(dist > radius) {  /* when the particle is outiside the radius, it's attracted a lot more to the center */
         k = 15.0;
       }
-
+#if 0
       // This is where we flush the water drops! 
-      if(state == WATERDROP_STATE_FLUSH && dist < radius) {
+      if(state == WATERDROP_STATE_FLUSH  && dist < radius) {
         if(now >= flush_timeout) {
           if(drops.size()) {
             it = drops.erase(drops.begin());
             flush_timeout = now + flush_delay * 1000000LLU;
+
             if(!drops.size()) {
-              state = WATERDROP_STATE_NORMAL;
+              state = WATERDROP_STATE_FREE;
               break;
             }
             continue;
           }
         }
       }
+#endif
 
       dir /= dist;
       f = k * attract_force * (dist/radius) * dir;
@@ -233,7 +245,10 @@ void WaterBall::addDrop(vec2 position, float mass) {
 }
 
 void WaterBall::addRandomDrop() {
-  addDrop(vec2(rx_random(0, win_w), rx_random(0, win_h)), rx_random(min_drop_mass, max_drop_mass));
+  float s = 20;
+  addDrop(vec2(rx_random(position.x - s, position.x + s), 
+               rx_random(position.y - s, position.y + s)), 
+               rx_random(min_drop_mass, max_drop_mass));
 }
 
 // --------------------------------------------------------------------
@@ -343,9 +358,12 @@ void WaterBallDrawer::update(float dt) {
   drops.clear();
   for(std::vector<WaterBall*>::iterator it = balls.begin(); it != balls.end(); ++it) {
     WaterBall* b = *it;
-    if(b->state == WATERDROP_STATE_NONE) {
-      continue;
-    }
+
+    if(b->state == WATERDROP_STATE_NONE 
+       || b->state == WATERDROP_STATE_FREE) 
+      {
+        continue;
+      }
 
     b->update(dt);
 
@@ -357,7 +375,6 @@ void WaterBallDrawer::update(float dt) {
   }
 
   // update vbo
-  
   glBindBuffer(GL_ARRAY_BUFFER, basic_vbo);
   size_t bytes_needed = sizeof(WaterDrop) * drops.size();
   if(bytes_needed > bytes_allocated) {
@@ -378,6 +395,11 @@ void WaterBallDrawer::draw() {
 }
 
 void WaterBallDrawer::drawParticlesWithAlpha() {
+
+  if(!drops.size()) {
+    return;
+  }
+
   GLenum drawbufs[] = { GL_COLOR_ATTACHMENT0,  GL_COLOR_ATTACHMENT1  } ;
   glBindFramebuffer(GL_FRAMEBUFFER, fbo);
   glDrawBuffers(2, drawbufs);
@@ -402,7 +424,13 @@ void WaterBallDrawer::drawParticlesWithAlpha() {
 }
 
 void WaterBallDrawer::drawParticlesWithWaterEffect() {
+
+  if(!drops.size()) {
+    return;
+  }
+
   //glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glDisable(GL_DEPTH_TEST);
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 

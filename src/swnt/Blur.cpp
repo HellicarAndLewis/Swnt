@@ -126,7 +126,7 @@ bool Blur::setupShader() {
         << "void main() {\n"
         << "  fragcolor = texture(u_scene_tex, v_tex) * " << weights[0] << ";\n";
  
-  for(int i = 1 ; i < num_els; ++i) {
+  for(int i = 1 ; i <= num_els; ++i) {
     yblur << "  fragcolor += texture(u_scene_tex, v_tex + vec2(0.0, " << float(i) * dy << ")) * " << weights[i] << ";\n" ;
     yblur << "  fragcolor += texture(u_scene_tex, v_tex - vec2(0.0, " << float(i) * dy << ")) * " << weights[i] << ";\n" ;
     xblur << "  fragcolor += texture(u_scene_tex, v_tex + vec2(" << float(i) * dx << ", 0.0)) * " << weights[i] << ";\n" ;
@@ -180,6 +180,7 @@ bool Blur::setupShader() {
   }
   glUniform1i(u_scene_tex, 0);
  
+  //printf("%s\n", yblur_s.c_str());
   return true;
 }
  
@@ -199,6 +200,7 @@ void Blur::blur() {
  
   {
     // vertical blur
+
     GLenum draw_bufs1[] = { GL_COLOR_ATTACHMENT1 } ;
     glDrawBuffers(1, draw_bufs1);
  
@@ -207,6 +209,7 @@ void Blur::blur() {
  
     glUseProgram(prog0);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
   }
  
   {
@@ -219,7 +222,6 @@ void Blur::blur() {
  
     glUseProgram(prog1);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
- 
   }
  
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);

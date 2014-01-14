@@ -11,7 +11,7 @@ Mask::Mask(Settings& settings, Graphics& graphics)
   ,scene_fbo(0)
   ,scene_depth(0)
   ,scene_tex(0)
-  ,resolution(60)
+  ,resolution(560)
   ,mask_vert(0)
   ,mask_frag(0)
   ,mask_prog(0)
@@ -24,8 +24,12 @@ Mask::Mask(Settings& settings, Graphics& graphics)
   ,masked_out_pixels(NULL)
   ,masked_scene_frag(0)
   ,masked_scene_prog(0)
+  ,mask_tex_frag(0)
+  ,mask_tex_prog(0)
   ,perlin(4, 4, 1, 34)
   ,bytes_allocated(0)
+  ,scale(1.0)
+  ,scale_range(50.0f)
 {
 }
 
@@ -58,7 +62,7 @@ bool Mask::setup() {
     return false;
   }
 
-  if(!blur.setup(settings.image_processing_w, settings.image_processing_h, 30)) {
+  if(!blur.setup(settings.image_processing_w, settings.image_processing_h, 5, 5)) {
     printf("Error: cannot setup the blur shader.\n");
     return false;
   }
@@ -111,6 +115,8 @@ void Mask::updateVertices() {
   static float t = 0.001f;
   float a = TWO_PI / resolution;
   float first_change = 0;
+  float radius = settings.radius - scale_range + (scale_range * scale);
+
   for(int i = 0; i <= resolution; ++i) {
     //    float change = perlin.get(0.1 + float(i)/(resolution * 2.5), t) * 60;
 
@@ -122,9 +128,20 @@ void Mask::updateVertices() {
       change = first_change;
     }
 
+    //change = powf(cos(i * PI), 7) * sin(a * i) * 10.0;
+    //printf("%f\n", change);
+    //change = perlin.get(float(i)/resolution * 2.0, t) * 50;
     change = 0;
+    float perc = float(i) / (resolution-1);
+    //    float tri_v = 1.0 - (2 * (0.5 + sin(i * TWO_PI * 30)));
 
-    vec2 p(center.x + cos(a * i) * (settings.radius + change), center.y + sin(a * i) * (settings.radius + change));
+    //  printf("%f\n", tri_v);
+    // float tri = MAX(1.0 - (2 * (0.5 + sin(i * TWO_PI * 30))), 0.0) * 50;
+    //  printf("tri: %f, p: %f, %f\n", tri_v, perc, (1.0 - (2 * perc)));
+    change = sin(perc * TWO_PI * 10) * 5 ;
+
+    vec2 p(center.x + cos(a * i) * (radius + change), center.y + sin(a * i) * (radius + change));
+
     vertices.push_back(p);
 
   }
@@ -168,6 +185,23 @@ bool Mask::createShader() {
   glBindAttribLocation(masked_scene_prog, 1, "a_tex");
   glLinkProgram(masked_scene_prog);
   rx_print_shader_link_info(masked_scene_prog);
+
+  // Shader that will mask out a generic texture
+  mask_tex_frag = rx_create_shader(GL_FRAGMENT_SHADER, DRAW_MASKED_FS);
+  mask_tex_prog = rx_create_program(graphics.tex_vs, mask_tex_frag);
+  glBindAttribLocation(mask_tex_prog, 0, "a_pos");
+  glBindAttribLocation(mask_tex_prog, 1, "a_tex");
+  glLinkProgram(mask_tex_prog);
+  rx_print_shader_link_info(mask_tex_prog);
+  glUseProgram(mask_tex_prog);
+  glUniform1i(glGetUniformLocation(mask_tex_prog, "u_mask_tex"), 0);
+  glUniform1i(glGetUniformLocation(mask_tex_prog, "u_diffuse_tex"), 1);
+  glUniformMatrix4fv(glGetUniformLocation(mask_tex_prog, "u_pm"), 1, GL_FALSE, graphics.tex_pm.ptr());
+
+  mat4 mm;
+  mm.translate(settings.win_w * 0.5, settings.win_h * 0.5, 0.0f);
+  mm.scale(settings.win_w * 0.5, settings.win_h * 0.5, 1.0);
+  glUniformMatrix4fv(glGetUniformLocation(mask_tex_prog, "u_mm"), 1, GL_FALSE, mm.ptr());
 
   return true;
 }
@@ -392,6 +426,19 @@ void Mask::maskOutScene() {
   glDisable(GL_BLEND);
 }
 
+void Mask::maskOutTexture(GLuint tex) {
+
+  glBindVertexArray(graphics.tex_vao);
+  glUseProgram(mask_tex_prog);
+
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, mask_tex);
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D, tex);
+
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+}
+
 void Mask::print() {
   printf("mask.scene_tex: %d\n", scene_tex);
   printf("mask.mask_tex: %d\n", mask_tex);
@@ -406,4 +453,19 @@ void Mask::refresh() {
   assert(settings.color_dx < settings.colors.size());
   glUseProgram(masked_scene_prog);
   glUniform3fv(glGetUniformLocation(masked_scene_prog, "u_hand_col"), 1, settings.colors[settings.color_dx].hand.ptr());
+}
+
+void Mask::drawHand() {
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  maskOutTexture(thresh.output_tex);
+
+  //maskOutTexture(blur.tex0);
+  //  blur.setAsReadBuffer();
+  //  glBlitFramebuffer(0, 0, 640, 480, 0, 0, 640, 480, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+}
+
+void Mask::setScale(float s) {
+  s = CLAMP(s, 0.0f, 1.0f);
+  scale = s;
 }

@@ -26,19 +26,70 @@ Water::Water(HeightField& hf)
 {
   sun_pos[0] = 0.0;
   sun_pos[1] = 15.0;
-  sun_pos[2] = -300.0;
+  sun_pos[2] = -25.0;
   sun_color[0] = 4;
   sun_color[1] = 3;
   sun_color[2] = 1;
-  ads_intensities[0] = -0.75f;// ambient
+  ads_intensities[0] = 0.2f;  // ambient, the selected color
   ads_intensities[1] = 0.0f;  // diffuse
   ads_intensities[2] = 0.75f; // spec
-  ads_intensities[3] = 0.57;  // sun  
-  ads_intensities[4] = 0.64;  // foam
-  ads_intensities[5] = 1.09;  // texture
+  ads_intensities[3] = 0.36;  // sun  
+  ads_intensities[4] = 0.39;  // foam
+  ads_intensities[5] = 0.45;  // texture
+  ads_intensities[6] = 1.0;   // overall intensity
   ambient_color[0] = 46.0/255.0f;
   ambient_color[1] = 72.0/255.0f;
   ambient_color[2] = 96.0/255.0f;
+
+
+#if 0
+  float r = 0.0/255.0f;
+  float g = 125.0f/255.0f;
+  float b = 155.0f/255.0f;
+  float h,s,v = 0.0f;
+
+  float step = 0.01;
+  for(float i = 0; i < 1.0f; i += step) {
+    for(float j = 0; j < 1.0f; j += step) {
+      for(float k = 0; k < 1.0f; k += step) {
+        r = i;
+        g = j;
+        b = k;
+        rx_rgb_to_hsv(r,g,b, h,s,v);
+        printf("> hsv(%f, %f, %f), rgb(%f, %f, %f)\n", h,s,v, r,g,b);
+        float r1,g1,b1;
+        rx_hsv_to_rgb(h,s,v,r1,g1,b1);
+        printf("< hsv(%f, %f, %f), rgb(%f, %f, %f)\n", h,s,v, r,g,b);
+
+        if(fabs(r1 - r) > 0.001) {
+          //  printf("Red is wrong.\n");
+          //::exit(0);
+        }
+
+        if(fabs(g1 - g) > 0.001) {
+          //printf("Green is wrong.\n");
+          /// ::exit(0);
+        }
+       
+        if(fabs(b1 - b) > 0.001) {
+          //printf("Blue is wrong.\n");
+          //::exit(0);
+        }
+        printf("\n");
+      }
+    }
+  }
+
+  r = 0.0f;
+  g = 0.0f;
+  b = 0.2f;
+  rx_rgb_to_hsv(r,g,b,h,s,v);
+  printf("h: %f, s: %f, v: %f - r: %f, g: %f, b: %f\n", h,s, v, r, g, b);
+    r = g = b = 0;
+  rx_hsv_to_rgb(h,s,v,r,g,b);
+  printf("h: %f, s: %f, v: %f - r: %f, g: %f, b: %f\n", h, s, v, r, g, b);
+#endif
+  
 }
 
 GLuint Water::createTexture(std::string filename) {
@@ -244,12 +295,18 @@ void Water::draw() {
   glUniform1f(glGetUniformLocation(prog, "u_max_depth"), max_depth);
   glUniform1f(glGetUniformLocation(prog, "u_foam_depth"), foam_depth);
   glUniform1f(glGetUniformLocation(prog, "u_sun_shininess"), sun_shininess);
-  glUniform1fv(glGetUniformLocation(prog, "u_ads_intensities"), 6, ads_intensities);
+  glUniform1fv(glGetUniformLocation(prog, "u_ads_intensities"), 7, ads_intensities);
   glUniform3fv(glGetUniformLocation(prog, "u_ambient_color"), 1, ambient_color);
 
+  //glEnable(GL_CULL_FACE);
   //  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  //glFrontFace(GL_CW);
   glBindVertexArray(height_field.vao);
   glDrawElements(GL_TRIANGLES, height_field.indices.size(), GL_UNSIGNED_INT, NULL);
+  //glDisable(GL_CULL_FACE);
+  //glFrontFace(GL_CCW);
+  // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 
@@ -271,6 +328,28 @@ void Water::blitFlow(float x, float y, float w, float h) {
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
   glBlitFramebuffer(0, 0, win_w, win_h, x, y, w, h, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 }
+
+void Water::setTimeOfDay(float t, float sun) {
+  sun = CLAMP(sun, 0.0f, 1.0f);
+  foam_depth = 2.0 + (t * 1.2);
+  ads_intensities[6] = 1.0 + (sun * 0.6); // overall intensity
+
+  // change the color of the water.
+  vec3 hsv(sun * 0.410, 0.5, 0.5);
+  rx_hsv_to_rgb(hsv, ambient_color);
+
+  return;
+
+  ads_intensities[0] = -0.2 + (sun * 0.7); // ambient
+  ads_intensities[3] = (sun * 0.5);  // sun 
+  ads_intensities[4] = sun; // foam
+}
+
+void Water::setRoughness(float r) {
+  r = CLAMP(r, 0.0f, 1.0f);
+  
+}
+
 
 void Water::print() {
   printf("water.flow_tex: %d\n", flow_tex);

@@ -8,6 +8,7 @@
 #define WATERDROP_STATE_NORMAL 1
 #define WATERDROP_STATE_FILL 2
 #define WATERDROP_STATE_FLUSH 3
+#define WATERDROP_STATE_FREE 4
 
 class WaterDrop {
  public:
@@ -34,6 +35,12 @@ class WaterBall {
   void fill();                                /* start flushing the drops/waterball */
   void flush();                               /* start filling the waterball with drops */
   void addDrop(vec2 position, float mass);    /* adds a drop */
+  /*
+  void enable() { enabled = true; } 
+  void disable() { enabled = false; } 
+  bool isEnabled() { return enabled; } 
+  */
+  
 
  private:
   void addRandomDrop();                       /* adds a water drop somewhere on screen (0-win_w, 0-win_h) */
@@ -56,6 +63,7 @@ class WaterBall {
   float max_drop_size;                        /* maximum size of a water drop */
   float min_drop_mass;                        /* miminum random mass for a water drop; forces have more effect when the mass is low */
   float max_drop_mass;                        /* maximum random mass, used in addRandomDrop() */
+  //bool enabled;                               /* only update/draw when enabled */
 };
 
 class WaterBallDrawer {
@@ -93,5 +101,22 @@ class WaterBallDrawer {
   size_t bytes_allocated;                     /* number of bytes we allocted on gpu */
   mat4 pm;                                    /* projection matrix; ortho */
 };
+
+
+inline void WaterBall::flush() {
+  if(state == WATERDROP_STATE_FLUSH) {
+    printf("warning: Trying to set the state of a waterball to flush, but we're already flushing.\n");
+    return;
+  }
+  state = WATERDROP_STATE_FLUSH;
+}
+
+inline void WaterBall::fill() {
+  if(state == WATERDROP_STATE_FILL) {
+    printf("warning: Trying to set the state of a waterball to flush, but we're already flushing.\n");
+    return;
+  }
+  state = WATERDROP_STATE_FILL;
+}
 
 #endif

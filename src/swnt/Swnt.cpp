@@ -9,6 +9,10 @@ Swnt::Swnt(Settings& settings)
 #if USE_WATER
   ,water(height_field)
 #endif
+#if USE_TIDES
+  ,tides_timeout(0)
+  ,time_of_day(0)
+#endif
 #if USE_KINECT
   ,rgb_tex(0)
   ,depth_tex(0)
@@ -21,12 +25,18 @@ Swnt::Swnt(Settings& settings)
   ,draw_water(true)
   ,draw_vortex(false)
   ,draw_tracking(false)
+  ,draw_gui(true)
+  ,override_with_gui(false)
 #if USE_GUI
   ,gui(*this)
 #endif
 #if USE_EFFECTS
   ,effects(*this)
 #endif
+#if USE_WEATHER
+  ,has_weather_info(false)
+#endif
+  ,ocean_roughness(0.5f)
 {
 }
 
@@ -47,6 +57,14 @@ Swnt::~Swnt() {
     depth_image = NULL;
   }
 #endif
+
+  draw_flow = false;
+  draw_threshold = false;
+  draw_water = false;
+  draw_vortex = false;
+  draw_tracking = false;
+  draw_gui = false;
+  override_with_gui = false;
 }
 
 bool Swnt::setup() {
@@ -121,6 +139,13 @@ bool Swnt::setup() {
   }
 #endif
 
+#if USE_TIDES 
+  if(!tides.setup(rx_to_data_path("tides.txt"))) {  
+    printf("Error: cannot load the tides information.\n");
+    return false;
+  }
+#endif
+
 #if USE_AUDIO
   if(!audio.setup()) {
     printf("Error: cannot setup the audio player.\n");
@@ -149,7 +174,6 @@ bool Swnt::setup() {
     printf("Error: cannot setup the water ball drawer.\n");
     return false;
   }
-  ball_drawer.addWaterBall(new WaterBall());
 #endif
 
   // matrices for rendering the ocean
@@ -219,6 +243,12 @@ void Swnt::update() {
 
 #if USE_WEATHER
   weather.update();
+  WeatherInfo new_info;
+  bool weather_changed = weather.hasInfo(new_info);
+  if(weather_changed) {
+    has_weather_info = true;
+    weather_info = new_info;
+  }
 #endif
 
 #if USE_AUDIO
@@ -232,6 +262,10 @@ void Swnt::update() {
 #if USE_WATER_BALLS
   updateWaterBalls();
 #endif  
+
+#if USE_TIDES
+  updateTides();
+#endif
 }
 
 void Swnt::draw() {
@@ -276,6 +310,19 @@ void Swnt::draw() {
   
 #if USE_KINECT
 
+
+#if USE_WATER_BALLS
+    // apply forces onto the water, when water balls are flushing away
+    if(flush_points.size()) {
+      height_field.beginDrawForces();
+      for(std::vector<vec2>::iterator it = flush_points.begin(); it != flush_points.end(); ++it) {
+        vec2& p = *it;
+        height_field.drawForceTexture(water.force_tex0, 1.0 - p.x, p.y, 0.4, 0.4);
+      }
+      height_field.endDrawForces();
+    }
+#endif
+
     // capture the mask shape
     mask.beginMaskGrab();
        mask.drawMask();
@@ -292,6 +339,7 @@ void Swnt::draw() {
   water.endGrabFlow();
 #endif
     
+
     // capture the scene
     mask.beginSceneGrab();
     {
@@ -303,30 +351,25 @@ void Swnt::draw() {
 #    endif
 
       if(draw_vortex) {
-        // water.blitFlow(0.0, 0.0, 320.0f, 240.0f);
         effects.splashes.drawExtraDiffuse();
         effects.splashes.drawExtraFlow();
       }
 
-      if(draw_flow){ 
-        //  flow.draw();
-      }
-         mask.drawThresholded();
-      
+
     }
     mask.endSceneGrab();
 
     mask.maskOutDepth();
-
-    // flow.calc(mask.masked_out_pixels); 
-    tracking.track(mask.masked_out_pixels);
-
-    // draw the final masked out scene
-    mask.draw_hand = draw_threshold;
     mask.maskOutScene();
 
+    mask.drawHand();
+
+    tracking.track(mask.masked_out_pixels);
+
+    mask.draw_hand = draw_threshold;
+
 #    if USE_WATER_BALLS
-    //      ball_drawer.draw();
+    ball_drawer.draw();
 #    endif
 
 
@@ -341,6 +384,8 @@ void Swnt::draw() {
     rgb_shift.apply();
     rgb_shift.draw();
     #endif
+
+
   }
 #endif  // USE_KINECT
 
@@ -348,10 +393,12 @@ void Swnt::draw() {
 
 
 #if USE_GUI
-  gui.draw();
+  if(draw_gui) {
+    gui.draw();
+  }
 #endif
 
-  height_field.debugDraw();
+  // height_field.debugDraw();
 }
 
 
@@ -413,18 +460,19 @@ void Swnt::print() {
 #if USE_WATER_BALLS 
 
 void Swnt::updateWaterBalls() {
-
+  flush_points.clear();
   ball_drawer.update(0.016f);
 
   std::vector<Tracked*>& tracked_items = tracking.tracked;
   std::vector<TrackedWaterBall> free_tracked;
+  vec2 flush_point_to_water(1.0/settings.win_w, 1.0/settings.win_h);
 
   // Step 1: Find water balls, which don't have a tracked object anymore, so we can reuse them.
   for(std::vector<TrackedWaterBall>::iterator twit = tracked_balls.begin(); twit != tracked_balls.end(); ++twit) {
 
     TrackedWaterBall& tracked_ball = *twit;
     Tracked* found = NULL;
-
+    
     for(std::vector<Tracked*>::iterator it = tracked_items.begin(); it != tracked_items.end(); ++it) {
       Tracked* tr = *it;
       if(tr->id == tracked_ball.tracked_id) {
@@ -434,9 +482,27 @@ void Swnt::updateWaterBalls() {
     }
 
     if(!found) {
-      free_tracked.push_back(tracked_ball);
+      if(tracked_ball.water_ball->state == WATERDROP_STATE_FREE) {
+         free_tracked.push_back(tracked_ball);
+      }
+      else if(tracked_ball.water_ball->state == WATERDROP_STATE_FILL) {
+        tracked_ball.water_ball->flush();
+      }
+    }
+    else if(!found->matched) {
+      if(tracked_ball.water_ball->state == WATERDROP_STATE_FREE) {
+         free_tracked.push_back(tracked_ball);
+      }
+      else if(tracked_ball.water_ball->state == WATERDROP_STATE_FILL) {
+        tracked_ball.water_ball->flush();
+        flush_points.push_back(tracked_ball.water_ball->position * flush_point_to_water);
+      }
+      // printf("Found: %d, matched: %d, state: %d\n", found->id, found->matched, tracked_ball.water_ball->state);
     }
   }
+
+  float scale_x = float(settings.win_w) / settings.image_processing_w;
+  float scale_y = float(settings.win_h) / settings.image_processing_h;
 
   // Step: For each tracked object, find the related water ball or create a new one, when it isn't found
   for(std::vector<Tracked*>::iterator it = tracked_items.begin(); it != tracked_items.end(); ++it) {
@@ -465,6 +531,7 @@ void Swnt::updateWaterBalls() {
       free_tracked.erase(free_tracked.begin());
       free_tracked_ball.tracked_id = tracked->id;
       found = free_tracked_ball.water_ball;
+      found->fill();
     }
 
     if(!found) {
@@ -476,6 +543,8 @@ void Swnt::updateWaterBalls() {
       tracked_ball.tracked_id = tracked->id;
       tracked_balls.push_back(tracked_ball);
       found_tracked_ball = tracked_ball;
+
+      found->fill();
     }
 
     if(!found) {
@@ -483,13 +552,86 @@ void Swnt::updateWaterBalls() {
       ::exit(EXIT_FAILURE);
     }
 
-    printf("Tracking: %d, WaterBall: %p, Number of WaterBalls: %ld, age: %d\n", found_tracked_ball.tracked_id, found_tracked_ball.water_ball, ball_drawer.balls.size(), tracked->age);
+    //printf("Tracking: %d, WaterBall: %p, Number of WaterBalls: %ld, age: %d, (%f, %f), state: %d\n", found_tracked_ball.tracked_id, found_tracked_ball.water_ball, ball_drawer.balls.size(), tracked->age, tracked->position.x, tracked->position.y, found_tracked_ball.water_ball->state);
     //printf("Ball found: %p  total tracked now: %ld. Created balls: %ld, age: %d\n", found, tracked_balls.size(), ball_drawer.balls.size());
 
-    found->position = tracked->position; 
+    //found->position.set(tracked->position.x * scale_x, settings.win_h - (tracked->position.y * scale_y)); 
+    //found->enable();
+    found->position.set(tracked->position.x * scale_x, (tracked->position.y * scale_y)); 
+    //found->position.set(312, 0);
    
   }
 
 }
-
 #endif
+
+#if USE_TIDES
+void Swnt::updateTides() {
+
+  if(override_with_gui) {
+    return;
+  }
+
+  uint64_t now = rx_hrtime();
+  if(now < tides_timeout) {
+    return;
+  }
+
+  float t = 0.0f;
+  int hour = rx_get_hour();
+  if(hour) {
+    t = hour / 23.0;
+  }
+
+  int minute = rx_get_minute();
+  if(minute) {
+    float mt = (minute/59.0f) * 0.1;
+    t += mt;
+  }
+
+  setTimeOfDay(t);
+
+  tides_timeout = now + (1000000LLU * 1000LLU * 60LLU *  1LLU); // 1 minute(s)
+}
+
+void Swnt::setTimeOfDay(float t) {
+
+  t = CLAMP(t, 0.0f, 1.0f);
+  time_of_day = t;
+
+  float ht = fabs(t);
+
+  float mt = fmod(t * 10, 1.0f);
+  printf("Time: %d:%d\n", int(ht * 24), int(mt * 60));
+
+  // Update tides
+  TidesEntry entry;
+  if(tides.getEntry(rx_get_year(), rx_get_month(), rx_get_day(), entry)) {
+
+    float height = entry.getInterpolatedHeight(t);
+
+    if(entry.min_value < entry.max_value) {
+      float level_p = (height - entry.min_value) / (entry.max_value - entry.min_value);
+      mask.setScale(level_p);
+    }
+
+  }
+  else {
+    printf("Warning: cannot retrieve tide information.\n");
+  }
+    
+  // Update lighting
+  float sun = 0.0f;
+  if(has_weather_info) {
+    sun = weather_info.getSun(t);
+  }
+  else {
+    printf("Verbose: no weather info yet.\n");
+  }
+
+#if USE_WATER
+  water.setTimeOfDay(t, sun);
+#endif
+
+}
+#endif // #USE_TIDES

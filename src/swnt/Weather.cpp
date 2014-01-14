@@ -1,10 +1,69 @@
 #include <swnt/Weather.h>
 #include <tinylib.h>
 
+
 #define XML_ERR_CHECK(n, err) if(!n) { printf("%s", err); return false; } 
 
 using namespace rapidxml;
 
+// -----------------------------------------------------------------------------
+
+// safely parsing a time string like: "8:25 pm", "8:30 am", and converting it to 24 time
+bool weather_parse_time(std::string t, int& hour, int& minute) {
+
+  hour = 0;
+  minute = 0;
+
+  if(!t.size()) {
+    return false;
+  }
+
+  std::string shour;
+  std::string smin;
+  std::string sampm;
+  int state = 0;
+
+  for(size_t i = 0; i < t.size(); ++i) {
+    if(t[i] == ':') {
+      state = 1;
+      continue;
+    }
+    else if(state == 1 && t[i] == ' ') {
+      state = 2;
+      continue;
+    }
+
+    if(state == 0) {
+      shour.push_back(t[i]);
+    }
+    else if(state == 1) {
+      smin.push_back(t[i]);
+    }
+    else if(state == 2) {
+      sampm.push_back(t[i]);
+    }
+  }
+
+  if(!shour.size() || !smin.size() || !sampm.size()) {
+    printf("Warning: could not parse weather time: %s\n", t.c_str());
+    return false;
+  }
+
+  if(sampm.size() != 2) {
+    printf("Warning: the weather am/pm flag is invalid.\n");
+    return false;
+  }
+
+  std::stringstream ss_hour(shour);
+  std::stringstream ss_min(smin);
+  ss_hour >> hour;
+  ss_min >> minute;
+  if(sampm == "pm") {
+    hour += 12;
+  }
+
+  return true;
+}
 // -----------------------------------------------------------------------------
 
 bool weather_parse_yahoo_rss(std::string& rss, WeatherInfo& result) {
@@ -46,6 +105,21 @@ bool weather_parse_yahoo_rss(std::string& rss, WeatherInfo& result) {
       result.direction = rx_to_int(dir_att->value());
       result.speed = rx_to_float(speed_att->value());
     }
+
+    // ASTRONOMY
+    {
+      xml_node<>* astr = channel->first_node("yweather:astronomy");  XML_ERR_CHECK(astr, "Error: cannot find the astronomy part.\n");
+      xml_attribute<>* sunrise = astr->first_attribute("sunrise");   XML_ERR_CHECK(sunrise, "Error: cannot get the sunrise attribute.\n");
+      xml_attribute<>* sunset = astr->first_attribute("sunset");     XML_ERR_CHECK(sunset, "Error: cannot get the sunset attribute.\n");
+      weather_parse_time(sunrise->value(), result.sunrise_hour, result.sunrise_minute);
+      weather_parse_time(sunset->value(), result.sunset_hour, result.sunset_minute);
+    }    
+
+    // TTL
+    {
+      xml_node<>* ttl = channel->first_node("ttl"); XML_ERR_CHECK(ttl, "Error: cannot find the TTL entry in the weather data.\n");
+      result.ttl = rx_to_int(ttl->value());
+    }
   }
   catch(parse_error& er) {
     printf("Error: cannot parse yahoo weather rss  %s\n", er.what());
@@ -62,7 +136,8 @@ size_t weather_write_data(void* ptr, size_t size, size_t nmemb, void* str) {
   std::copy((char*)ptr, (char*)ptr + (size * nmemb), std::back_inserter(*s));
   return size * nmemb;
 }
-//   std::string url = "http://weather.yahooapis.com/forecastrss?w=10242&u=c"; // w=10242 is Aberaron
+
+// "http://weather.yahooapis.com/forecastrss?w=10242&u=c"; // w=10242 is Aberaron
 std::string weather_fetch_url(std::string url) {
   std::string result;
 
@@ -126,7 +201,6 @@ void weather_thread(void* user) {
   std::vector<WeatherTask*> work;
   bool must_stop = false;
 
-  printf("weather thread.\n");
   while(true) {
     
     uv_mutex_lock(&w->task_mutex);
@@ -147,6 +221,7 @@ void weather_thread(void* user) {
             uv_mutex_lock(&w->mutex);
             {
               w->info = weather_info;
+              weather_info.print();
               w->has_new_info = true;
             }
             uv_mutex_unlock(&w->mutex);
@@ -156,7 +231,6 @@ void weather_thread(void* user) {
         task = NULL;
       }
       else if(task->type == WEATHER_TASK_STOP) {
-        printf("Weather thread asked to stop.\n");
         must_stop = true;
         delete task;
         task = NULL;
@@ -171,14 +245,14 @@ void weather_thread(void* user) {
     }
 
   }
-
-  printf("Weather thread stopped.\n");
 }
 
 // -----------------------------------------------------------------------------
 
 Weather::Weather() 
   :has_new_info(false)
+  ,timeout(0)
+  ,ttl(5)
 {
   uv_mutex_init(&mutex);
   uv_mutex_init(&task_mutex);
@@ -223,5 +297,28 @@ void Weather::addTask(WeatherTask* t) {
 }
 
 void Weather::update() {
+  uint64_t now = uv_hrtime();
+  if(now > timeout) {
+    fetchYahooRSS();
+    printf("TTL: %lld\n", ttl);
+    uint64_t minutes = 1;
+    timeout = now + minutes * (1000000LLU * 1000LLU * 60LLU);
+  }
 }
 
+// -----------------------------------------------------------------------------
+float WeatherInfo::getSun(float t) {
+  t = CLAMP(t, 0.0f, 1.0f);
+  float day_hours = sunset_hour - sunrise_hour;
+  float in_hour = t * 24;
+
+  // night
+  if(in_hour < sunrise_hour || in_hour > sunset_hour) {
+    return 0.0f;
+  }
+
+  // day (@todo maybe add minutes too)
+  float k_hour = (in_hour - sunrise_hour) / day_hours;
+  float sunpos = sin(k_hour * PI);
+  return sunpos;
+}

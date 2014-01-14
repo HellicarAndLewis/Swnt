@@ -37,6 +37,7 @@
 #include <swnt/Scene.h>
 #include <swnt/Audio.h>
 #include <swnt/WaterBall.h>
+#include <swnt/Tides.h>
 
 #define ROXLU_USE_OPENGL
 #define ROXLU_USE_MATH
@@ -56,6 +57,10 @@ class Swnt {
   void draw();
   void print();                      /* print some debug info */
 
+#if USE_TIDES
+  void setTimeOfDay(float t);        /* when t = 0, it's midnight, when t = 1 it's 23:59 */
+#endif
+
  private:
 #if USE_KINECT
   bool setupKinect();
@@ -64,6 +69,10 @@ class Swnt {
 
 #if USE_WATER_BALLS
   void updateWaterBalls();
+#endif
+
+#if USE_TIDES
+  void updateTides();                /* check the current tide information and update the visuals accordingly */
 #endif
 
  public:
@@ -78,6 +87,10 @@ class Swnt {
   bool draw_water;
   bool draw_vortex;
   bool draw_tracking;
+  bool draw_gui;                     /* draw the gui */ 
+  bool override_with_gui;            /* certain values can be overriden with the gui, like the mask size */
+  float time_of_day;                 /* is set in setTimeOfDay() */
+  float ocean_roughness;             /* the roughness of the ocean; used by Water and Heightfield */
 
 #if USE_EFFECTS
   Effects effects;
@@ -96,6 +109,11 @@ class Swnt {
   Water water;
 #endif
 
+#if USE_TIDES
+  Tides tides;
+  uint64_t tides_timeout;            /* we will update the tides every 10 minutes */
+#endif
+
 #if USE_RGB_SHIFT
   RGBShift rgb_shift;
 #endif
@@ -105,16 +123,20 @@ class Swnt {
 #endif
 
 #if USE_WEATHER
-  Weather weather;
+  Weather weather; /* fetches weather info from yahoo */
+  WeatherInfo weather_info; /* the retrieved weather info */
+  bool has_weather_info;  /* is set to true when weather_info contians valid data */
 #endif
 
 #if USE_AUDIO
   Audio audio;
 #endif
 
+
 #if USE_WATER_BALLS
   WaterBallDrawer ball_drawer;
   std::vector<TrackedWaterBall> tracked_balls;
+  std::vector<vec2> flush_points; /* the positions where the tracked balls started to flush, this is used to apply a force onto the water*/
 #endif
 
 #if USE_GUI

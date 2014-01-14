@@ -62,6 +62,7 @@ static const char* MASKED_OUT_SCENE_FS = ""
   "  fragcolor.a = mask_tc.r * scene_tc.a; "
   "  fragcolor.rgb = scene_tc.rgb;"
 
+  // @todo remove u_draw_hand from shader
 #if 0
   "  if(u_draw_hand == 1 && thresh_tc.r > 0.0) {"
   "     fragcolor.rgb = u_hand_col;"
@@ -69,6 +70,22 @@ static const char* MASKED_OUT_SCENE_FS = ""
   "  }"
 #endif
 
+  "}"
+  "";
+
+/* Masks out a texture with the generated mask */
+static const char* DRAW_MASKED_FS = ""
+  "#version 150\n"
+  "uniform sampler2D u_mask_tex;"
+  "uniform sampler2D u_diffuse_tex;"
+  "in vec2 v_tex;"
+  "out vec4 fragcolor;"
+
+  "void main() {"
+  "  float mask_color = texture(u_mask_tex, v_tex).r;"
+  "  vec3 diffuse_color = texture(u_diffuse_tex, v_tex).rgb;"
+  "  fragcolor.rgb = diffuse_color * mask_color;"
+  "  fragcolor.a = diffuse_color.r;"
   "}"
   "";
 
@@ -92,6 +109,10 @@ class Mask {
 
   void maskOutDepth();                    /* this function will mask out the grabbed depth buffer with the grabbed mask generating an image that can be used for image processing */
   void maskOutScene();                    /* this will mask out the captured scene using the captured mask */
+  void maskOutTexture(GLuint tex);
+  
+  void drawHand();
+  void setScale(float s);                 /* set the scale for the mask; this is used to change the radius of the mask slightly. works together with the scale range */
 
   void refresh();                         /* refresh the rendering of the mask based on the current settings (e.g. change colors) */
   void print();                           /* print some debug info */
@@ -130,9 +151,13 @@ class Mask {
   GLuint masked_out_prog;                  /* shader program ... "" "" */
   unsigned char* masked_out_pixels;        /* the pixels, grayscale unsigned char*, that we read back from the GPU and that is used by the Tracker. */
 
-  /* Masking out the scene texture */
+  /* Masking out the captured scene texture */
   GLuint masked_scene_frag;
   GLuint masked_scene_prog;
+
+  /* Rendering a texture and mask it out, we use the TEX_VS vertex shader of Graphics */
+  GLuint mask_tex_frag;                    /* the fragment shader we use to mask out a texture with the generated mask */
+  GLuint mask_tex_prog;                    /* the program to mask out another texture */
 
   /* Grabbing the depth */
   GLuint depth_tex;                        /* we render the depth image from the kinect into this texture. this only does a simple "blit" we assume the depth pixels are already converted to meters */
@@ -144,6 +169,8 @@ class Mask {
   std::vector<vec2> vertices;
   Perlin perlin;                            /* used to animate the radius of the mask */
   size_t bytes_allocated;                   /* number of bytes allocated in the vbo */
+  float scale;                              /* scale of the mask that we use with "scale_range" to modify the radius of the mask. e.g. when scale_range is 20, the a scale value of 1.0 means that we add 20 to the radius */
+  float scale_range;                        /* the length we change the radius. this works together with scale */
 };
 
 #endif

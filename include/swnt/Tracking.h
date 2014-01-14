@@ -83,6 +83,8 @@ class Tracking {
 
   /* K-Means clustering */
   std::vector<vec2> closest_points;                   /* closest points in the detected contours.. closest to the center. used to detect peaks in blobs that will be tracked */
+  std::vector<vec2> closest_dirs;                     /* the vectors from the center to the the closest points. this is used to calculate the points that we need to track */
+  std::vector<vec2> closest_centers;                  /* the positions that we track; it's the center between closest_point and the max radius */
   std::vector<vec2> closest_points_history;           /* we keep a history of the closest points which is used with k-means to cluster */
   size_t prev_num_points;                             /* just a helper to make sure the kmeans() function of cv doesn't crash */
   std::vector<Tracked*> tracked;                      /* tracked objects; we use the 'age' to delete old tracked points. this is what you'll want to use for e.g. forming of water drops*/

@@ -6,6 +6,9 @@
 
 class Swnt;
 
+void TW_CALL set_time_of_day(const void* value, void* user);
+void TW_CALL get_time_of_day(void* value, void* user);
+
 class GUI {
  public:
   GUI(Swnt& swnt);
@@ -21,6 +24,7 @@ class GUI {
   int win_w;
   int win_h;
   TwBar* bar;
+  float time_of_day;  /* used to override the time of day, 0 = midnight at 00:00, 1 = 23:59:59... */
 };
 
 #endif

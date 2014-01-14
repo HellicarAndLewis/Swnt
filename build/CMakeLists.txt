@@ -31,6 +31,7 @@ set(app_sources
   ${sd}/swnt/Particles.cpp
   ${sd}/swnt/Water.cpp
   ${sd}/swnt/HeightField.cpp
+  ${sd}/swnt/Tides.cpp
   ${sd}/swnt/Effects.cpp
   ${sd}/swnt/effects/BaseEffect.cpp
   ${sd}/swnt/effects/Eddy.cpp
