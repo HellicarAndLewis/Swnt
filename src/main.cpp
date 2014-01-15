@@ -77,7 +77,7 @@ int main() {
   int w,h = 0;
   glfwGetWindowSize(win, &w, &h);
   if(w != settings.win_w || h != settings.win_h) {
-    printf("The created window does not have the asked dimensions!\nTry changing the width and height in the settings");
+    printf("The created window does not have the asked dimensions!\nTry changing the width and height in the settings: %d x %d", w, h);
     ::exit(EXIT_FAILURE);
   }
 
