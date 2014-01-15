@@ -645,5 +645,5 @@ void Swnt::updateActivityLevel() {
   //activity_level = activity_level * 0.9 + (float(tracking.num_tracked) / max_tracked) * 0.1;
   activity_level = CLAMP(activity_level * 0.9 + float(tracking.num_tracked) * 0.1, 0.0f, 1.0f);
   audio.setVolume(SOUND_WATER_FLOWING, activity_level);
-  printf("%u, act: %f\n", tracking.num_tracked, activity_level);
+  //  printf("%u, act: %f\n", tracking.num_tracked, activity_level);
 }

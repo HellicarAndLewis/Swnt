@@ -100,6 +100,7 @@ void Graphics::drawDepth(GLuint tex, float x, float y, float w, float h) {
 
   glUniformMatrix4fv(glGetUniformLocation(kinect_prog, "u_pm"), 1, GL_FALSE, settings.depth_ortho_matrix.ptr());
   glUniformMatrix4fv(glGetUniformLocation(kinect_prog, "u_mm"), 1, GL_FALSE, tex_mm.ptr());
+  glUniform2f(glGetUniformLocation(kinect_prog, "u_dist"), settings.kinect_near, settings.kinect_far);
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 

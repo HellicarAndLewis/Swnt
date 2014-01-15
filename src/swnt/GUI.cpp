@@ -97,8 +97,12 @@ bool GUI::setup(int w, int h) {
   TwAddVarRW(bar, "Draw Contours and Tangents", TW_TYPE_BOOLCPP, &swnt.draw_tracking, "group='Rendering'");
   TwAddVarRW(bar, "Override Values With GUI", TW_TYPE_BOOLCPP, &swnt.override_with_gui, "group='Rendering'");
 
+  // general
   TwAddVarCB(bar, "Time Of Day", TW_TYPE_FLOAT, set_time_of_day, get_time_of_day, this, "min=0.25 max=0.75 step=0.001");
 
+  // kinect
+  TwAddVarRW(bar, "Kinect Far", TW_TYPE_FLOAT, &swnt.settings.kinect_far, "group='Kinect' min=0.00 max=5.00 step=0.01");
+  TwAddVarRW(bar, "Kinect Near", TW_TYPE_FLOAT, &swnt.settings.kinect_near, "group='Kinect' min=0.00 max=5.00 step=0.01");
 
   TwWindowSize(win_w, win_h);
   return true;
