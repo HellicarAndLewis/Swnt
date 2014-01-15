@@ -22,6 +22,8 @@ Spirals::Spirals(Settings& settings, Tracking& tracker, Graphics& graphics, Flow
   ,max_strip_width(7.5f)
   ,min_mass(1.0f)
   ,max_mass(1.4f)
+  ,center_force(2.5f)
+  ,field_force(0.015f)
 {
 }
 
@@ -149,7 +151,7 @@ void Spirals::applyVelocityField() {
 
   float scale_x = flow.field_size / float(settings.win_w);
   float scale_y = flow.field_size / float(settings.win_h);
-  float f = 0.015;
+
   for(Particles::iterator it = particles.begin(); it != particles.end(); ++it) {
 
     Particle* p = *it;
@@ -166,8 +168,9 @@ void Spirals::applyVelocityField() {
 
     size_t dx = MIN((flow.field_size-1)*(flow.field_size-1), row * flow.field_size + col);
     vec2& v = flow.velocities[dx];
-    p->addForce(vec3(v.x * f, v.y * f, 0.0f));
+    p->addForce(vec3(v.x * field_force, v.y * field_force, 0.0f));
   }
+
 }
 
 void Spirals::spawnParticles() {
@@ -426,7 +429,7 @@ void Spirals::applyCenterForce() {
     float df = ls / max_dist;
     dir = normalized(dir);
     vec3 f = dir * (1.0 - (1.0/ls));
-    p->addForce(f * 2.6);
+    p->addForce(f * center_force);
 
     f.set(-f.y, f.x, 0.0f);
     p->addForce(f * 0.8);

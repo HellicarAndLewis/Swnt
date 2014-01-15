@@ -116,6 +116,8 @@ class Spirals {
   float max_strip_width;
   float min_mass;
   float max_mass;
+  float center_force;                          /* how much should the particle be attracted to the center */
+  float field_force;                           /* the force we apply for the velocity field */
 
   /* Vertices */
   size_t bytes_allocated;                      /* how many bytes we have allocated for our vbo that hold the spiral vertices */

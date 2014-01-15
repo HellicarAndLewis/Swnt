@@ -128,6 +128,12 @@ bool GUI::setup(int w, int h) {
   Spirals& spirals = swnt.spirals;
   TwAddVarRW(bar, "Min Particle Lifetime", TW_TYPE_FLOAT, &spirals.min_lifetime, "min=0.0 max=300.0 step=1.0 group='Spirals'");
   TwAddVarRW(bar, "Max Particle Lifetime", TW_TYPE_FLOAT, &spirals.max_lifetime, "min=0.0 max=300.0 step=1.0 group='Spirals'");
+  TwAddVarRW(bar, "Min Particle Mass", TW_TYPE_FLOAT, &spirals.min_mass, "min=0.0 max=15.0 step=0.001 group='Spirals'");
+  TwAddVarRW(bar, "Max Particle Mass", TW_TYPE_FLOAT, &spirals.max_mass, "min=0.0 max=15.0 step=0.001 group='Spirals'");
+  TwAddVarRW(bar, "Force Towards Center", TW_TYPE_FLOAT, &spirals.center_force, "min=0.0 max=100.0 step=0.1 group='Spirals'");
+  TwAddVarRW(bar, "Velocity Field Force", TW_TYPE_FLOAT, &spirals.field_force, "min=0.0 max=5.0 step=0.001 group='Spirals'");
+  TwAddVarRW(bar, "Min Width", TW_TYPE_FLOAT, &spirals.min_strip_width, "min=0.0 max=15.0 step=0.001 group='Spirals'");
+  TwAddVarRW(bar, "Max Width", TW_TYPE_FLOAT, &spirals.max_strip_width, "min=0.0 max=15.0 step=0.001 group='Spirals'");
 #endif
 
   TwWindowSize(win_w, win_h);
