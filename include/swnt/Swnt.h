@@ -23,30 +23,39 @@
 
 #include <swnt/Types.h>
 #include <swnt/Settings.h>
-#if USE_KINECT
-#  include <swnt/Kinect.h>
-#endif
 #include <swnt/Graphics.h>
 #include <swnt/Mask.h>
 #include <swnt/Tracking.h>
 #include <swnt/Flow.h>
 #include <swnt/HeightField.h>
 #include <swnt/Water.h>
+#include <swnt/RGBShift.h>
+#include <swnt/Weather.h>
+#include <swnt/Scene.h>
+#include <swnt/WaterBall.h>
+
+#if USE_KINECT
+#  include <swnt/Kinect.h>
+#endif
+
 #if USE_EFFECTS
 #  include <swnt/Effects.h>
 #endif
-#include <swnt/RGBShift.h>
+
 #if USE_GUI
 #  include <swnt/GUI.h>
 #endif
-#include <swnt/Weather.h>
-#include <swnt/Scene.h>
+
 #if USE_AUDIO
 #  include <swnt/Audio.h>
 #endif
-#include <swnt/WaterBall.h>
+
 #if USE_TIDES
-#include <swnt/Tides.h>
+#  include <swnt/Tides.h>
+#endif
+
+#if USE_SPIRALS
+#  include <swnt/Spirals.h>
 #endif
 
 #define ROXLU_USE_OPENGL
@@ -70,6 +79,8 @@ class Swnt {
 #if USE_TIDES
   void setTimeOfDay(float t);        /* when t = 0, it's midnight, when t = 1 it's 23:59 */
 #endif
+
+  void setTimeOfYear(float t);        /* 0 = 1 january, 1 = 31 dec, used to change the colors */
 
  private:
   void updateActivityLevel();        /* sets the activity level. when there are more people interacting this number will go up, 1 is heighest value, 0 means no ativity */
@@ -102,9 +113,10 @@ class Swnt {
   bool draw_gui;                     /* draw the gui */ 
   bool override_with_gui;            /* certain values can be overriden with the gui, like the mask size */
   float time_of_day;                 /* is set in setTimeOfDay() */
+  float time_of_year;                /* is set in setTimeOfYear() */
   float ocean_roughness;             /* the roughness of the ocean; used by Water and Heightfield */
   float activity_level;              /* 0 = there is no activity, 1 = a lot of activity */
-
+  
 #if USE_EFFECTS
   Effects effects;
 #endif
@@ -145,12 +157,16 @@ class Swnt {
   Audio audio;
 #endif
 
-
 #if USE_WATER_BALLS
   WaterBallDrawer ball_drawer;
   std::vector<TrackedWaterBall> tracked_balls;
   std::vector<vec2> flush_points; /* the positions where the tracked balls started to flush, this is used to apply a force onto the water*/
 #endif
+
+#if USE_SPIRALS
+  Spirals spirals;
+#endif
+
 
 #if USE_GUI
   GUI gui;

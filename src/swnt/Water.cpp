@@ -15,6 +15,7 @@ Water::Water(HeightField& hf)
   ,diffuse_tex(0)
   ,foam_tex(0)
   ,force_tex0(0)
+  ,vortex_tex(0)
   ,color_tex(0)
   ,foam_colors_tex(0)
   ,foam_ramp_tex(0)
@@ -23,6 +24,7 @@ Water::Water(HeightField& hf)
   ,foam_depth(2.4)
   ,fbo(0)
   ,extra_flow_tex(0)
+  ,vortex_intensity(0.2)
 {
   sun_pos[0] = 0.0;
   sun_pos[1] = 15.0;
@@ -152,6 +154,7 @@ bool Water::setup(int w, int h) {
   glUniform1i(glGetUniformLocation(prog, "u_foam_delta_tex"),     11);  // FS
   glUniform1i(glGetUniformLocation(prog, "u_foam_colors"),        12);  // FS
   glUniform1i(glGetUniformLocation(prog, "u_foam_ramp"),          13);  // FS
+  glUniform1i(glGetUniformLocation(prog, "u_vortex_tex"),         14);  // FS
 
   //GLint texture_units = 0;
   //glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &texture_units);
@@ -169,6 +172,7 @@ bool Water::setup(int w, int h) {
   force_tex0 = createTexture("images/force.png");
   foam_colors_tex = createTexture("images/foam_densities.png");
   foam_ramp_tex = createTexture("images/foam_ramps.png");
+  vortex_tex = createTexture("images/vortex.png");
   
   glBindTexture(GL_TEXTURE_2D, foam_colors_tex);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -280,6 +284,9 @@ void Water::draw() {
 
     glActiveTexture(GL_TEXTURE13);
     glBindTexture(GL_TEXTURE_2D, foam_ramp_tex);
+
+    glActiveTexture(GL_TEXTURE14);
+    glBindTexture(GL_TEXTURE_2D, vortex_tex);
   }
 
   static float t = 0.0;
@@ -335,9 +342,10 @@ void Water::setTimeOfDay(float t, float sun) {
   ads_intensities[6] = 1.0 + (sun * 0.6); // overall intensity
 
   // change the color of the water.
+  /*
   vec3 hsv(sun * 0.410, 0.5, 0.5);
   rx_hsv_to_rgb(hsv, ambient_color);
-
+  */
   return;
 
   ads_intensities[0] = -0.2 + (sun * 0.7); // ambient
@@ -345,9 +353,30 @@ void Water::setTimeOfDay(float t, float sun) {
   ads_intensities[4] = sun; // foam
 }
 
+void Water::setTimeOfYear(float t) {
+  vec2 hues[] = {vec2(1.0, 1.0), vec2(2.0, 0.5), vec2(3.0, 0.2),  vec2(4.0, 1.0)};
+  Spline<vec2, 2> hue_spline;
+  hue_spline.add(4, hues);
+
+  vec2 sats[] = {vec2(1.0, 1.0), vec2(1.0, 1.0), vec2(1.0, 1.0), vec2(1.0, 1.0)};
+  Spline<vec2, 2> sat_spline;
+  sat_spline.add(4, sats);
+
+  vec2 values[] = { vec2(1.0, 1.0), vec2(1.0, 1.0), vec2(1.0, 1.0), vec2(1.0, 1.0) };
+  Spline<vec2, 2> value_spline;
+  value_spline.add(4, values);
+
+  vec2 hue = hue_spline.at(t);
+  vec2 sat = sat_spline.at(t);
+  vec2 val = value_spline.at(t);
+
+  vec3 hsv(hue.y, sat.y, val.y);
+
+  rx_hsv_to_rgb(hsv, ambient_color);
+}
+
 void Water::setRoughness(float r) {
   r = CLAMP(r, 0.0f, 1.0f);
-  
 }
 
 

@@ -16,6 +16,12 @@ Spirals::Spirals(Settings& settings, Tracking& tracker, Graphics& graphics, Flow
   ,frag(0)
   ,prog(0)
   ,center_particle(NULL)
+  ,min_lifetime(5.0f)
+  ,max_lifetime(10.0f)
+  ,min_strip_width(1.5f)
+  ,max_strip_width(7.5f)
+  ,min_mass(1.0f)
+  ,max_mass(1.4f)
 {
 }
 
@@ -209,9 +215,9 @@ void Spirals::spawnParticles() {
       p->tmp_pos = p->pos;
       p->forces.set(0.0f, 0.0f, 0.0f);
       p->vel.set(0.0f, 0.0f, 0.0f);
-      p->lifetime = rx_random(100.0f, 110.0f);
-      p->strip_width = rx_random(4.4f,7.5f);
-      p->setMass(1.4f);
+      p->lifetime = rx_random(min_lifetime, max_lifetime);
+      p->strip_width = rx_random(min_strip_width, max_strip_width);
+      p->setMass(rx_random(min_mass, max_mass));
       particles.push_back(p);
       
       #if 0
@@ -237,11 +243,9 @@ void Spirals::spawnParticles() {
       p->tmp_pos = p->pos;
       p->forces.set(0.0f, 0.0f, 0.0f);
       p->vel.set(0.0f, 0.0f, 0.0f);
-      p->lifetime = rx_random(20.0f, 30.0f);
-      p->strip_width = rx_random(1.4f,2.5f);
-      // p->strip_width = rx_random(46.4f,123.5f);
-      p->strip_width = rx_random(2.4f,3.5f);
-      p->setMass(0.2);
+      p->lifetime = rx_random(min_lifetime, max_lifetime);
+      p->strip_width = rx_random(min_strip_width, max_strip_width);
+      p->setMass(rx_random(min_mass, max_mass));
       particles.push_back(p);
     }
   }

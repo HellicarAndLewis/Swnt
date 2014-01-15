@@ -8,6 +8,8 @@ class Swnt;
 
 void TW_CALL set_time_of_day(const void* value, void* user);
 void TW_CALL get_time_of_day(void* value, void* user);
+void TW_CALL set_time_of_year(const void* value, void* user);
+void TW_CALL get_time_of_year(void* value, void* user);
 
 class GUI {
  public:
@@ -25,6 +27,7 @@ class GUI {
   int win_h;
   TwBar* bar;
   float time_of_day;  /* used to override the time of day, 0 = midnight at 00:00, 1 = 23:59:59... */
+  float time_of_year; /* used to override the time of year, 0 = 1 jan, 1 = 31 dec. */
 };
 
 #endif

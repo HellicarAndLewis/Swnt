@@ -27,6 +27,9 @@ Swnt::Swnt(Settings& settings)
   ,draw_tracking(false)
   ,draw_gui(true)
   ,override_with_gui(false)
+#if USE_SPIRALS
+  ,spirals(settings, tracking, graphics, flow)
+#endif
 #if USE_GUI
   ,gui(*this)
 #endif
@@ -125,6 +128,13 @@ bool Swnt::setup() {
   }
 #endif
 
+#if USE_SPIRALS
+  if(!spirals.setup()) {
+    printf("Error: cannot setup the spirals.\n");
+    return false;
+  }
+#endif
+
 #if USE_GUI
   if(!gui.setup(settings.win_w, settings.win_h)) {
     printf("Error: cannot setup the GUI.\n");
@@ -154,9 +164,15 @@ bool Swnt::setup() {
   if(!audio.add(SOUND_WAVES_CRASHING, rx_to_data_path("audio/waves_crashing.wav"), FMOD_SOFTWARE | FMOD_LOOP_NORMAL)) {
     return false;
   }
+  if(!audio.add(SOUND_GLOOB, rx_to_data_path("audio/gloob.mp3"), FMOD_SOFTWARE)) {
+    return false;
+  }
+  if(!audio.add(SOUND_SPLASH, rx_to_data_path("audio/splash.mp3"), FMOD_SOFTWARE)) {
+    return false;
+  }
 
   audio.play(SOUND_WATER_FLOWING);
-  
+  audio.setVolume(SOUND_WATER_FLOWING, 0.5);
 
 #endif
 
@@ -266,6 +282,11 @@ void Swnt::update() {
 #if USE_TIDES
   updateTides();
 #endif
+
+#if USE_SPIRALS
+  spirals.update(1.0f/60.0f);
+#endif
+
 }
 
 void Swnt::draw() {
@@ -360,6 +381,11 @@ void Swnt::draw() {
       effects.splashes.drawExtraFlow();
     }
 #   endif
+
+#   if USE_SPIRALS
+    spirals.draw();
+#   endif
+
     mask.endSceneGrab();
 
     mask.maskOutDepth();
@@ -374,7 +400,6 @@ void Swnt::draw() {
 #    if USE_WATER_BALLS
     ball_drawer.draw();
 #    endif
-
 
     if(draw_tracking) {
       tracking.draw(0.0f, 0.0f);
@@ -641,9 +666,22 @@ void Swnt::setTimeOfDay(float t) {
 #endif // #USE_TIDES
 
 void Swnt::updateActivityLevel() {
-  //float max_tracked = 10; // we assume that max 10 people interact at the same time
-  //activity_level = activity_level * 0.9 + (float(tracking.num_tracked) / max_tracked) * 0.1;
+
   activity_level = CLAMP(activity_level * 0.9 + float(tracking.num_tracked) * 0.1, 0.0f, 1.0f);
-  audio.setVolume(SOUND_WATER_FLOWING, activity_level);
-  //  printf("%u, act: %f\n", tracking.num_tracked, activity_level);
+
+  if(tracking.prev_num_tracked < tracking.num_tracked) {
+    audio.playOnce(SOUND_GLOOB);
+  }
+  else if(tracking.prev_num_tracked > tracking.num_tracked) {
+    audio.playOnce(SOUND_SPLASH);
+  }
+}
+
+void Swnt::setTimeOfYear(float t) {
+  t = CLAMP(t, 0.0f, 1.0f);
+  printf("Time of year: %f\n", t);
+
+#if USE_WATER
+  water.setTimeOfYear(t);
+#endif
 }

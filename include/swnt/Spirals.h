@@ -109,6 +109,14 @@ class Spirals {
   Flow& flow;
   Particles particles;
 
+  /* Particle behavior  */
+  float min_lifetime;
+  float max_lifetime;
+  float min_strip_width;
+  float max_strip_width;
+  float min_mass;
+  float max_mass;
+
   /* Vertices */
   size_t bytes_allocated;                      /* how many bytes we have allocated for our vbo that hold the spiral vertices */
   std::vector<SpiralVertex> vertices;          /* the spiral vertices */

@@ -3,7 +3,7 @@
 #include <swnt/GUI.h>
 #include <swnt/Swnt.h>
 #include <swnt/Types.h>
-
+#include <swnt/Spirals.h>
 
 // -------------------------------------------------------------------------------
 
@@ -25,6 +25,25 @@ void TW_CALL get_time_of_day(void* value, void* user) {
   }
   else {
     *(float*)value = g->swnt.time_of_day;
+  }
+}
+
+// -------------------------------------------------------------------------------
+void TW_CALL set_time_of_year(const void* value, void* user) {
+  GUI* g = static_cast<GUI*>(user);
+  g->time_of_year = *(float*)value;
+  if(g->swnt.override_with_gui) {
+    g->swnt.setTimeOfYear(g->time_of_year);
+  }
+}
+
+void TW_CALL get_time_of_year(void* value, void* user) {
+  GUI* g = static_cast<GUI*>(user);
+  if(g->swnt.override_with_gui) {
+    *(float*)value = g->time_of_year;
+  }
+  else {
+    *(float*)value = g->swnt.time_of_year;
   }
 }
 
@@ -95,14 +114,21 @@ bool GUI::setup(int w, int h) {
   TwAddVarRW(bar, "Draw Water", TW_TYPE_BOOLCPP, &swnt.draw_water, "group='Rendering'");
   TwAddVarRW(bar, "Draw Debug Eddy", TW_TYPE_BOOLCPP, &swnt.draw_vortex, "group='Rendering'");
   TwAddVarRW(bar, "Draw Contours and Tangents", TW_TYPE_BOOLCPP, &swnt.draw_tracking, "group='Rendering'");
-  TwAddVarRW(bar, "Override Values With GUI", TW_TYPE_BOOLCPP, &swnt.override_with_gui, "group='Rendering'");
 
   // general
-  TwAddVarCB(bar, "Time Of Day", TW_TYPE_FLOAT, set_time_of_day, get_time_of_day, this, "min=0.25 max=0.75 step=0.001");
+  TwAddVarRW(bar, "Override Values With GUI", TW_TYPE_BOOLCPP, &swnt.override_with_gui, "group='General'");
+  TwAddVarCB(bar, "Time Of Day", TW_TYPE_FLOAT, set_time_of_day, get_time_of_day, this, "group='General' min=0.25 max=0.75 step=0.001");
+  TwAddVarCB(bar, "Time Of Year", TW_TYPE_FLOAT, set_time_of_year, get_time_of_year, this, "group='General' min=0.0 max=1.0 step=0.01");
 
   // kinect
   TwAddVarRW(bar, "Kinect Far", TW_TYPE_FLOAT, &swnt.settings.kinect_far, "group='Kinect' min=0.00 max=5.00 step=0.01");
   TwAddVarRW(bar, "Kinect Near", TW_TYPE_FLOAT, &swnt.settings.kinect_near, "group='Kinect' min=0.00 max=5.00 step=0.01");
+
+#if USE_SPIRALS
+  Spirals& spirals = swnt.spirals;
+  TwAddVarRW(bar, "Min Particle Lifetime", TW_TYPE_FLOAT, &spirals.min_lifetime, "min=0.0 max=300.0 step=1.0 group='Spirals'");
+  TwAddVarRW(bar, "Max Particle Lifetime", TW_TYPE_FLOAT, &spirals.max_lifetime, "min=0.0 max=300.0 step=1.0 group='Spirals'");
+#endif
 
   TwWindowSize(win_w, win_h);
   return true;

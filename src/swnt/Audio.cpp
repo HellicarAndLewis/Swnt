@@ -24,6 +24,16 @@ Sound::~Sound() {
 void Sound::setLoop(bool l) {
 }
 
+void Sound::setVolume(float v) {
+
+  if(!channel) {
+    printf("Warning: cannot set volume because we don't have channel information.\n");
+    return;
+  }
+
+  channel->setVolume(v);
+}
+
 // -----------------------------------------
 
 Audio::Audio() {
@@ -109,6 +119,20 @@ void Audio::play(int name) {
   }
 }
 
+void Audio::playOnce(int name) {
+  Sound* s = getSound(name);
+  if(!s) {
+    printf("Warning: cannot find sound for: %d\n", name);
+    return ;
+  }
+
+  FMOD_RESULT result = system->playSound(FMOD_CHANNEL_FREE, s->sound, false, NULL);
+  if(result != FMOD_OK) {
+    printf("Error: %s\n", FMOD_ErrorString(result));
+    ::exit(EXIT_FAILURE);
+  }
+}
+
 void Audio::setVolume(int name, float v) {
   if(v > 1.0f) {
     v = 1.0f;
@@ -116,6 +140,14 @@ void Audio::setVolume(int name, float v) {
   else if(v < 0.0f) {
     v = 0.0f;
   }
+
+  Sound* s = getSound(name);
+  if(!s) {
+    printf("Warning: cannot find sound: %d\n",  name);
+    return;
+  }
+  
+  s->setVolume(v);
 }
 
 Sound* Audio::getSound(int name) {

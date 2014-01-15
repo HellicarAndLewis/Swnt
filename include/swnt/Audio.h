@@ -15,6 +15,7 @@ public:
   Sound(int name);
   ~Sound();
   void setLoop(bool loop);
+  void setVolume(float v);
 
 public:
   int name;
@@ -32,6 +33,7 @@ public:
   void update();
   bool add(int name, std::string filepath, FMOD_MODE mode = FMOD_SOFTWARE);
   void play(int name);
+  void playOnce(int name);
   void stop(int name);
   void setVolume(int name, float f);
   Sound* getSound(int name);

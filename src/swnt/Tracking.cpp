@@ -225,6 +225,7 @@ void Tracking::updateVertices() {
 
 void Tracking::clusterPoints() {
   
+  prev_num_tracked = num_tracked;
   num_tracked = 0;
   
   // unset all  matched flags.
