@@ -44,14 +44,15 @@ static const char* HF_DIFFUSE_VERT = ""
   "uniform sampler2D u_tex_u;     "
   "uniform sampler2D u_tex_forces;"
   "uniform sampler2D u_tex_v;     "
-  "const float dt = 0.16;         "
+  "const float dt = 0.016;        "
   "out float v_new_u_value;       "
   "out float v_new_v_value;       "
 
   "float get_force(int i, int j) {"
   "  float f0 = texelFetch(u_tex_u,      ivec2(a_tex.s + i, a_tex.t + j), 0).r;"
   "  vec2  f1 = texelFetch(u_tex_forces, ivec2(a_tex.s + i, a_tex.t + j), 0).rg;"
-  "  return f0 + (f1.r  * 5.2) - (f1.g * 9.2);"
+
+  "  return f0 + (f1.r  * 5.2) - (f1.g * 5.2);"
   "}"
 
   "void main() {                  "
