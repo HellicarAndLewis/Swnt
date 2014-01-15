@@ -243,5 +243,4 @@ void cursor_callback(GLFWwindow* win, double x, double y) {
   force_x = x/1280.0;
   force_y = (720-y)/720.0;
   // printf("force_x: %f, force_y: %f\n", force_x, force_y);
-
 }

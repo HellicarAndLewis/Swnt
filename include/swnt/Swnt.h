@@ -72,6 +72,8 @@ class Swnt {
 #endif
 
  private:
+  void updateActivityLevel();        /* sets the activity level. when there are more people interacting this number will go up, 1 is heighest value, 0 means no ativity */
+
 #if USE_KINECT
   bool setupKinect();
   void updateKinect();
@@ -101,6 +103,7 @@ class Swnt {
   bool override_with_gui;            /* certain values can be overriden with the gui, like the mask size */
   float time_of_day;                 /* is set in setTimeOfDay() */
   float ocean_roughness;             /* the roughness of the ocean; used by Water and Heightfield */
+  float activity_level;              /* 0 = there is no activity, 1 = a lot of activity */
 
 #if USE_EFFECTS
   Effects effects;

@@ -33,6 +33,7 @@ public:
   bool add(int name, std::string filepath, FMOD_MODE mode = FMOD_SOFTWARE);
   void play(int name);
   void stop(int name);
+  void setVolume(int name, float f);
   Sound* getSound(int name);
 
 public:

@@ -26,6 +26,7 @@ Tracking::Tracking(Settings& settings, Graphics& graphics)
   ,prev_num_points(0)
   ,tan_count(0)
   ,tan_offset(0)
+  ,num_tracked(0)
 {
 }
 
@@ -224,6 +225,8 @@ void Tracking::updateVertices() {
 
 void Tracking::clusterPoints() {
   
+  num_tracked = 0;
+  
   // unset all  matched flags.
   for(size_t i = 0; i < tracked.size(); ++i) {
     tracked[i]->matched = false;
@@ -279,6 +282,7 @@ void Tracking::clusterPoints() {
       matched->position = cluster_center;
       matched->matched = true;
       matched->age++;
+      num_tracked++;
     }
     else {
       Tracked* tr = new Tracked();
@@ -286,6 +290,7 @@ void Tracking::clusterPoints() {
       tr->matched = true;
       tr->id = ++last_id;
       tracked.push_back(tr);
+      num_tracked++;
     }
   }
 
@@ -301,7 +306,6 @@ void Tracking::clusterPoints() {
         continue;
       }
     }
-   
     ++it;
   }
 

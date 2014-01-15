@@ -109,6 +109,15 @@ void Audio::play(int name) {
   }
 }
 
+void Audio::setVolume(int name, float v) {
+  if(v > 1.0f) {
+    v = 1.0f;
+  }
+  else if(v < 0.0f) {
+    v = 0.0f;
+  }
+}
+
 Sound* Audio::getSound(int name) {
   for(std::vector<Sound*>::iterator it = sounds.begin(); it != sounds.end(); ++it) {
     if((*it)->name == name) {

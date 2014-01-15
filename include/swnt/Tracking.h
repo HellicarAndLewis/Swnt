@@ -89,6 +89,7 @@ class Tracking {
   size_t prev_num_points;                             /* just a helper to make sure the kmeans() function of cv doesn't crash */
   std::vector<Tracked*> tracked;                      /* tracked objects; we use the 'age' to delete old tracked points. this is what you'll want to use for e.g. forming of water drops*/
   uint32_t last_id;                                   /* each tracked object gets a new id and this is the last one created */
+  uint32_t num_tracked;                               /* the number of tracked AND matched objects, use after calling track() */
 };
 
 #endif

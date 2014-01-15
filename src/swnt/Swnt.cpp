@@ -154,6 +154,10 @@ bool Swnt::setup() {
   if(!audio.add(SOUND_WAVES_CRASHING, rx_to_data_path("audio/waves_crashing.wav"), FMOD_SOFTWARE | FMOD_LOOP_NORMAL)) {
     return false;
   }
+
+  audio.play(SOUND_WATER_FLOWING);
+  
+
 #endif
 
 #if USE_EFFECTS
@@ -220,6 +224,8 @@ bool Swnt::setupKinect() {
 #endif
 
 void Swnt::update() {
+
+  updateActivityLevel();
 
 #if USE_KINECT
   updateKinect();
@@ -299,6 +305,7 @@ void Swnt::draw() {
 #endif
 
   if(state == STATE_RENDER_ALIGN) {
+    glDisable(GL_DEPTH_TEST);
     vec3 red(1.0f, 0.0f, 0.0f);
     vec3 green(0.0f, 1.0f, 0.0f);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -587,7 +594,7 @@ void Swnt::updateTides() {
 
   setTimeOfDay(t);
 
-  tides_timeout = now + (1000000LLU * 1000LLU * 60LLU *  1LLU); // 1 minute(s)
+  tides_timeout = now + (1000000ull * 1000ull * 60ull *  1ull); // 1 minute(s)
 }
 
 void Swnt::setTimeOfDay(float t) {
@@ -631,3 +638,11 @@ void Swnt::setTimeOfDay(float t) {
 
 }
 #endif // #USE_TIDES
+
+void Swnt::updateActivityLevel() {
+  //float max_tracked = 10; // we assume that max 10 people interact at the same time
+  //activity_level = activity_level * 0.9 + (float(tracking.num_tracked) / max_tracked) * 0.1;
+  activity_level = CLAMP(activity_level * 0.9 + float(tracking.num_tracked) * 0.1, 0.0f, 1.0f);
+  audio.setVolume(SOUND_WATER_FLOWING, activity_level);
+  printf("%u, act: %f\n", tracking.num_tracked, activity_level);
+}
