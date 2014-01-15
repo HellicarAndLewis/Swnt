@@ -148,12 +148,10 @@ bool Swnt::setup() {
 
 #if USE_AUDIO
   //  if(!audio.add(SOUND_OCEAN, rx_to_data_path("audio/ocean.mp2"))) {
-  if(!audio.add(SOUND_OCEAN, rx_to_data_path("audio/short.mp3"))) {
-    printf("Error while loading ocean sound");
+  if(!audio.add(SOUND_WATER_FLOWING, rx_to_data_path("audio/water_flowing.wav"), FMOD_SOFTWARE | FMOD_LOOP_NORMAL)) {
     return false;
   }
-  if(!audio.add(SOUND_WATER, rx_to_data_path("audio/water.mp2"))) {
-    printf("Error while loading water sound");
+  if(!audio.add(SOUND_WAVES_CRASHING, rx_to_data_path("audio/waves_crashing.wav"), FMOD_SOFTWARE | FMOD_LOOP_NORMAL)) {
     return false;
   }
 #endif

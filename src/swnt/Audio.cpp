@@ -80,11 +80,11 @@ void Audio::update() {
   }
 }
 
-bool Audio::add(int name, std::string filepath) {
+bool Audio::add(int name, std::string filepath, FMOD_MODE mode) {
   FMOD_RESULT result; 
   Sound* s = new Sound(name);
 
-  result = system->createSound(filepath.c_str(), FMOD_SOFTWARE, 0, &s->sound);
+  result = system->createSound(filepath.c_str(), mode, 0, &s->sound);
 
   if(result != FMOD_OK) {
     printf("Error: cannot create the sound: %s\n", FMOD_ErrorString(result));

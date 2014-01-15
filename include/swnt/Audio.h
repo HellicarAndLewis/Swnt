@@ -30,7 +30,7 @@ public:
   Audio();
   ~Audio();
   void update();
-  bool add(int name, std::string filepath);
+  bool add(int name, std::string filepath, FMOD_MODE mode = FMOD_SOFTWARE);
   void play(int name);
   void stop(int name);
   Sound* getSound(int name);
