@@ -309,7 +309,7 @@ void Swnt::draw() {
     vec3 red(1.0f, 0.0f, 0.0f);
     vec3 green(0.0f, 1.0f, 0.0f);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    float radius = settings.radius - (mask.scale_range + (mask.scale_range * mask.scale));
+    float radius = settings.radius;
     graphics.drawCircle(settings.win_w * 0.5, settings.win_h * 0.5, radius, red);
     graphics.drawCircle(settings.win_w * 0.5, settings.win_h * 0.5, 20, green);
   }
