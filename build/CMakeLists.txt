@@ -107,6 +107,7 @@ if(APPLE)
     ${extern_lib_dir}/libssl.a
     ${extern_lib_dir}/libao.a
     ${extern_lib_dir}/libmpg123.a
+    ${extern_lib_dir}/libfmodex.dylib
     ${fr_corefoundation}
     ${fr_cocoa}
     ${fr_opengl}
@@ -163,4 +164,5 @@ elseif(WIN32)
 endif()
 
 install(TARGETS ${app} DESTINATION bin)
+install(FILES ${extern_lib_dir}/libfmodex.dylib DESTINATION bin)
 

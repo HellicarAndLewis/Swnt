@@ -147,10 +147,6 @@ bool Swnt::setup() {
 #endif
 
 #if USE_AUDIO
-  if(!audio.setup()) {
-    printf("Error: cannot setup the audio player.\n");
-    return false;
-  }
   //  if(!audio.add(SOUND_OCEAN, rx_to_data_path("audio/ocean.mp2"))) {
   if(!audio.add(SOUND_OCEAN, rx_to_data_path("audio/short.mp3"))) {
     printf("Error while loading ocean sound");
@@ -270,7 +266,7 @@ void Swnt::update() {
 
 void Swnt::draw() {
 
-#if 1
+#if 0
   water.draw();
   return ;
 #endif
@@ -330,38 +326,34 @@ void Swnt::draw() {
 
     // capture the mask shape
     mask.beginMaskGrab();
-       mask.drawMask();
+    mask.drawMask();
     mask.endMaskGrab();
     
     // capture the depth buffer from kinect 
     mask.beginDepthGrab();
-       graphics.drawDepth(depth_tex, 0.0f, 0.0f, settings.image_processing_w, settings.image_processing_h);
+    graphics.drawDepth(depth_tex, 0.0f, 0.0f, settings.image_processing_w, settings.image_processing_h);
     mask.endDepthGrab();
 
 #if USE_EFFECTS
-  water.beginGrabFlow();
+    water.beginGrabFlow();
     effects.drawExtraFlow();
-  water.endGrabFlow();
+    water.endGrabFlow();
 #endif
     
 
     // capture the scene
     mask.beginSceneGrab();
-    {
-
-#    if USE_WATER
-      if(draw_water) {
-        water.draw();
-      }
-#    endif
-
-      if(draw_vortex) {
-        effects.splashes.drawExtraDiffuse();
-        effects.splashes.drawExtraFlow();
-      }
-
-
+#   if USE_WATER
+    if(draw_water) {
+      water.draw();
     }
+#   endif
+#   if USE_EFFECTS
+    if(draw_vortex) {
+      effects.splashes.drawExtraDiffuse();
+      effects.splashes.drawExtraFlow();
+    }
+#   endif
     mask.endSceneGrab();
 
     mask.maskOutDepth();
@@ -409,6 +401,7 @@ void Swnt::draw() {
 
 // Updates the kinect depth and color buffers.
 #if USE_KINECT
+
 void Swnt::updateKinect() {
 #  if 1
   {
@@ -449,9 +442,9 @@ void Swnt::updateKinect() {
     }
   }
 #  endif
-#endif // USE_KINECT
- 
 }
+
+#endif // USE_KINECT
 
 void Swnt::print() {
 #if USE_KINECT  

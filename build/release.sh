@@ -7,4 +7,5 @@ fi
 cd build.release
 cmake -DCMAKE_BUILD_TYPE=Release ../ 
 cmake --build . --target install
-./../../install/mac-clang-x86_64/bin/swnt
+cd ./../../install/mac-clang-x86_64/bin/
+./swnt

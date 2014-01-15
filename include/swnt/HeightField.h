@@ -44,7 +44,7 @@ static const char* HF_DIFFUSE_VERT = ""
   "uniform sampler2D u_tex_u;     "
   "uniform sampler2D u_tex_forces;"
   "uniform sampler2D u_tex_v;     "
-  "const float dt = 0.016;        "
+  "const float dt = 0.16;        "
   "out float v_new_u_value;       "
   "out float v_new_v_value;       "
 

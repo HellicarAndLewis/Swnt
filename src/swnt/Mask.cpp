@@ -88,11 +88,6 @@ bool Mask::createBuffers() {
     glBindBuffer(GL_ARRAY_BUFFER, mask_vbo);
     glEnableVertexAttribArray(0); // pos
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (GLvoid*)0);
-
-    //updateVertices();
-
-    //glBufferData(GL_ARRAY_BUFFER, sizeof(vec2) * vertices.size(), &vertices[0].x, GL_STREAM_DRAW);
-
   }
   
   // Masking out GL 
@@ -118,33 +113,16 @@ void Mask::updateVertices() {
   float radius = settings.radius - scale_range + (scale_range * scale);
 
   for(int i = 0; i <= resolution; ++i) {
-    //    float change = perlin.get(0.1 + float(i)/(resolution * 2.5), t) * 60;
-
-    float change = perlin.get(0.1 + i * a * 0.1, t) * 60.0f;
-    if(i == 0) {
-      first_change = change;
-    }
-    else if(i == resolution) {
-      change = first_change;
-    }
-
-    //change = powf(cos(i * PI), 7) * sin(a * i) * 10.0;
-    //printf("%f\n", change);
-    //change = perlin.get(float(i)/resolution * 2.0, t) * 50;
-    change = 0;
     float perc = float(i) / (resolution-1);
-    //    float tri_v = 1.0 - (2 * (0.5 + sin(i * TWO_PI * 30)));
-
-    //  printf("%f\n", tri_v);
-    // float tri = MAX(1.0 - (2 * (0.5 + sin(i * TWO_PI * 30))), 0.0) * 50;
-    //  printf("tri: %f, p: %f, %f\n", tri_v, perc, (1.0 - (2 * perc)));
-    change = sin(perc * TWO_PI * 10) * 5 ;
-
+#if 0
+    float change = sin(perc * TWO_PI * 10) * 5 ;
+#else
+    float change = 0.0f;
+#endif
     vec2 p(center.x + cos(a * i) * (radius + change), center.y + sin(a * i) * (radius + change));
-
     vertices.push_back(p);
-
   }
+
   t += 0.001;
 
   glBindBuffer(GL_ARRAY_BUFFER, mask_vbo);
@@ -387,14 +365,8 @@ void Mask::maskOutDepth() {
 }
 
 void Mask::drawThresholded() {
-  //glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  //glViewport(0.0f, 0.0f, settings.win_w, settings.win_h);
-
-  //graphics.drawTexture(thresh.output_tex, 0.0, 240, settings.image_processing_w, settings.image_processing_h);
-  // because graphics.drawTexture uses 1.0 for the alpha the background will be black.
   graphics.drawTexture(thresh.output_tex, 0.0, 0.0, settings.win_w, settings.win_h);
 }
-
 
 // Draws the masked out scene (this will be the final result) 
 void Mask::maskOutScene() {

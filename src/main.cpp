@@ -136,17 +136,17 @@ void key_callback(GLFWwindow* win, int key, int scancode, int action, int mods) 
 
   switch(key) {
 #if USE_AUDIO
-    case GLFW_KEY_E: {
+    case GLFW_KEY_U: {
       printf("audio.play(SOUND_WATER)\n");
       swnt.audio.play(SOUND_WATER);
       break;
     }
-    case GLFW_KEY_F: {
+    case GLFW_KEY_I: {
       printf("audio.play(SOUND_OCEAN)\n");
       swnt.audio.play(SOUND_OCEAN);
       break;
     }
-    case GLFW_KEY_G: {
+    case GLFW_KEY_O: {
       printf("audio.stop(SOUND_OCEAN)\n");
       swnt.audio.stop(SOUND_OCEAN);
       break;
@@ -188,10 +188,6 @@ void key_callback(GLFWwindow* win, int key, int scancode, int action, int mods) 
       break;
     }
     case GLFW_KEY_ESCAPE: {
-#if USE_AUDIO
-      printf("Shutting down audio.\n");
-      swnt.audio.shutdown();
-#endif
       glfwSetWindowShouldClose(win, GL_TRUE);
       break;
     }

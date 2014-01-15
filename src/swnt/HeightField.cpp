@@ -46,7 +46,7 @@ bool HeightField::setup() {
   
   pm.perspective(60.0f, float(HEIGHT_FIELD_W)/HEIGHT_FIELD_H, 0.01, 100.0);
 
-#if 0
+#if 1
   vm.lookAt(vec3(0.0, 20.0, 0.0), vec3(0.0, 0.0, 0.1), vec3(0.0, 1.0, 0.0));
 #else
   vm.rotateX(DEG_TO_RAD * 25);

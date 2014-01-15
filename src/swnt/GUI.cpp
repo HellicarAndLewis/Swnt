@@ -73,6 +73,7 @@ bool GUI::setup(int w, int h) {
   TwAddVarRW(bar, "Ambient Color", TW_TYPE_COLOR3F, &swnt.water.ambient_color, "group='Water'");
 
   // splashes
+#if USE_EFFECTS  
   Splashes& sp = swnt.effects.splashes;
   TwAddVarRW(bar, "Minimum Lifetime", TW_TYPE_FLOAT, &sp.lifetime_min, "min=0.0 max=300.0 step=1.0 group='Splashes'");
   TwAddVarRW(bar, "Maximum Lifetime", TW_TYPE_FLOAT, &sp.lifetime_max, "min=0.0 max=300.0 step=1.0 group='Splashes'");
@@ -87,6 +88,7 @@ bool GUI::setup(int w, int h) {
   TwAddVarRW(bar, "Minimum Splash Size", TW_TYPE_FLOAT, &sp.size_min, "min=0.0 max=300.0 step=1.0 group='Splashes'");
   TwAddVarRW(bar, "Maximum Splash Size", TW_TYPE_FLOAT, &sp.size_max, "min=0.0 max=300.0 step=1.0 group='Splashes'");
   TwAddVarRW(bar, "Animation Speed Of Texture", TW_TYPE_FLOAT, &sp.texture_anim_speed, "min=0.0 max=2.0 step=0.01 group='Splashes'");
+#endif
 
   // rendering
   TwAddVarRW(bar, "Draw Flow Field", TW_TYPE_BOOLCPP, &swnt.draw_flow, "group='Rendering'");
