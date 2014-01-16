@@ -2,7 +2,8 @@
   
   Flow
   ----
-  Creates a velocity/vectory field
+  Creates a velocity/vectory field that uses opencv to create a 
+  force that influences the velocity field. 
 
  */
 #ifndef SWNT_FLOW_H
@@ -27,10 +28,10 @@ class Flow {
   bool setup();
   void calc(unsigned char* curr);
   void draw();
-  void createVortex(float px, float py);            /* create a vortex at the given percentages, 0.5,0.5 is the center of the field */
-  void applyPerlinToField();                        /* apply a perlin noise force to the field */
-  void updateFlowTexture();                         /* uploads the current velocities into a texture */
-  void print();                                     /* prints some debug info */
+  void createVortex(float px, float py, float radius, float force);   /* create a vortex at the given percentages, 0.5,0.5 is the center of the field, radius is in percentage too */
+  void applyPerlinToField();                                          /* apply a perlin noise force to the field */
+  void updateFlowTexture();                                           /* uploads the current velocities into a texture */
+  void print();                                                       /* prints some debug info */
 
  private:
   bool setupGraphics();

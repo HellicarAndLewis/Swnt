@@ -10,7 +10,7 @@ Flow::Flow(Settings& settings, Graphics& graphics)
   ,field_vao(0)
   ,field_vbo(0)
   ,field_bytes_allocated(0)
-  ,field_size(64)
+  ,field_size(32)
   ,perlin(4, 4, TWO_PI, 94)
   ,flow_tex(0)
 {
@@ -70,7 +70,8 @@ void Flow::updateFlowTexture() {
 }
 
 void Flow::draw() {
-
+  glDisable(GL_DEPTH);
+  glDisable(GL_BLEND);
   assert(settings.color_dx < settings.colors.size());
 
   if(field_vertices.size()) {
@@ -100,6 +101,7 @@ void Flow::draw() {
  */
 void Flow::calc(unsigned char* curr) {
   calcFlow(curr);
+  createVortex(0.5, 0.5, 0.6, 0.3);
   updateVelocityField();
   updateFieldVertices();
   dampVelocities();
@@ -211,26 +213,58 @@ void Flow::updateVelocityField() {
 }
 
 void Flow::dampVelocities() {
+  float max_vel = 8.0;
+  float max_vel_sq = max_vel * max_vel;
+  float vel_sq = 0.0f;
+
   for(size_t j = 0; j < field_size; ++j) {
     for(size_t i = 0; i < field_size; ++i) {
       size_t dx = j * field_size + i;
-      velocities[dx] *= 0.95f;
+
+      vel_sq = dot(velocities[dx], velocities[dx]);
+
+      if(vel_sq > max_vel_sq) {
+        velocities[dx] = normalized(velocities[dx]) * max_vel;
+      }
+      else {
+        //        velocities[dx] *= 0.99f;
+      }
     }
   }
+
 }
 
-void Flow::createVortex(float px, float py) {
-  int num = 5;
-  float step = 1.0/(float)field_size;
-  for(int j = -num; j < num; ++j) {
-    for(int i = -num; i < num; ++i) {
-      float perc_x = px + float(i) * step;
-      float perc_y = py + float(j) * step;
-      vec2 dir(-(py - perc_y), px - perc_x);
-      int col = MIN(field_size-1, (perc_x * field_size));
-      int row = MIN(field_size-1, (perc_y * field_size));
-      int dx = row * field_size + col;
-      velocities[dx] += (dir * 50.0);
+void Flow::createVortex(float px, float py, float r, float force) {
+
+  float radius = r * field_size; // percentage, r is the radius of the force
+  float radius_sq = radius * radius;
+  int ki = CLAMP(px * field_size, 0, field_size-1);
+  int kj = CLAMP(py * field_size, 0, field_size-1);
+
+  for(int j = 0; j < field_size; ++j) {
+
+    for(int i = 0; i < field_size; ++i) {
+
+      float dx = ki - i;
+      float dy = kj - j;
+      float d = dx * dx + dy * dy;
+
+      if(d > radius_sq) {
+        continue;
+      }
+
+      vec2 dir(dx,dy);
+      float len = length(dir);
+      dir /= len;
+      
+      float f = len / radius;
+      if(f < 0.1) {
+        continue;
+      }
+
+      vec2 perp(-dir.y, dir.x);
+      int index = j * field_size + i;
+      velocities[index] += perp * force;
     }
   }
 }
@@ -239,6 +273,10 @@ void Flow::createVortex(float px, float py) {
 #define FLOW_CREATE_TEST_VELOCITIES 0
 
 void Flow::applyPerlinToField() {
+
+  // @todo do we want to use this?
+  return; 
+
   size_t s = field_size;
   float influence = 1.01; // how much influence does the current velocity has?
   float scale = 0.5;
@@ -261,7 +299,7 @@ void Flow::applyPerlinToField() {
         velocities[dx].set(0.0, -5.0);
       }    
 #else
-      velocities[dx] += force;
+      velocities[dx] += force * 0.2;
 
 #endif
       heights[dx] = (TWO_PI + a) / (TWO_PI * 2);

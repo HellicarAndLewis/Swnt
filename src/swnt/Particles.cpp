@@ -2,43 +2,6 @@
 
 // ------------------------------------------------------
 
-Spring::Spring(Particle* a, Particle* b)
-  :a(a)
-  ,b(b)
-  ,rest_length(length(b->pos - a->pos) )
-  ,curr_length(rest_length)
-  ,k(0.1f)
-{
-
-}
-
-void Spring::update(const float dt) {
-  if(!a->enabled && !b->enabled) {
-    return;
-  }
-
-  vec3 dir = b->tmp_pos - a->tmp_pos;
-  const float len = length(dir);
-  const float inv_mass = a->inv_mass + b->inv_mass;
-  const float f = ((rest_length - len) / inv_mass) * k;
-
-  curr_length = len;
-
-  dir /= len;
-  dir *= f;
-  dir *= dt;
-
-  if(a->enabled) {
-    a->tmp_pos -= (dir * a->inv_mass);
-  }
-
-  if(b->enabled) {
-    b->tmp_pos += (dir * b->inv_mass);
-  }
-}
-
-// ------------------------------------------------------
-
 Particle::Particle()
   :enabled(true)
   ,age(0.0f)
@@ -47,6 +10,7 @@ Particle::Particle()
   ,rotate_speed(0.0f)
   ,move_speed(0.0f)
   ,size(0.0f)
+  ,max_tail_size(0)
 {
   inv_mass = 1.0f;
 }
@@ -59,10 +23,12 @@ void Particle::update() {
   age++;
   age_perc = age / lifetime;
 
-  tail.push_back(pos);
+  if(max_tail_size) {
+    tail.push_back(pos);
 
-  while(tail.size() > 55) {
-    tail.erase(tail.begin());
+    while(tail.size() > max_tail_size) {
+      tail.erase(tail.begin());
+    }
   }
 }
 
@@ -84,9 +50,26 @@ Particles::~Particles() {
 }
 
 void Particles::update(const float dt) {
-  float drag = 0.99f;
+  float drag = 0.93f;
   float fps = 1.0f / dt;
 
+  for(Particles::iterator it = begin(); it != end(); ++it) {
+    Particle* p = *it;
+
+    if(!p->enabled) {
+      continue;
+    }
+    
+    p->forces = p->forces * p->inv_mass * dt;
+    p->vel += p->forces * dt;
+    p->pos += p->vel;
+    p->vel *= drag;
+    p->forces = 0;
+    p->update();
+    
+  }
+
+  /*
   // PREDICT NEW LOCATIONS
   for(Particles::iterator it = begin(); it != end(); ++it) {
     Particle* p = *it;
@@ -128,6 +111,7 @@ void Particles::update(const float dt) {
 
     p->update();
   }
+  */
 }
 
 void Particles::addForce(const vec3& f) {

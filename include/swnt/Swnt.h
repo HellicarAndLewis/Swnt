@@ -72,7 +72,7 @@ class Swnt {
   Swnt(Settings& settings);
   ~Swnt();
   bool setup();
-  void update();
+  void update(float dt);
   void draw();
   void print();                      /* print some debug info */
 
@@ -84,6 +84,7 @@ class Swnt {
 
  private:
   void updateActivityLevel();        /* sets the activity level. when there are more people interacting this number will go up, 1 is heighest value, 0 means no ativity */
+  void drawScene();
 
 #if USE_KINECT
   bool setupKinect();

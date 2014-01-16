@@ -7,7 +7,7 @@ Swnt::Swnt(Settings& settings)
   ,tracking(settings, graphics)
   ,flow(settings, graphics)
 #if USE_WATER
-  ,water(height_field)
+  ,water(height_field, settings)
 #endif
 #if USE_TIDES
   ,tides_timeout(0)
@@ -110,9 +110,7 @@ bool Swnt::setup() {
     printf("Error: cannot setup the flow.\n");
     return false;
   }
-  flow.print();
-
-  //water.flow_tex = flow.flow_tex;
+  flow.createVortex(0.5, 0.5, 0.6, 5.0);
 
 #if USE_RGB_SHIFT
   if(!rgb_shift.setup()) {
@@ -197,6 +195,9 @@ bool Swnt::setup() {
 
   mask.print();
   print();
+
+  float tof = float(rx_get_day()) / 366.0f;
+  setTimeOfYear(tof);
   return true;
 }
 
@@ -239,7 +240,7 @@ bool Swnt::setupKinect() {
 }
 #endif
 
-void Swnt::update() {
+void Swnt::update(float dt) {
 
   updateActivityLevel();
 
@@ -284,7 +285,7 @@ void Swnt::update() {
 #endif
 
 #if USE_SPIRALS
-  spirals.update(1.0f/60.0f);
+  spirals.update(dt);
 #endif
 
 }
@@ -353,39 +354,27 @@ void Swnt::draw() {
 
     // capture the mask shape
     mask.beginMaskGrab();
-    mask.drawMask();
+      mask.drawMask();
     mask.endMaskGrab();
     
     // capture the depth buffer from kinect 
     mask.beginDepthGrab();
-    graphics.drawDepth(depth_tex, 0.0f, 0.0f, settings.image_processing_w, settings.image_processing_h);
+      graphics.drawDepth(depth_tex, 0.0f, 0.0f, settings.image_processing_w, settings.image_processing_h);
     mask.endDepthGrab();
 
 #if USE_EFFECTS
     water.beginGrabFlow();
-    effects.drawExtraFlow();
+      effects.drawExtraFlow();
     water.endGrabFlow();
 #endif
     
 
     // capture the scene
     mask.beginSceneGrab();
-#   if USE_WATER
-    if(draw_water) {
-      water.draw();
-    }
-#   endif
-#   if USE_EFFECTS
-    if(draw_vortex) {
-      effects.splashes.drawExtraDiffuse();
-      effects.splashes.drawExtraFlow();
-    }
-#   endif
+    {
+      drawScene();
 
-#   if USE_SPIRALS
-    spirals.draw();
-#   endif
-
+    }
     mask.endSceneGrab();
 
     mask.maskOutDepth();
@@ -405,20 +394,12 @@ void Swnt::draw() {
       tracking.draw(0.0f, 0.0f);
     }
 
-    // flow.applyPerlinToField();
-    // flow.draw();
-
     #if USE_RGB_SHIFT
     rgb_shift.apply();
     rgb_shift.draw();
     #endif
-
-
   }
 #endif  // USE_KINECT
-
-  //effects.splashes.drawExtraFlow();
-
 
 #if USE_GUI
   if(draw_gui) {
@@ -429,6 +410,29 @@ void Swnt::draw() {
   // height_field.debugDraw();
 }
 
+void Swnt::drawScene() {
+
+#if USE_WATER
+  if(draw_water) {
+    water.draw();
+  }
+#endif
+
+#if USE_EFFECTS
+  if(draw_vortex) {
+    effects.splashes.drawExtraDiffuse();
+    effects.splashes.drawExtraFlow();
+  }
+#endif
+
+  flow.calc(mask.masked_out_pixels);
+  flow.draw();
+
+#if USE_SPIRALS
+  spirals.draw();
+#endif
+    
+}
 
 // Updates the kinect depth and color buffers.
 #if USE_KINECT
@@ -679,9 +683,14 @@ void Swnt::updateActivityLevel() {
 
 void Swnt::setTimeOfYear(float t) {
   t = CLAMP(t, 0.0f, 1.0f);
-  printf("Time of year: %f\n", t);
+
+  settings.setTimeOfYear(t);
 
 #if USE_WATER
   water.setTimeOfYear(t);
+#endif
+
+#if USE_SPIRALS
+  spirals.refresh();
 #endif
 }

@@ -1,9 +1,11 @@
 #include <assert.h>
 #include <swnt/Water.h>
 #include <swnt/HeightField.h>
+#include <swnt/Settings.h>
 
-Water::Water(HeightField& hf)
+Water::Water(HeightField& hf, Settings& settings)
   :height_field(hf)
+  ,settings(settings)
   ,win_w(0)
   ,win_h(0)
   ,prog(0)
@@ -304,6 +306,7 @@ void Water::draw() {
   glUniform1f(glGetUniformLocation(prog, "u_sun_shininess"), sun_shininess);
   glUniform1fv(glGetUniformLocation(prog, "u_ads_intensities"), 7, ads_intensities);
   glUniform3fv(glGetUniformLocation(prog, "u_ambient_color"), 1, ambient_color);
+  glUniform1f(glGetUniformLocation(prog, "u_vortex_intensity"), vortex_intensity);
 
   //glEnable(GL_CULL_FACE);
   //  glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -354,25 +357,9 @@ void Water::setTimeOfDay(float t, float sun) {
 }
 
 void Water::setTimeOfYear(float t) {
-  vec2 hues[] = {vec2(1.0, 1.0), vec2(2.0, 0.5), vec2(3.0, 0.2),  vec2(4.0, 1.0)};
-  Spline<vec2, 2> hue_spline;
-  hue_spline.add(4, hues);
-
-  vec2 sats[] = {vec2(1.0, 1.0), vec2(1.0, 1.0), vec2(1.0, 1.0), vec2(1.0, 1.0)};
-  Spline<vec2, 2> sat_spline;
-  sat_spline.add(4, sats);
-
-  vec2 values[] = { vec2(1.0, 1.0), vec2(1.0, 1.0), vec2(1.0, 1.0), vec2(1.0, 1.0) };
-  Spline<vec2, 2> value_spline;
-  value_spline.add(4, values);
-
-  vec2 hue = hue_spline.at(t);
-  vec2 sat = sat_spline.at(t);
-  vec2 val = value_spline.at(t);
-
-  vec3 hsv(hue.y, sat.y, val.y);
-
-  rx_hsv_to_rgb(hsv, ambient_color);
+  ambient_color[0] = settings.curr_colors.water.x;
+  ambient_color[1] = settings.curr_colors.water.y;
+  ambient_color[2] = settings.curr_colors.water.z;
 }
 
 void Water::setRoughness(float r) {

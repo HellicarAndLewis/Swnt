@@ -20,11 +20,13 @@ class GUI {
   void onMouseClicked(int bt, int action);
   void onKeyPressed(int key, int mod);
   void onResize(int w, int h);
+  void onMouseWheel(double x, double y);
   void draw();
  public:
   Swnt& swnt;
   int win_w;
   int win_h;
+  double scroll_y;
   TwBar* bar;
   float time_of_day;  /* used to override the time of day, 0 = midnight at 00:00, 1 = 23:59:59... */
   float time_of_year; /* used to override the time of year, 0 = 1 jan, 1 = 31 dec. */

@@ -69,7 +69,6 @@ class Splashes : public BaseEffect {
 inline void Splashes::resetParticle(Particle* p, vec3 position, vec3 direction) {
 
   p->enabled = true;
-  p->tmp_pos = position;
   p->pos = position;
   p->dir = normalized(direction);
   p->age = 0.0f;
@@ -77,7 +76,6 @@ inline void Splashes::resetParticle(Particle* p, vec3 position, vec3 direction) 
   p->forces = 0.0f;
   p->age_perc = 0.0f;
 
-#if 1 
   p->lifetime = rx_random(lifetime_min, lifetime_max);
   p->size_x = rx_random(size_x_min, size_x_max);
   p->size_y = rx_random(size_y_min, size_y_max);
@@ -85,23 +83,6 @@ inline void Splashes::resetParticle(Particle* p, vec3 position, vec3 direction) 
   p->rotate_speed = rx_random(rotate_speed_min, rotate_speed_max);
   p->move_speed = rx_random(move_speed_min, move_speed_max);
 
-#else
-#  if 0
-  p->lifetime = 120.0;
-  p->size_x = rx_random(50.0f, 100); // rx_random(250, 400);
-  p->size_y = rx_random(250, 350);
-  p->size = rx_random(50.0, 150.0f);
-  p->rotate_speed = rx_random(-4.5f, 4.5f);
-  p->move_speed = rx_random(35.0, 100.0f);
-#  else
-  p->lifetime = 30.0;
-  p->size_x = rx_random(25.0f, 50); // rx_random(250, 400);
-  p->size_y = rx_random(50, 95);
-  p->size = rx_random(60.0, 90.0f);
-  p->rotate_speed = rx_random(-4.5f, 4.5f);
-  p->move_speed = rx_random(35.0, 50.0f);
-#  endif
-#endif
 }
 
 #endif

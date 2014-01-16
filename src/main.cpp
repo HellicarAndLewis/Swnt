@@ -24,6 +24,7 @@ void button_callback(GLFWwindow* win, int bt, int action, int mods);
 void key_callback(GLFWwindow* win, int key, int scancode, int action, int mods);
 void error_callback(int err, const char* desc);
 void resize_callback(GLFWwindow* window, int width, int height);
+void scroll_callback(GLFWwindow* window, double x, double y);
 
 Settings settings;
 Swnt swnt(settings);
@@ -63,6 +64,7 @@ int main() {
   glfwSetFramebufferSizeCallback(win, resize_callback);
   glfwSetKeyCallback(win, key_callback);
   glfwSetMouseButtonCallback(win, button_callback);
+  glfwSetScrollCallback(win, scroll_callback);
   glfwSetCursorPosCallback(win, cursor_callback);
   glfwMakeContextCurrent(win);
   glfwSwapInterval(1);
@@ -90,6 +92,9 @@ int main() {
     ::exit(EXIT_FAILURE);
   }
 
+  uint64_t prev_time = rx_hrtime();
+  float inv_ns = 1.0f / 1000000000.0f;
+
   while(!glfwWindowShouldClose(win)) {
     glClearColor(0.094f, 0.074f, 0.184f, 1.0f);
     glClearColor(0,0,0,1);
@@ -103,10 +108,14 @@ int main() {
       draw_forces = false;
     }
 #endif
-
-    swnt.update();
+    
+    uint64_t now = rx_hrtime();
+    uint64_t delta_ns = now - prev_time;
+    float dt = delta_ns * inv_ns; 
+    prev_time = now;
+    swnt.update(dt);
     swnt.draw();
-
+    
     glfwSwapBuffers(win);
     glfwPollEvents();
   }
@@ -243,4 +252,10 @@ void cursor_callback(GLFWwindow* win, double x, double y) {
   force_x = x/1280.0;
   force_y = (720-y)/720.0;
   // printf("force_x: %f, force_y: %f\n", force_x, force_y);
+}
+
+void scroll_callback(GLFWwindow* window, double x, double y) {
+#if USE_GUI
+  swnt.gui.onMouseWheel(x, y);
+#endif  
 }

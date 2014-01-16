@@ -51,7 +51,7 @@ static const char* SPIRAL_FS = ""
   "in vec2 v_tex;"
   "void main() {"
   "  vec4 diffuse_tc = texture(u_diffuse_tex, v_tex);"
-  "  fragcolor.a = diffuse_tc.r * (1.0 - (pow(v_age_perc, 4.0))) * u_alpha;"
+  "  fragcolor.a = (1.0 - v_tex.s) * (1.0 - v_age_perc); " //  * diffuse_tc.r * (1.0 - (pow(v_age_perc, 4.0))) * u_alpha;"
   "  fragcolor.rgb = mix(u_col_from, u_col_to, v_tex.s);"
   "}"
   "";
@@ -118,6 +118,9 @@ class Spirals {
   float max_mass;
   float center_force;                          /* how much should the particle be attracted to the center */
   float field_force;                           /* the force we apply for the velocity field */
+  uint32_t max_tail_size;                      /* max number of elements we store in the tail of the particles */
+  uint32_t min_tail_size;                      /* min number of elements we store in the tail of the particles */
+  uint32_t spawn_per_tracked;                  /* number of particles to spawn per tracked contour */
 
   /* Vertices */
   size_t bytes_allocated;                      /* how many bytes we have allocated for our vbo that hold the spiral vertices */

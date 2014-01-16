@@ -15,14 +15,17 @@ struct ColorSettings {
   vec3 spiral_from;
   vec3 spiral_to;
   vec3 flow_lines;
+  vec3 water;
 };
 
 class Settings {
  public:
   Settings();
   bool load(std::string filepath);
+  void setTimeOfYear(float t);
 
  private:
+  void getColorsForTimeOfYear(float t, ColorSettings& result); 
   void extractColor(rapidxml::xml_node<>* n, vec3& col);
 
  public:
@@ -39,6 +42,7 @@ class Settings {
   std::vector<ColorSettings> colors;   /* the colors used when rendering */
   size_t color_dx;                     /* the current color palette to use */
   float radius;                        /* radius of the overlay */
+  ColorSettings curr_colors;           /* the colors for the current time of year, only valid when setTimeOfYear() has been called once */
 };
 
 #endif

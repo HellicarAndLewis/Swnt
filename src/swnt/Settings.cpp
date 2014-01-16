@@ -92,8 +92,14 @@ bool Settings::load(std::string filepath) {
       extractColor(cols->first_node("spiral_from"), col_setting.spiral_from) ;
       extractColor(cols->first_node("spiral_to"), col_setting.spiral_to) ;
       extractColor(cols->first_node("flow_lines"), col_setting.flow_lines) ;
+      extractColor(cols->first_node("water"), col_setting.water) ;
       colors.push_back(col_setting);
       cols = cols->next_sibling();
+    }
+
+    if(colors.size() != 4) {
+      printf("Error: we did found enough colors. Make sure the settings file has colors for each season.\n");
+      ::exit(EXIT_FAILURE);
     }
 
   }
@@ -122,4 +128,68 @@ void Settings::extractColor(xml_node<>* n, vec3& col) {
     dx++;
     c = c->next_sibling();
   }
+}
+
+void Settings::setTimeOfYear(float t) {
+  getColorsForTimeOfYear(t, curr_colors);
+}
+
+void Settings::getColorsForTimeOfYear(float t, ColorSettings& result) {
+  t = CLAMP(t, 0.0, 1.0);
+  
+  // get the season
+  int day = t * 366;
+  int seasons[] = { 80, 172, 264, 366 } ;
+  int season;
+  for(int i = 0; i < 3; ++i) {
+    if(day < seasons[i]) {
+      season = i; 
+      break;
+    }
+  }
+
+  if(season > colors.size()) {
+    printf("Warning: trying to get colors for a seaons which doesnt exist: season: %d, day: %d\n", season, day);
+    return;
+  }
+
+  Spline<float> hand_hues;
+  Spline<float> hand_sats;
+  Spline<float> hand_vals;
+
+  Spline<float> water_hues;
+  Spline<float> water_sats;
+  Spline<float> water_vals;
+
+  Spline<float> flow_hues;
+  Spline<float> flow_sats;
+  Spline<float> flow_vals;
+  
+  float hand_hsv[3];
+  float water_hsv[3];
+  float flow_hsv[3];
+
+  for(int i = 0; i < colors.size(); ++i) {
+    ColorSettings col = colors[i];
+
+    rx_rgb_to_hsv(col.hand, hand_hsv);
+    rx_rgb_to_hsv(col.water, water_hsv);
+    rx_rgb_to_hsv(col.flow_lines, flow_hsv);
+
+    hand_hues.push_back(hand_hsv[0]);
+    water_hues.push_back(water_hsv[0]);
+    flow_hues.push_back(flow_hsv[0]);
+
+    hand_sats.push_back(hand_hsv[1]);
+    water_sats.push_back(water_hsv[1]);
+    flow_sats.push_back(hand_hsv[1]);
+
+    hand_vals.push_back(hand_hsv[2]);
+    water_vals.push_back(water_hsv[2]);
+    flow_vals.push_back(hand_hsv[2]);
+  }
+
+  rx_hsv_to_rgb(hand_hues.at(t), hand_sats.at(t), hand_vals.at(t), result.hand.x, result.hand.y, result.hand.z);
+  rx_hsv_to_rgb(water_hues.at(t), water_sats.at(t), water_vals.at(t), result.water.x, result.water.y, result.water.z);
+  rx_hsv_to_rgb(flow_hues.at(t), flow_sats.at(t), flow_vals.at(t), result.flow_lines.x, result.flow_lines.y, result.flow_lines.z);
 }

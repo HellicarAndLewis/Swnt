@@ -53,6 +53,7 @@ GUI::GUI(Swnt& swnt)
   :swnt(swnt)
   ,win_w(0)
   ,win_h(0)
+  ,scroll_y(0)
   ,bar(NULL)
   ,time_of_day(0)
 {
@@ -90,6 +91,7 @@ bool GUI::setup(int w, int h) {
   TwAddVarRW(bar, "Diffuse Texture Intensity", TW_TYPE_FLOAT, &swnt.water.ads_intensities[5], "min=-10.0 max=10.0 step=0.01 group='Water'");
   TwAddVarRW(bar, "Ambient Intensity", TW_TYPE_FLOAT, &swnt.water.ads_intensities[0], "min=-10.0 max=10.0 step=0.01 group='Water'");
   TwAddVarRW(bar, "Ambient Color", TW_TYPE_COLOR3F, &swnt.water.ambient_color, "group='Water'");
+  TwAddVarRW(bar, "Vortex Amount", TW_TYPE_FLOAT, &swnt.water.vortex_intensity, "group='Water' min=0.0 max=5.0 step=0.01");
 
   // splashes
 #if USE_EFFECTS  
@@ -120,6 +122,24 @@ bool GUI::setup(int w, int h) {
   TwAddVarCB(bar, "Time Of Day", TW_TYPE_FLOAT, set_time_of_day, get_time_of_day, this, "group='General' min=0.25 max=0.75 step=0.001");
   TwAddVarCB(bar, "Time Of Year", TW_TYPE_FLOAT, set_time_of_year, get_time_of_year, this, "group='General' min=0.0 max=1.0 step=0.01");
 
+  // colors
+  if(swnt.settings.colors.size() == 4) {
+    TwAddVarRW(bar, "Hand Winter", TW_TYPE_COLOR3F, swnt.settings.colors[0].hand.ptr(), "group='General'");
+    TwAddVarRW(bar, "Hand Spring", TW_TYPE_COLOR3F, swnt.settings.colors[1].hand.ptr(), "group='General'");
+    TwAddVarRW(bar, "Hand Summer", TW_TYPE_COLOR3F, swnt.settings.colors[2].hand.ptr(), "group='General'");
+    TwAddVarRW(bar, "Hand Autumn", TW_TYPE_COLOR3F, swnt.settings.colors[3].hand.ptr(), "group='General'");
+
+    TwAddVarRW(bar, "Spiral Winter", TW_TYPE_COLOR3F, swnt.settings.colors[0].spiral_from.ptr(), "group='General'");
+    TwAddVarRW(bar, "Spiral Spring", TW_TYPE_COLOR3F, swnt.settings.colors[1].spiral_from.ptr(), "group='General'");
+    TwAddVarRW(bar, "Spiral Summer", TW_TYPE_COLOR3F, swnt.settings.colors[2].spiral_from.ptr(), "group='General'");
+    TwAddVarRW(bar, "Spiral Autumn", TW_TYPE_COLOR3F, swnt.settings.colors[3].spiral_from.ptr(), "group='General'");
+
+    TwAddVarRW(bar, "Water Winter", TW_TYPE_COLOR3F, swnt.settings.colors[0].water.ptr(), "group='General'");
+    TwAddVarRW(bar, "Water Spring", TW_TYPE_COLOR3F, swnt.settings.colors[1].water.ptr(), "group='General'");
+    TwAddVarRW(bar, "Water Summer", TW_TYPE_COLOR3F, swnt.settings.colors[2].water.ptr(), "group='General'");
+    TwAddVarRW(bar, "Water Autumn", TW_TYPE_COLOR3F, swnt.settings.colors[3].water.ptr(), "group='General'");
+  }
+
   // kinect
   TwAddVarRW(bar, "Kinect Far", TW_TYPE_FLOAT, &swnt.settings.kinect_far, "group='Kinect' min=0.00 max=5.00 step=0.01");
   TwAddVarRW(bar, "Kinect Near", TW_TYPE_FLOAT, &swnt.settings.kinect_near, "group='Kinect' min=0.00 max=5.00 step=0.01");
@@ -131,10 +151,15 @@ bool GUI::setup(int w, int h) {
   TwAddVarRW(bar, "Min Particle Mass", TW_TYPE_FLOAT, &spirals.min_mass, "min=0.0 max=15.0 step=0.001 group='Spirals'");
   TwAddVarRW(bar, "Max Particle Mass", TW_TYPE_FLOAT, &spirals.max_mass, "min=0.0 max=15.0 step=0.001 group='Spirals'");
   TwAddVarRW(bar, "Force Towards Center", TW_TYPE_FLOAT, &spirals.center_force, "min=0.0 max=100.0 step=0.1 group='Spirals'");
-  TwAddVarRW(bar, "Velocity Field Force", TW_TYPE_FLOAT, &spirals.field_force, "min=0.0 max=5.0 step=0.001 group='Spirals'");
-  TwAddVarRW(bar, "Min Width", TW_TYPE_FLOAT, &spirals.min_strip_width, "min=0.0 max=15.0 step=0.001 group='Spirals'");
-  TwAddVarRW(bar, "Max Width", TW_TYPE_FLOAT, &spirals.max_strip_width, "min=0.0 max=15.0 step=0.001 group='Spirals'");
+  TwAddVarRW(bar, "Velocity Field Force", TW_TYPE_FLOAT, &spirals.field_force, "min=0.0 max=100.0 step=0.1 group='Spirals'");
+  TwAddVarRW(bar, "Min Width", TW_TYPE_FLOAT, &spirals.min_strip_width, "min=0.0 max=15.0 step=0.1 group='Spirals'");
+  TwAddVarRW(bar, "Max Width", TW_TYPE_FLOAT, &spirals.max_strip_width, "min=0.0 max=15.0 step=0.1 group='Spirals'");
+  TwAddVarRW(bar, "Min Tail Size", TW_TYPE_UINT32, &spirals.min_tail_size, "min=2 max=100 step=1 group='Spirals'");
+  TwAddVarRW(bar, "Max Tail Size", TW_TYPE_UINT32, &spirals.max_tail_size, "min=2 max=100 step=1 group='Spirals'");
+  TwAddVarRW(bar, "Number of Particles To Spawn", TW_TYPE_UINT32, &spirals.spawn_per_tracked, "min=1 max=200 step=1 group='Spirals'");
 #endif
+
+
 
   TwWindowSize(win_w, win_h);
   return true;
@@ -154,6 +179,16 @@ void GUI::onMouseClicked(int bt, int action) {
   TwMouseButtonID btn = (bt == 0) ? TW_MOUSE_LEFT : TW_MOUSE_RIGHT;
   TwMouseAction ma = (action == GLFW_PRESS) ? TW_MOUSE_PRESSED : TW_MOUSE_RELEASED;
   TwMouseButton(ma, btn);
+}
+
+void GUI::onMouseWheel(double x, double y) {
+  if(y > 0.0) {
+    scroll_y += 1;
+  }
+  else {
+    scroll_y -= 1;
+  }
+  TwMouseWheel(scroll_y);
 }
 
 void GUI::onKeyPressed(int key, int mod) {

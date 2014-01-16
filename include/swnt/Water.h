@@ -142,8 +142,8 @@ static const char* WATER_FS = ""
   "  vec3 diffuse1 = texture(u_diffuse_tex, texcoord1 * 1.0).rgb;"
   "  vec3 moved_diffuse = mix(diffuse0, diffuse1, lerp);"
 
-  "  vec3 foam0 = texture(u_foam_tex, texcoord0 * 4.0).rgb;"
-  "  vec3 foam1 = texture(u_foam_tex, texcoord1 * 4.0).rgb;"
+  "  vec3 foam0 = texture(u_foam_tex, texcoord0 * 1.0).rgb;"
+  "  vec3 foam1 = texture(u_foam_tex, texcoord1 * 1.0).rgb;"
   "  vec3 moved_foam = mix(foam0, foam1, lerp);"
 
   "  vec3 Ka = u_ambient_color;"
@@ -203,8 +203,8 @@ static const char* WATER_FS = ""
   "  float foam_level = u_foam_depth;"
   "  float foam_k = v_pos.y / foam_level;"
   "  if(foam_k > 1.0) { foam_k = 1.0; } "//  else if (foam_k <= 0.2) { foam_k = 0.0; } "
-  "  vec3 foam = foam_k * moved_foam ;"
-  "  foam += foam_m * 0.4 ;"
+  "  vec3 foam = foam_k * (moved_foam * 1.2);"
+  "  foam += foam_m * 0.2  ;"
 
   // http://blog.elmindreda.org/2011/06/oceans-of-fun/ 
   "  vec3 fake_sun = u_sun_color * pow(clamp(dot(eye_r, eye_v), 0.0, 1.0), u_sun_shininess);"
@@ -239,13 +239,13 @@ static const char* WATER_FS = ""
   "";
 
 // ------------------------------------------------------
-
+class Settings;
 class HeightField;
 
 class Water {
 
  public:
-  Water(HeightField& heightField);
+  Water(HeightField& heightField, Settings& settings);
   bool setup(int winW, int winH);
   void update(float dt);
   void draw();
@@ -256,6 +256,7 @@ class Water {
   void setTimeOfDay(float t, float sun);
   void setTimeOfYear(float t); /* 0 = 1 jan, 1 = 31 dec */
   void setRoughness(float r); /* 0 = no roughness, 1 = a lot of roughness */
+  void setVortexAmount(float v);
 
  private:
   GLuint createTexture(std::string filename);
@@ -263,6 +264,7 @@ class Water {
  public:
 
   HeightField& height_field;
+  Settings& settings;
   int win_w;
   int win_h;
 

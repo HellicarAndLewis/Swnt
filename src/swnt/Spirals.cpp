@@ -16,14 +16,17 @@ Spirals::Spirals(Settings& settings, Tracking& tracker, Graphics& graphics, Flow
   ,frag(0)
   ,prog(0)
   ,center_particle(NULL)
-  ,min_lifetime(5.0f)
-  ,max_lifetime(10.0f)
+  ,min_lifetime(150.0f)
+  ,max_lifetime(200.0f)
   ,min_strip_width(1.5f)
   ,max_strip_width(7.5f)
   ,min_mass(1.0f)
   ,max_mass(1.4f)
-  ,center_force(2.5f)
-  ,field_force(0.015f)
+  ,center_force(0.0f)
+  ,field_force(40.0f)
+  ,max_tail_size(15)
+  ,min_tail_size(5)
+  ,spawn_per_tracked(10)
 {
 }
 
@@ -34,7 +37,7 @@ bool Spirals::setup() {
   center_particle = new Particle();
   center_particle->enabled = false;
   center_particle->pos.set(settings.win_w * 0.5, settings.win_h * 0.5, 0.0);
-  center_particle->tmp_pos = center_particle->pos;
+
   particles.push_back(center_particle);
   #endif
   
@@ -143,7 +146,7 @@ void Spirals::update(float dt) {
   applyVortexToField();
   applyCenterForce();
 
-  particles.update(1);
+  particles.update(dt);
   updateVertices();
 }
 
@@ -166,9 +169,12 @@ void Spirals::applyVelocityField() {
       continue;
     }
 
+    // We copy 50% of the velocity field and use 50% from the other velocities
     size_t dx = MIN((flow.field_size-1)*(flow.field_size-1), row * flow.field_size + col);
     vec2& v = flow.velocities[dx];
-    p->addForce(vec3(v.x * field_force, v.y * field_force, 0.0f));
+    vec3 pvel(v.x, v.y, 0.0);
+    p->vel = p->vel * 0.5 + pvel * 0.5;
+    //p->addForce(vec3(v.x * field_force, v.y * field_force, 0.0f));
   }
 
 }
@@ -198,7 +204,7 @@ void Spirals::spawnParticles() {
   // Spawn from tracked position (k-means)
   float scale_x = float(settings.win_w) / settings.image_processing_w;
   float scale_y = float(settings.win_h) / settings.image_processing_h;
-  int spawn_per_tracked = 5;
+  // int spawn_per_tracked = 5;
   float displace = 50.0f;
 
   #if 0
@@ -215,11 +221,11 @@ void Spirals::spawnParticles() {
       p->pos = vec3(tr->position.x * scale_x + rx_random(-displace, displace), 
                     tr->position.y * scale_y + rx_random(-displace, displace), 
                     0.0f);
-      p->tmp_pos = p->pos;
       p->forces.set(0.0f, 0.0f, 0.0f);
       p->vel.set(0.0f, 0.0f, 0.0f);
       p->lifetime = rx_random(min_lifetime, max_lifetime);
       p->strip_width = rx_random(min_strip_width, max_strip_width);
+      p->max_tail_size = rx_random(min_tail_size, max_tail_size);
       p->setMass(rx_random(min_mass, max_mass));
       particles.push_back(p);
       
@@ -234,7 +240,7 @@ void Spirals::spawnParticles() {
   #endif
 
   // Spawn from contour
-  spawn_per_tracked = 360;
+  //spawn_per_tracked = 60;
   if(tracker.contour_vertices.size()) {
 
     for(int i = 0; i < spawn_per_tracked; ++i) {
@@ -243,11 +249,11 @@ void Spirals::spawnParticles() {
 
       Particle* p = new Particle();
       p->pos = vec3(position.x * scale_x + rx_random(10.0f), position.y * scale_y + rx_random(10.0f), 0.0f);
-      p->tmp_pos = p->pos;
       p->forces.set(0.0f, 0.0f, 0.0f);
       p->vel.set(0.0f, 0.0f, 0.0f);
       p->lifetime = rx_random(min_lifetime, max_lifetime);
       p->strip_width = rx_random(min_strip_width, max_strip_width);
+      p->max_tail_size = rx_random(min_tail_size, max_tail_size);
       p->setMass(rx_random(min_mass, max_mass));
       particles.push_back(p);
     }
@@ -282,7 +288,7 @@ void Spirals::updateVertices() {
       for(size_t i = 0; i < (p->tail.size()-1); ++i) {
 
         // Get perpendicular vertex
-        perc = float(i)/p->tail.size();
+        perc = float(i)/(p->tail.size()-1);
         dir = p->tail[i+1] - p->tail[i];
         perp = normalized(cross(dir, rotate_axis)) * (p->strip_width * perc);
 
@@ -299,7 +305,6 @@ void Spirals::updateVertices() {
         v.pos = p->tail[i] + perp;
         v.tex.y = 1.0f;
         vertices.push_back(v);
-
       }
     }
     vertex_counts.push_back(vertices.size() - vertex_offsets.back());
@@ -347,7 +352,6 @@ void Spirals::draw(float alpha) {
   glBindTexture(GL_TEXTURE_2D, diffuse_tex);
 
   glMultiDrawArrays(GL_TRIANGLE_STRIP, &vertex_offsets[0], &vertex_counts[0], vertex_counts.size());
-
 }
 
 
@@ -372,6 +376,8 @@ void Spirals::drawDisplacement() {
 
 void Spirals::applyVortexToField() {
 
+  //  printf("Update Spirals::applyVortexToField\n");
+
   for(std::vector<Tracked*>::iterator tit = tracker.tracked.begin(); tit != tracker.tracked.end(); ++tit) {
 
     Tracked* tr = *tit;
@@ -382,15 +388,18 @@ void Spirals::applyVortexToField() {
 
     float px = tr->position.x/settings.image_processing_w;
     float py = tr->position.y/settings.image_processing_h;
-    flow.createVortex(px, py);
+    flow.createVortex(px, py, 0.1, 3.0);
   }
 }
 
 void Spirals::refresh() {
   assert(settings.color_dx < settings.colors.size());
   glUseProgram(prog);
-  glUniform3fv(glGetUniformLocation(prog, "u_col_from"), 1, settings.colors[settings.color_dx].spiral_from.ptr());
-  glUniform3fv(glGetUniformLocation(prog, "u_col_to"), 1, settings.colors[settings.color_dx].spiral_to.ptr());
+
+  //glUniform3fv(glGetUniformLocation(prog, "u_col_from"), 1, settings.colors[settings.color_dx].spiral_from.ptr());
+  //glUniform3fv(glGetUniformLocation(prog, "u_col_to"), 1, settings.colors[settings.color_dx].spiral_to.ptr());
+  glUniform3fv(glGetUniformLocation(prog, "u_col_from"), 1, settings.curr_colors.hand.ptr());
+  glUniform3fv(glGetUniformLocation(prog, "u_col_to"), 1, settings.curr_colors.hand.ptr());
 }
 
 void Spirals::applyCenterForce() {

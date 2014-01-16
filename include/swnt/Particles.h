@@ -14,9 +14,8 @@ class Particle {
   void addForce(const vec3& f);
   void update();
   void setMass(float m);
-  void setPosition(vec3 p) { tmp_pos = p; pos = p; } 
+
  public:
-  vec3 tmp_pos;
   vec3 pos;
   vec3 vel;
   vec3 forces;
@@ -31,24 +30,11 @@ class Particle {
   float size_y;
   float rotate_speed; /* e.g. to control rotation speed of your particle */
   float move_speed; /* e.g. use this together with 'dir' to control the force/speed you want for the particle */
+  size_t max_tail_size; /* the maximum number of elements we store in the tail; default to 0, no tail */
   std::vector<vec3> tail;
 
   /* used for different purposes */
   vec3 dir; /* if you want a particle to follow a certain direction you could use this with addForce */
-};
-
-// -------------------------------------------------
-
-class Spring { 
- public:
-  Spring(Particle* a, Particle* b);
-  void update(const float dt);  
- public:
-  Particle* a;
-  Particle* b;
-  float rest_length;
-  float curr_length;
-  float k;
 };
 
 // -------------------------------------------------
@@ -66,10 +52,6 @@ class Particles {
   void push_back(Particle* p);
   size_t size();
 
-  // springs
-  void addSpring(Spring* s);
-
-  // vector access
   typedef std::vector<Particle*>::iterator iterator;
   Particles::iterator begin();
   Particles::iterator end();
@@ -78,7 +60,6 @@ class Particles {
 
  public:
   std::vector<Particle*> particles; /* particles container; used by the drawer */
-  std::vector<Spring*> springs;
 };
 
 inline void Particles::push_back(Particle* p) {
@@ -97,25 +78,8 @@ inline Particles::iterator Particles::end() {
   return particles.end();
 }
 
-inline void Particles::addSpring(Spring* s) {
-  springs.push_back(s);
-}
-
 inline Particles::iterator Particles::erase(Particles::iterator it) {
-
   Particle* p = *it;
-
-  std::vector<Spring*>::iterator sit = springs.begin();
-  while(sit != springs.end()) {
-    Spring* s = *sit;
-    if(s->a == p) {
-      sit = springs.erase(sit);
-      delete s;
-      continue;
-    }
-    ++sit;
-  }
-
   return particles.erase(it);
 }
 
