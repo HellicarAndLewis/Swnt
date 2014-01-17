@@ -142,8 +142,8 @@ static const char* WATER_FS = ""
   "  vec3 diffuse1 = texture(u_diffuse_tex, texcoord1 * 1.0).rgb;"
   "  vec3 moved_diffuse = mix(diffuse0, diffuse1, lerp);"
 
-  "  vec3 foam0 = texture(u_foam_tex, texcoord0 * 1.0).rgb;"
-  "  vec3 foam1 = texture(u_foam_tex, texcoord1 * 1.0).rgb;"
+  "  vec3 foam0 = texture(u_foam_tex, texcoord0 * 4.0).rgb;"
+  "  vec3 foam1 = texture(u_foam_tex, texcoord1 * 4.0).rgb;"
   "  vec3 moved_foam = mix(foam0, foam1, lerp);"
 
   "  vec3 Ka = u_ambient_color;"
@@ -203,8 +203,8 @@ static const char* WATER_FS = ""
   "  float foam_level = u_foam_depth;"
   "  float foam_k = v_pos.y / foam_level;"
   "  if(foam_k > 1.0) { foam_k = 1.0; } "//  else if (foam_k <= 0.2) { foam_k = 0.0; } "
-  "  vec3 foam = foam_k * (moved_foam * 1.2);"
-  "  foam += foam_m * 0.2  ;"
+  "  vec3 foam = foam_k * (moved_foam * 2.2);"
+  //  "  foam += foam_m * 0.2  ;"
 
   // http://blog.elmindreda.org/2011/06/oceans-of-fun/ 
   "  vec3 fake_sun = u_sun_color * pow(clamp(dot(eye_r, eye_v), 0.0, 1.0), u_sun_shininess);"
@@ -214,6 +214,7 @@ static const char* WATER_FS = ""
   "  K     += u_ads_intensities[3] * spec;"
   "  K     += depth_color * ndl;"
   "  K     += mix(u_ads_intensities[5] * moved_diffuse, u_ads_intensities[4] * foam, foam_k);"
+  
   //  "  K  += u_ads_intensities[5] * moved_diffuse;"
   //" K += foam_m;"
 

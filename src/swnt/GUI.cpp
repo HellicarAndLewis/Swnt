@@ -92,6 +92,7 @@ bool GUI::setup(int w, int h) {
   TwAddVarRW(bar, "Ambient Intensity", TW_TYPE_FLOAT, &swnt.water.ads_intensities[0], "min=-10.0 max=10.0 step=0.01 group='Water'");
   TwAddVarRW(bar, "Ambient Color", TW_TYPE_COLOR3F, &swnt.water.ambient_color, "group='Water'");
   TwAddVarRW(bar, "Vortex Amount", TW_TYPE_FLOAT, &swnt.water.vortex_intensity, "group='Water' min=0.0 max=5.0 step=0.01");
+  TwDefine("SWNT/Water opened=false");
 
   // splashes
 #if USE_EFFECTS  
@@ -109,6 +110,7 @@ bool GUI::setup(int w, int h) {
   TwAddVarRW(bar, "Minimum Splash Size", TW_TYPE_FLOAT, &sp.size_min, "min=0.0 max=300.0 step=1.0 group='Splashes'");
   TwAddVarRW(bar, "Maximum Splash Size", TW_TYPE_FLOAT, &sp.size_max, "min=0.0 max=300.0 step=1.0 group='Splashes'");
   TwAddVarRW(bar, "Animation Speed Of Texture", TW_TYPE_FLOAT, &sp.texture_anim_speed, "min=0.0 max=2.0 step=0.01 group='Splashes'");
+  TwDefine("SWNT/Splashes opened=false");
 #endif
 
   // rendering
@@ -116,6 +118,7 @@ bool GUI::setup(int w, int h) {
   TwAddVarRW(bar, "Draw Water", TW_TYPE_BOOLCPP, &swnt.draw_water, "group='Rendering'");
   TwAddVarRW(bar, "Draw Debug Eddy", TW_TYPE_BOOLCPP, &swnt.draw_vortex, "group='Rendering'");
   TwAddVarRW(bar, "Draw Contours and Tangents", TW_TYPE_BOOLCPP, &swnt.draw_tracking, "group='Rendering'");
+  TwDefine("SWNT/Rendering opened=false");
 
   // general
   TwAddVarRW(bar, "Override Values With GUI", TW_TYPE_BOOLCPP, &swnt.override_with_gui, "group='General'");
@@ -140,9 +143,12 @@ bool GUI::setup(int w, int h) {
     TwAddVarRW(bar, "Water Autumn", TW_TYPE_COLOR3F, swnt.settings.colors[3].water.ptr(), "group='General'");
   }
 
+  TwDefine("SWNT/General opened=false");
+
   // kinect
   TwAddVarRW(bar, "Kinect Far", TW_TYPE_FLOAT, &swnt.settings.kinect_far, "group='Kinect' min=0.00 max=5.00 step=0.01");
   TwAddVarRW(bar, "Kinect Near", TW_TYPE_FLOAT, &swnt.settings.kinect_near, "group='Kinect' min=0.00 max=5.00 step=0.01");
+  TwDefine("SWNT/Kinect opened=false");
 
 #if USE_SPIRALS
   Spirals& spirals = swnt.spirals;
@@ -150,16 +156,15 @@ bool GUI::setup(int w, int h) {
   TwAddVarRW(bar, "Max Particle Lifetime", TW_TYPE_FLOAT, &spirals.max_lifetime, "min=0.0 max=300.0 step=1.0 group='Spirals'");
   TwAddVarRW(bar, "Min Particle Mass", TW_TYPE_FLOAT, &spirals.min_mass, "min=0.0 max=15.0 step=0.001 group='Spirals'");
   TwAddVarRW(bar, "Max Particle Mass", TW_TYPE_FLOAT, &spirals.max_mass, "min=0.0 max=15.0 step=0.001 group='Spirals'");
-  TwAddVarRW(bar, "Force Towards Center", TW_TYPE_FLOAT, &spirals.center_force, "min=0.0 max=100.0 step=0.1 group='Spirals'");
-  TwAddVarRW(bar, "Velocity Field Force", TW_TYPE_FLOAT, &spirals.field_force, "min=0.0 max=100.0 step=0.1 group='Spirals'");
+  TwAddVarRW(bar, "Force Towards Center", TW_TYPE_FLOAT, &spirals.center_force, "min=0.0 max=400.0 step=0.1 group='Spirals'");
+  TwAddVarRW(bar, "Velocity Field Force", TW_TYPE_FLOAT, &spirals.field_force, "min=0.0 max=1.0 step=0.01 group='Spirals'");
   TwAddVarRW(bar, "Min Width", TW_TYPE_FLOAT, &spirals.min_strip_width, "min=0.0 max=15.0 step=0.1 group='Spirals'");
   TwAddVarRW(bar, "Max Width", TW_TYPE_FLOAT, &spirals.max_strip_width, "min=0.0 max=15.0 step=0.1 group='Spirals'");
   TwAddVarRW(bar, "Min Tail Size", TW_TYPE_UINT32, &spirals.min_tail_size, "min=2 max=100 step=1 group='Spirals'");
   TwAddVarRW(bar, "Max Tail Size", TW_TYPE_UINT32, &spirals.max_tail_size, "min=2 max=100 step=1 group='Spirals'");
   TwAddVarRW(bar, "Number of Particles To Spawn", TW_TYPE_UINT32, &spirals.spawn_per_tracked, "min=1 max=200 step=1 group='Spirals'");
+  TwDefine("SWNT/Spirals opened=false");
 #endif
-
-
 
   TwWindowSize(win_w, win_h);
   return true;

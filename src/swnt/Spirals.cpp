@@ -23,7 +23,7 @@ Spirals::Spirals(Settings& settings, Tracking& tracker, Graphics& graphics, Flow
   ,min_mass(1.0f)
   ,max_mass(1.4f)
   ,center_force(0.0f)
-  ,field_force(40.0f)
+  ,field_force(0.5f)
   ,max_tail_size(15)
   ,min_tail_size(5)
   ,spawn_per_tracked(10)
@@ -173,7 +173,7 @@ void Spirals::applyVelocityField() {
     size_t dx = MIN((flow.field_size-1)*(flow.field_size-1), row * flow.field_size + col);
     vec2& v = flow.velocities[dx];
     vec3 pvel(v.x, v.y, 0.0);
-    p->vel = p->vel * 0.5 + pvel * 0.5;
+    p->vel = p->vel * (1.0 - field_force) + pvel * field_force;
     //p->addForce(vec3(v.x * field_force, v.y * field_force, 0.0f));
   }
 
