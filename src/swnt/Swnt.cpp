@@ -373,14 +373,13 @@ void Swnt::draw() {
     mask.beginSceneGrab();
     {
       drawScene();
-
     }
     mask.endSceneGrab();
 
     mask.maskOutDepth();
     mask.maskOutScene();
 
-    mask.drawHand();
+    //mask.drawHand();
 
     tracking.track(mask.masked_out_pixels);
 

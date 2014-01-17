@@ -106,6 +106,8 @@ class Swnt {
   Tracking tracking;                 /* trackes found blobs using k-means */
   Flow flow;                         /* optical flow that drives the spirals*/
   int state;                         /* used to swith the way and what we draw */
+
+  /* @todo - check which draw_* are used */
   bool draw_flow;                    /* flag that toggles drawing of the flow field */
   bool draw_threshold;               /* flag that toggles drawing of the hand/found blobs */
   bool draw_water;

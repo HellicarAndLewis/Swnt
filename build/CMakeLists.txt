@@ -4,16 +4,23 @@ include(${CMAKE_CURRENT_LIST_DIR}/Triplet.cmake)
 
 set(app swnt)
 set(sd ${CMAKE_CURRENT_LIST_DIR}/../src/)
+set(shared ${CMAKE_CURRENT_LIST_DIR}/../shared/)
 
 if(CMAKE_BUILD_TYPE STREQUAL Debug)
   set(app "${app}_debug")
 endif()
+
+add_definitions(
+  -DTRILIBRARY
+  -DSINGLE
+)
 
 include_directories(
   ${CMAKE_CURRENT_LIST_DIR}/../src
   ${CMAKE_CURRENT_LIST_DIR}/../include
   ${extern_include_dir}
   ${CMAKE_CURRENT_LIST_DIR}/../shared/tinylib/src
+  ${shared}/triangle/
   )
 
 if(NOT WIN32)
@@ -43,8 +50,8 @@ if(NOT WIN32)
     ${sd}/swnt/Weather.cpp
     ${sd}/swnt/Audio.cpp
     ${sd}/swnt/WaterBall.cpp
-    #  ${sd}/ocean/WaterGraphics.cpp
-    #  ${sd}/ocean/Ocean.cpp
+    ${sd}/swnt/Triangulate.cpp
+    ${shared}/triangle/triangle.c
     )
 else()
   set(app_sources

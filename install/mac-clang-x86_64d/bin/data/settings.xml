@@ -12,31 +12,123 @@
   <kinect_far>1.2</kinect_far> <!-- everything after this point is not used -->
 
   <colors>
+
+    <!-- WINTER -->
     <color>
       <hand>
-        <!-- spring: pink -->
-        <r>255</r>
-        <g>201</g>
-        <b>51</b>
+        <r>23</r> <!-- blueish -->
+        <g>70</g>
+        <b>117</b>
       </hand>
-      <spiral_from>
-        <r>255</r>
-        <g>201</g>
-        <b>51</b>
+      <spiral_from> <!-- blueish -->
+        <r>23</r>
+        <g>70</g>
+        <b>117</b>
+      </spiral_from>
+      <spiral_to> <!-- greyish -->
+        <r>23</r>
+        <g>70</g>
+        <b>117</b>
+      </spiral_to>
+      <flow_lines>
+       <r>203</r>
+       <g>204</g>
+       <b>202</b>
+      </flow_lines>
+      <water>
+       <r>203</r>
+       <g>204</g>
+       <b>202</b>
+      </water>
+    </color>
+
+    <!-- SPRING -->
+    <color>
+      <hand>
+        <r>61</r>
+        <g>61</g>
+        <b>153</b>
+      </hand>
+      <spiral_from> 
+        <r>61</r>
+        <g>61</g>
+        <b>153</b>
       </spiral_from>
       <spiral_to>
-        <!-- spring: red -->
+        <r>61</r>
+        <g>61</g>
+        <b>153</b>
+      </spiral_to>
+      <flow_lines>
+        <r>255</r>
+        <g>255</g>
+        <b>102</b>
+      </flow_lines>
+      <water>
+        <r>255</r>
+        <g>255</g>
+        <b>102</b>
+      </water>
+    </color>
+
+    <!-- SUMMER -->
+    <color>
+      <hand>
+        <r>23</r>
+        <g>106</g>
+        <b>182</b>
+      </hand>
+      <spiral_from> 
+        <r>23</r>
+        <g>106</g>
+        <b>182</b>
+      </spiral_from>
+      <spiral_to>
         <r>23</r>
         <g>106</g>
         <b>182</b>
       </spiral_to>
       <flow_lines>
-        <!-- spring: gray -->
-        <r>123</r>
-        <g>189</g>
-        <b>243</b>
+        <r>255</r>
+        <g>204</g>
+        <b>77</b>
       </flow_lines>
+      <water>
+        <r>255</r>
+        <g>204</g>
+        <b>77</b>
+      </water>
     </color>
+
+    <!-- AUTUMN -->
+    <color>
+      <hand>
+        <r>48</r>
+        <g>40</g>
+        <b>118</b>
+      </hand>
+      <spiral_from> 
+        <r>48</r>
+        <g>40</g>
+        <b>118</b>
+      </spiral_from>
+      <spiral_to>
+        <r>48</r>
+        <g>40</g>
+        <b>118</b>
+      </spiral_to>
+      <flow_lines>
+        <r>168</r>
+        <g>229</g>
+        <b>188</b>
+      </flow_lines>
+      <water>
+        <r>168</r>
+        <g>229</g>
+        <b>188</b>
+      </water>
+    </color>
+
   </colors>
 
 </settings>

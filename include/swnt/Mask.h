@@ -11,6 +11,7 @@
 #include <swnt/Graphics.h>
 #include <swnt/Blur.h>
 #include <swnt/Threshold.h>
+
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 

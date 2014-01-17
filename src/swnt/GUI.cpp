@@ -114,10 +114,13 @@ bool GUI::setup(int w, int h) {
 #endif
 
   // rendering
-  TwAddVarRW(bar, "Draw Flow Field", TW_TYPE_BOOLCPP, &swnt.draw_flow, "group='Rendering'");
+  //TwAddVarRW(bar, "Draw Flow Field", TW_TYPE_BOOLCPP, &swnt.draw_flow, "group='Rendering'");
   TwAddVarRW(bar, "Draw Water", TW_TYPE_BOOLCPP, &swnt.draw_water, "group='Rendering'");
-  TwAddVarRW(bar, "Draw Debug Eddy", TW_TYPE_BOOLCPP, &swnt.draw_vortex, "group='Rendering'");
-  TwAddVarRW(bar, "Draw Contours and Tangents", TW_TYPE_BOOLCPP, &swnt.draw_tracking, "group='Rendering'");
+  //TwAddVarRW(bar, "Draw Debug Eddy", TW_TYPE_BOOLCPP, &swnt.draw_vortex, "group='Rendering'");
+  TwAddVarRW(bar, "Draw Tracking (Blobs, Points, Contours) ", TW_TYPE_BOOLCPP, &swnt.draw_tracking, "group='Rendering'");
+  TwAddVarRW(bar, "Draw Triangulated Blobs", TW_TYPE_BOOLCPP, &swnt.tracking.draw_triangulated_blobs, "group='Rendering'");
+  TwAddVarRW(bar, "Draw Points of Tracked Blobs", TW_TYPE_BOOLCPP, &swnt.tracking.draw_tracking_points, "group='Rendering'");
+  TwAddVarRW(bar, "Draw Blob Contours", TW_TYPE_BOOLCPP, &swnt.tracking.draw_contours, "group='Rendering'");
   TwDefine("SWNT/Rendering opened=false");
 
   // general

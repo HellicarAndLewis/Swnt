@@ -19,6 +19,9 @@ Tracked::Tracked()
 Tracking::Tracking(Settings& settings, Graphics& graphics)
   :settings(settings)
   ,graphics(graphics)
+  ,draw_contours(false)
+  ,draw_triangulated_blobs(true)
+  ,draw_tracking_points(false)
   ,contour_threshold(100)
   ,vao(0)
   ,vbo(0)
@@ -27,6 +30,12 @@ Tracking::Tracking(Settings& settings, Graphics& graphics)
   ,tan_count(0)
   ,tan_offset(0)
   ,num_tracked(0)
+  ,blob_vertices_vbo(0)
+  ,blob_vao(0)
+  ,blob_vertices_allocated(0)
+  ,blob_frag(0)
+  ,blob_vert(0)
+  ,blob_prog(0)
 {
 }
 
@@ -49,6 +58,20 @@ bool Tracking::setupGraphics() {
   glEnableVertexAttribArray(0); // pos
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (GLvoid*)0);
 
+  // program to render the triangulated blobs
+  const char* blob_atts[] = { "a_pos" } ;
+  blob_vert = rx_create_shader(GL_VERTEX_SHADER, BLOB_VS);
+  blob_frag = rx_create_shader(GL_FRAGMENT_SHADER, BLOB_FS);
+  blob_prog = rx_create_program_with_attribs(blob_vert, blob_frag, 1, blob_atts);
+  glUseProgram(blob_prog);
+  glUniformMatrix4fv(glGetUniformLocation(blob_prog, "u_pm"), 1, GL_FALSE, settings.ortho_matrix.ptr());
+
+  glGenVertexArrays(1, &blob_vao);
+  glBindVertexArray(blob_vao);
+  glGenBuffers(1, &blob_vertices_vbo);
+  glBindBuffer(GL_ARRAY_BUFFER, blob_vertices_vbo);
+  glEnableVertexAttribArray(0); // pos
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(BlobVertex), (GLvoid*)0);
   return true;
 }
 
@@ -71,8 +94,9 @@ void Tracking::draw(float tx, float ty) {
   float sx = float(settings.win_w) / settings.image_processing_w;
   float sy = float(settings.win_h) / settings.image_processing_h;
 
+
   // Draw contours
-  {
+  if(draw_contours) {
     vec3 line_col(0.0f, 1.0f, 0.0f);
     mat4 mm;
 
@@ -97,12 +121,23 @@ void Tracking::draw(float tx, float ty) {
   }
 
   // Draw tracked points 
-  {
+  if(draw_tracking_points && tracked.size()) {
     vec3 col(0.0f, 1.0f, 0.0f);
     for(size_t i = 0; i < tracked.size(); ++i) {
       Tracked* t = tracked[i];
       graphics.drawCircle(t->position.x * sx, t->position.y * sy, 5, col);
     }
+  }
+
+  // Draw triangulated
+  if(draw_triangulated_blobs && blob_counts.size()) {
+    mat4 mm;
+    mm.scale(sx, sy, 1.0f);
+
+    glUseProgram(blob_prog);
+    glUniformMatrix4fv(glGetUniformLocation(blob_prog, "u_mm"), 1, GL_FALSE, mm.ptr());
+    glBindVertexArray(blob_vao);
+    glMultiDrawArrays(GL_TRIANGLES, &blob_offsets.front(), &blob_counts.front(), blob_counts.size());
   }
 }
 
@@ -126,6 +161,9 @@ void Tracking::updateVertices() {
   closest_points.clear();
   closest_dirs.clear();
   closest_centers.clear();
+  blob_offsets.clear();
+  blob_counts.clear();
+  blob_vertices.clear();
 
   if(!contours.size()) {
     return;
@@ -149,21 +187,61 @@ void Tracking::updateVertices() {
       size_t start_nvertices = contour_vertices.size();
       contour_offsets.push_back(contour_vertices.size());
 
+      int last_point = 0;
+      tri.clear();
+
       for(size_t i = 0; i < pts.size(); ++i) {
 
         cv::Point& pt = pts[i];
         vec2 v(pt.x, pt.y);
+
         contour_vertices.push_back(v);
-      
+    
         vec2 dir_to_center = contour_center - v;
         int dist_to_center = dot(dir_to_center, dir_to_center);
-      
+
         if(dist_to_center < closest_dist) {
           closest_dir = dir_to_center;
           closest_dist = dist_to_center;
           closest_point = v;
         }
+
+        // The Triangle library is a little bit awkward as it "may" crash when you 
+        // use the "p" option (necessary to create non convect triangulated shapes). The 
+        // library may crash in these situations when the angle between points is too small,
+        // because of rounding issue, etc..  I found that adding every 5th element seems
+        // to work well.
+        if((i - last_point) >= 5) {
+          tri.add(pt.x, pt.y);
+          last_point = int(i);
+        }
       }
+
+      #if 1
+      if(tri.size() > 3) {
+
+        struct triangulateio out;
+        tri.triangulate("zpQ", out);
+
+        if(out.numberoftriangles) {
+          blob_offsets.push_back(blob_vertices.size());
+          for(int i = 0; i  < out.numberoftriangles; ++i) {
+            int a = out.trianglelist[i * 3 + 0];
+            int b = out.trianglelist[i * 3 + 1];
+            int c = out.trianglelist[i * 3 + 2];
+            vec2 pa(out.pointlist[(a * 2) + 0], out.pointlist[(a * 2) + 1]);
+            vec2 pb(out.pointlist[(b * 2) + 0], out.pointlist[(b * 2) + 1]);
+            vec2 pc(out.pointlist[(c * 2) + 0], out.pointlist[(c * 2) + 1]);
+            blob_vertices.push_back(BlobVertex(pa));
+            blob_vertices.push_back(BlobVertex(pb));
+            blob_vertices.push_back(BlobVertex(pc));
+          }
+          blob_counts.push_back(blob_vertices.size() - blob_offsets.back());
+        }
+
+        tri.free(out);
+      }
+      #endif
 
       // adjust the closest point from the center to the contain, so it's between the `radius` and the found point. this will make sure the water drops are nicely on the hands
       vec2 closest_dir_norm = normalized(closest_dir);
@@ -178,11 +256,11 @@ void Tracking::updateVertices() {
       contour_nvertices.push_back(contour_vertices.size() - start_nvertices);
     }
   }
-
+  
   {
     tan_offset = contour_vertices.size();
 
-    // calculate the tangents
+    // calculate the tangents which are used to spawn particles 
     std::vector<vec2> tan_vertices;
     int step_size = 30;
     for(int i = 0; i < int(contour_vertices.size())-(step_size+1); i += step_size) {
@@ -208,7 +286,6 @@ void Tracking::updateVertices() {
 
   // Check if we need to update the vbo
   {
-
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
     size_t nbytes_needed = sizeof(vec2) * contour_vertices.size();
@@ -218,7 +295,21 @@ void Tracking::updateVertices() {
     else {
       glBufferSubData(GL_ARRAY_BUFFER, 0, nbytes_needed, contour_vertices[0].ptr());
     }
+  }
 
+  // Update the triangulate vertices.
+  if(blob_vertices.size()) {
+
+    glBindBuffer(GL_ARRAY_BUFFER, blob_vertices_vbo);
+    size_t nbytes_needed = blob_vertices.size() * sizeof(BlobVertex);
+
+    if(nbytes_needed > blob_vertices_allocated) {
+      glBufferData(GL_ARRAY_BUFFER, nbytes_needed, blob_vertices[0].pos.ptr(), GL_STREAM_DRAW);
+      blob_vertices_allocated = nbytes_needed;
+    }
+    else {
+      glBufferSubData(GL_ARRAY_BUFFER, 0, nbytes_needed, blob_vertices[0].pos.ptr());
+    }
   }
 }
 
@@ -316,3 +407,4 @@ void Tracking::clusterPoints() {
     }
   }
 }
+
