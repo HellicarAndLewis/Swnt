@@ -160,7 +160,7 @@ bool GUI::setup(int w, int h) {
   TwAddVarRW(bar, "Min Particle Mass", TW_TYPE_FLOAT, &spirals.min_mass, "min=0.0 max=15.0 step=0.001 group='Spirals'");
   TwAddVarRW(bar, "Max Particle Mass", TW_TYPE_FLOAT, &spirals.max_mass, "min=0.0 max=15.0 step=0.001 group='Spirals'");
   TwAddVarRW(bar, "Force Towards Center", TW_TYPE_FLOAT, &spirals.center_force, "min=0.0 max=400.0 step=0.1 group='Spirals'");
-  TwAddVarRW(bar, "Velocity Field Force", TW_TYPE_FLOAT, &spirals.field_force, "min=0.0 max=1.0 step=0.01 group='Spirals'");
+  TwAddVarRW(bar, "Velocity Field Force", TW_TYPE_FLOAT, &spirals.field_force, "min=0.0 max=5.0 step=0.01 group='Spirals'");
   TwAddVarRW(bar, "Min Width", TW_TYPE_FLOAT, &spirals.min_strip_width, "min=0.0 max=50.0 step=0.1 group='Spirals'");
   TwAddVarRW(bar, "Max Width", TW_TYPE_FLOAT, &spirals.max_strip_width, "min=0.0 max=50.0 step=0.1 group='Spirals'");
   TwAddVarRW(bar, "Min Tail Size", TW_TYPE_UINT32, &spirals.min_tail_size, "min=2 max=100 step=1 group='Spirals'");

@@ -20,7 +20,7 @@ Swnt::Swnt(Settings& settings)
   ,depth_image(NULL)
 #endif
   ,state(STATE_RENDER_SCENE)
-  ,draw_flow(false)
+  ,draw_flow(true)
   ,draw_threshold(true)
   ,draw_water(true)
   ,draw_vortex(false)

@@ -183,10 +183,8 @@ void Spirals::applyVelocityField() {
     size_t dx = MIN((flow.field_size-1)*(flow.field_size-1), row * flow.field_size + col);
     vec2& v = flow.velocities[dx];
     vec3 pvel(v.x, v.y, 0.0);
-    p->vel = p->vel * (1.0 - field_force) + pvel * field_force;
-    //p->addForce(vec3(v.x * field_force, v.y * field_force, 0.0f));
+    p->vel = pvel * field_force;
   }
-
 }
 
 void Spirals::spawnParticles() {
@@ -214,43 +212,9 @@ void Spirals::spawnParticles() {
   // Spawn from tracked position (k-means)
   float scale_x = float(settings.win_w) / settings.image_processing_w;
   float scale_y = float(settings.win_h) / settings.image_processing_h;
-  // int spawn_per_tracked = 5;
   float displace = 50.0f;
 
-  #if 0
-  for(std::vector<Tracked*>::iterator tit = tracker.tracked.begin(); tit != tracker.tracked.end(); ++tit) {
-
-    Tracked* tr = *tit;
-    if(!tr->matched) {
-      continue;
-    }
-
-    for(int i = 0; i < spawn_per_tracked; ++i) {
-
-      Particle* p = new Particle();
-      p->pos = vec3(tr->position.x * scale_x + rx_random(-displace, displace), 
-                    tr->position.y * scale_y + rx_random(-displace, displace), 
-                    0.0f);
-      p->forces.set(0.0f, 0.0f, 0.0f);
-      p->vel.set(0.0f, 0.0f, 0.0f);
-      p->lifetime = rx_random(min_lifetime, max_lifetime);
-      p->strip_width = rx_random(min_strip_width, max_strip_width);
-      p->max_tail_size = rx_random(min_tail_size, max_tail_size);
-      p->setMass(rx_random(min_mass, max_mass));
-      particles.push_back(p);
-      
-      #if 0
-      Spring* s = new Spring(p, center_particle);
-      s->rest_length = 0.1;
-      particles.addSpring(s);
-      #endif
-    }
-
-  }
-  #endif
-
   // Spawn from contour
-  //spawn_per_tracked = 60;
   if(tracker.contour_vertices.size()) {
 
     for(int i = 0; i < spawn_per_tracked; ++i) {
@@ -345,9 +309,10 @@ void Spirals::draw() {
 
   glDisable(GL_DEPTH_TEST);
   glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glBlendFunc(GL_ONE, GL_ONE);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
   draw(1.0f);
+
   glDisable(GL_BLEND);
 }
 
@@ -385,14 +350,11 @@ void Spirals::drawDisplacement() {
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+// @todo - do we still want to use this?
 void Spirals::applyVortexToField() {
-
-  //  printf("Update Spirals::applyVortexToField\n");
-
   for(std::vector<Tracked*>::iterator tit = tracker.tracked.begin(); tit != tracker.tracked.end(); ++tit) {
 
     Tracked* tr = *tit;
-
     if(!tr->matched) {
       continue;
     }
@@ -425,30 +387,37 @@ void Spirals::applyCenterForce() {
       continue;
     }
 
+    /*
     if(p->strip_width < 4.0f) {
       continue;
     }
+    */
 
-    if(p->age_perc < 0.3 ) {
-      continue;
-    }
+    //if(p->age_perc < 0.3 ) {
+    // continue;
+    // }
 
     vec3 dir = center - p->pos;
     float ls = dot(dir, dir);
 
-    if(ls < 0.001) {
-      ls = 0.001;
-    }
-    else if(ls > max_dist) {
-      ls = max_dist;
+    if(ls < 50 * 50) {
+      continue;
     }
 
-    float df = ls / max_dist;
-    dir = normalized(dir);
-    vec3 f = dir * (1.0 - (1.0/ls));
-    p->addForce(f * center_force);
+    //float df = ls / max_dist;
+    float dist = length(dir);
+    dir /= dist;
+    float f = dist;
+    //    printf("%f\n", f);
+    //   printf("%f\n", f);
+    //printf("%f\n", df); // (1.0 - (1.0/ls)));
+    //  dir = normalized(dir) * df;
+    //vec3 f = dir * (1.0 - (1.0/ls)) * center_force;
+    //    f.print();
+    //    p->addForce(dir * center_force);
+     p->addForce(dir * f * center_force);
 
-    f.set(-f.y, f.x, 0.0f);
-    p->addForce(f * 0.8);
+    //f.set(-f.y, f.x, 0.0f);
+    //p->addForce(f * 0.8);
   }
 }

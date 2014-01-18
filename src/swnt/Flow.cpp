@@ -212,6 +212,8 @@ void Flow::updateVelocityField() {
   }
 }
 
+
+// This is actually limiting the velocities
 void Flow::dampVelocities() {
   float max_vel = 8.0;
   float max_vel_sq = max_vel * max_vel;
@@ -226,12 +228,8 @@ void Flow::dampVelocities() {
       if(vel_sq > max_vel_sq) {
         velocities[dx] = normalized(velocities[dx]) * max_vel;
       }
-      else {
-        //        velocities[dx] *= 0.99f;
-      }
     }
   }
-
 }
 
 void Flow::createVortex(float px, float py, float r, float force) {
@@ -255,16 +253,29 @@ void Flow::createVortex(float px, float py, float r, float force) {
 
       vec2 dir(dx,dy);
       float len = length(dir);
-      dir /= len;
-      
-      float f = len / radius;
-      if(f < 0.1) {
+
+      if(len < 0.01) {
         continue;
       }
 
-      vec2 perp(-dir.y, dir.x);
+      dir /= len;
+      
+      float f = len / radius;
       int index = j * field_size + i;
-      velocities[index] += perp * force;
+      vec2 perp(-dir.y, dir.x);
+
+#if 0 
+      // this makes the central forces more strong towards the center
+      if(len > 2.25) {
+        perp += (dir * f);
+      }
+      else {
+        perp += dir * 5.0f;
+      }
+#else
+      perp += (dir * f);
+#endif
+       velocities[index] += perp * force;
     }
   }
 }
