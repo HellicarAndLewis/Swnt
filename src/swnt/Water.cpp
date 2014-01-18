@@ -18,15 +18,18 @@ Water::Water(HeightField& hf, Settings& settings)
   ,foam_tex(0)
   ,force_tex0(0)
   ,vortex_tex(0)
+  ,sand_tex(0)
+  ,depth_ramp_tex(0)
   ,color_tex(0)
   ,foam_colors_tex(0)
   ,foam_ramp_tex(0)
-  ,max_depth(5.0)
+  ,max_depth(3.95)
   ,sun_shininess(4.6)
-  ,foam_depth(2.4)
+  ,foam_depth(2.0)
   ,fbo(0)
   ,extra_flow_tex(0)
-  ,vortex_intensity(0.2)
+  ,vortex_intensity(2.0)
+  ,wind_level(0.0f)
 {
   sun_pos[0] = 0.0;
   sun_pos[1] = 15.0;
@@ -34,12 +37,12 @@ Water::Water(HeightField& hf, Settings& settings)
   sun_color[0] = 4;
   sun_color[1] = 3;
   sun_color[2] = 1;
-  ads_intensities[0] = 0.2f;  // ambient, the selected color
+  ads_intensities[0] = -1.90f;  // ambient, the selected color
   ads_intensities[1] = 0.0f;  // diffuse
   ads_intensities[2] = 0.75f; // spec
   ads_intensities[3] = 0.36;  // sun  
-  ads_intensities[4] = 0.39;  // foam
-  ads_intensities[5] = 0.45;  // texture
+  ads_intensities[4] = 0.88;  // foam
+  ads_intensities[5] = 0.33;  // texture
   ads_intensities[6] = 1.0;   // overall intensity
   ambient_color[0] = 46.0/255.0f;
   ambient_color[1] = 72.0/255.0f;
@@ -157,6 +160,8 @@ bool Water::setup(int w, int h) {
   glUniform1i(glGetUniformLocation(prog, "u_foam_colors"),        12);  // FS
   glUniform1i(glGetUniformLocation(prog, "u_foam_ramp"),          13);  // FS
   glUniform1i(glGetUniformLocation(prog, "u_vortex_tex"),         14);  // FS
+  glUniform1i(glGetUniformLocation(prog, "u_sand_tex"),           15);  // FS
+  glUniform1i(glGetUniformLocation(prog, "u_depth_ramp_tex"),           16);  // FS
 
   //GLint texture_units = 0;
   //glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &texture_units);
@@ -175,16 +180,23 @@ bool Water::setup(int w, int h) {
   foam_colors_tex = createTexture("images/foam_densities.png");
   foam_ramp_tex = createTexture("images/foam_ramps.png");
   vortex_tex = createTexture("images/vortex.png");
+  sand_tex = createTexture("images/sand.png");
+  depth_ramp_tex = createTexture("images/depth_ramp.png");
   
   glBindTexture(GL_TEXTURE_2D, foam_colors_tex);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
   glBindTexture(GL_TEXTURE_2D, foam_ramp_tex);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+  glBindTexture(GL_TEXTURE_2D, depth_ramp_tex);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
 
   unsigned char* img_pix = NULL;
   int img_w, img_h,img_channels = 0;  
@@ -289,6 +301,12 @@ void Water::draw() {
 
     glActiveTexture(GL_TEXTURE14);
     glBindTexture(GL_TEXTURE_2D, vortex_tex);
+
+    glActiveTexture(GL_TEXTURE15);
+    glBindTexture(GL_TEXTURE_2D, sand_tex);
+
+    glActiveTexture(GL_TEXTURE16);
+    glBindTexture(GL_TEXTURE_2D, depth_ramp_tex);
   }
 
   static float t = 0.0;
@@ -306,7 +324,7 @@ void Water::draw() {
   glUniform1f(glGetUniformLocation(prog, "u_sun_shininess"), sun_shininess);
   glUniform1fv(glGetUniformLocation(prog, "u_ads_intensities"), 7, ads_intensities);
   glUniform3fv(glGetUniformLocation(prog, "u_ambient_color"), 1, ambient_color);
-  glUniform1f(glGetUniformLocation(prog, "u_vortex_intensity"), vortex_intensity);
+  glUniform1f(glGetUniformLocation(prog, "u_vortex_intensity"), vortex_intensity * wind_level);
 
   //glEnable(GL_CULL_FACE);
   //  glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -339,21 +357,8 @@ void Water::blitFlow(float x, float y, float w, float h) {
   glBlitFramebuffer(0, 0, win_w, win_h, x, y, w, h, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 }
 
-void Water::setTimeOfDay(float t, float sun) {
-  sun = CLAMP(sun, 0.0f, 1.0f);
-  foam_depth = 2.0 + (t * 1.2);
-  ads_intensities[6] = 1.0 + (sun * 0.6); // overall intensity
-
-  // change the color of the water.
-  /*
-  vec3 hsv(sun * 0.410, 0.5, 0.5);
-  rx_hsv_to_rgb(hsv, ambient_color);
-  */
-  return;
-
-  ads_intensities[0] = -0.2 + (sun * 0.7); // ambient
-  ads_intensities[3] = (sun * 0.5);  // sun 
-  ads_intensities[4] = sun; // foam
+void Water::setWeatherInfo(float wind) {
+  wind_level = wind;
 }
 
 void Water::setTimeOfYear(float t) {
@@ -363,9 +368,9 @@ void Water::setTimeOfYear(float t) {
 }
 
 void Water::setRoughness(float r) {
+  // @todo - Water::setRoughnes(), still necessary?
   r = CLAMP(r, 0.0f, 1.0f);
 }
-
 
 void Water::print() {
   printf("water.flow_tex: %d\n", flow_tex);

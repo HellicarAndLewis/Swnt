@@ -83,7 +83,8 @@ static const char* WATER_FS = ""
   "uniform sampler2D u_foam_delta_tex;" // the foam delta, used to mix foam
   "uniform sampler2D u_foam_colors;" // the 3 levels of foam 
   "uniform sampler2D u_foam_ramp;" // used to mix the 3 foam levels
-
+  "uniform sampler2D u_sand_tex;"
+  "uniform sampler2D u_depth_ramp_tex;"
 
   "uniform vec3 u_sun_pos;"
   "uniform vec3 u_sun_color;"
@@ -122,8 +123,8 @@ static const char* WATER_FS = ""
 #if 1
   // This is what really makes the difference between a waterlike rendering
   // or not. By moving the water into the direction of the normal. 
-   "  flow_color = (v_norm.xz * 0.1 + flow_color);"  // move the texture in the direction of the normal
-   "  flow_color -= extra_color.rg * u_vortex_intensity ;"  // use the custom drawn forces to move the direction
+  "  flow_color = (v_norm.xz * 0.1 + flow_color);"  // move the texture in the direction of the normal
+  "  flow_color -= extra_color.rg * u_vortex_intensity ;"  // use the custom drawn forces to move the direction
   //"  flow_color += v_gradient.xy * 0.2;"
   "  float phase0 = noise_color * 0.2 + u_time0;"
   "  float phase1 =  noise_color * 0.2 + u_time1;"
@@ -157,20 +158,22 @@ static const char* WATER_FS = ""
      
   "  vec3 l     = vec3(-10.0, 20.0, 0.0);" 
   "  vec3 eye_l = mat3(u_vm) * l;"
-  "  vec3 eye_p = mat3(u_vm) * v_pos;"
+  // "  vec3 eye_l = vec3(1,1,1);"
+   "  vec3 eye_p = mat3(u_vm) * v_pos;"
   "  vec3 eye_s = normalize(eye_l - eye_p);"
   "  vec3 eye_n = normalize(mat3(u_vm) * n);"
   "  float ndl  = max(dot(eye_n,eye_s), 0.0);"
      
   "  vec3 eye_sun = mat3(u_vm) * u_sun_pos;" 
+  //  "  eye_sun = vec3(0, 0, 1);"
   "  eye_s = normalize(eye_sun - eye_p);"
   "  vec3 eye_v = normalize(-eye_p);"
-  "  vec3 eye_r = normalize(reflect(-eye_s, eye_n));"
+   "  vec3 eye_r = normalize(reflect(-eye_s, eye_n));"
   //"  vec3 eye_r = normalize(eye_s + eye_v);"
   "  float sun_ndl = max(dot(eye_s, eye_n), 0.0);"
   //     "  if(sun_ndl > 0.0) {"
   //"    Ks = 1.0;"
-    "    spec = sun_ndl *  u_sun_color * pow(clamp( dot(eye_r, eye_v), 0.0, 1.0), 8.0) * 3.0;"
+    "    spec = sun_ndl *  u_sun_color * pow(clamp( dot(eye_r, eye_v), 0.0, 1.0), 4.0) * 3.0;"
   //  "  } "
 
 #if 0
@@ -200,20 +203,24 @@ static const char* WATER_FS = ""
   "  float foam_m = dot(foam_ramp_color, texture(u_foam_colors, flipped_tex * 10.0).rgb); " 
 #endif
 
+#if 1
   "  float foam_level = u_foam_depth;"
   "  float foam_k = v_pos.y / foam_level;"
+  //" float foam_k = foam_delta;"
   "  if(foam_k > 1.0) { foam_k = 1.0; } "//  else if (foam_k <= 0.2) { foam_k = 0.0; } "
   "  vec3 foam = foam_k * (moved_foam * 2.2);"
   //  "  foam += foam_m * 0.2  ;"
+#endif
 
   // http://blog.elmindreda.org/2011/06/oceans-of-fun/ 
   "  vec3 fake_sun = u_sun_color * pow(clamp(dot(eye_r, eye_v), 0.0, 1.0), u_sun_shininess);"
 
   "  vec3 K = u_ads_intensities[0] * Ka * ndl;"
   //  "  K     += u_ads_intensities[1] * Kd * ndl ;" // not necessary, we use Ka for the ambient color
-  "  K     += u_ads_intensities[3] * spec;"
+  "  K     += u_ads_intensities[3] * spec ;"
   "  K     += depth_color * ndl;"
-  "  K     += mix(u_ads_intensities[5] * moved_diffuse, u_ads_intensities[4] * foam, foam_k);"
+  //  "  K     += moved_foam * u_ads_intensities[4]; "
+    "  K     += mix(u_ads_intensities[5] * moved_diffuse, u_ads_intensities[4] * foam, foam_k);"
   
   //  "  K  += u_ads_intensities[5] * moved_diffuse;"
   //" K += foam_m;"
@@ -231,6 +238,18 @@ static const char* WATER_FS = ""
   //   "  fragcolor.rgb =  Ka * ndl + spec;"
   //  "  fragcolor.rgb = 0.5 + 0.5 * v_norm;"
   //"  fragcolor.rgb = vec3(1.0, 0.0, 0.0);"
+
+  // refract test
+"  vec3 sand_base = texture(u_sand_tex, v_tex.st + n.xz*0.1).rgb;"
+ 
+  // tint test
+// "  float fake_depth = 1 - 1.5 * length(v_tex.st - vec2(0.5, 0.5)); "
+  
+"  float fake_depth = 0.1 + v_pos.y / u_max_depth;"  
+"  vec4 depth_ramp = texture(u_depth_ramp_tex, vec2(max(fake_depth, 0.1)));"
+"  fragcolor.rgb = mix(fragcolor.rgb, sand_base * depth_ramp.rgb, depth_ramp.a);"
+  //  " fragcolor.rgb = vec3(fake_depth);"
+"  fragcolor.a = 1.0;"
 
 #else 
   "  fragcolor.rgb = vec3(v_gradient.x, v_gradient.y, 0.0);"
@@ -254,7 +273,7 @@ class Water {
   void beginGrabFlow();       /* start rendering extra flow colors which we mix with the diffuse water texture */
   void endGrabFlow();         /* end rendering the extra flow colors */
   void blitFlow(float x, float y, float w, float h);
-  void setTimeOfDay(float t, float sun);
+  void setWeatherInfo(float wind); /* Sets the weather info; wind = 0.0f, no vortex, 1.0 = max vortex */
   void setTimeOfYear(float t); /* 0 = 1 jan, 1 = 31 dec */
   void setRoughness(float r); /* 0 = no roughness, 1 = a lot of roughness */
   void setVortexAmount(float v);
@@ -282,6 +301,8 @@ class Water {
   GLuint foam_ramp_tex;       /* used to mix the R/G/B layers */
   GLuint force_tex0;          /* used to apply a force to the height field */
   GLuint vortex_tex;          /* texture that we use to darken the centre of the simulation */
+  GLuint sand_tex;            /* sand, bottomof ocean */
+  GLuint depth_ramp_tex;      /* colors based on depth */
 
   /* Rendering extra diffuse/flow colors */
   GLuint fbo;                 /* used to capture extra flow and diffuse colors */
@@ -296,6 +317,8 @@ class Water {
   float ads_intensities[7];   /* ambient, diffuse, specular  intensity, sun, foam, texture, overall */
   float ambient_color[3];
   float vortex_intensity;
+
+  float wind_level;           /* the wind level is set by setWeatherInfo() and is used to change the vortex intensity */
 };
 
 #endif

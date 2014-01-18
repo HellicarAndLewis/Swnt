@@ -13,6 +13,11 @@
   find the blob from a previous frame. When the lost count reaches a certain age we will
   remove the Tracked object. See Tracking::clusterPoints()
 
+  The Tracking class also takes care of the triangulation of the found blobs. We use the 
+  Triangle library which has some quirks but is still the best available free solution for
+  triangulation (w/o the needs of lots of dependencies). We only use every N-th point on the
+  contour for triangulation (n = 5 now).
+
 */
 #ifndef SWNT_TRACKING_H
 #define SWNT_TRACKING_H
@@ -45,9 +50,10 @@ static const char* BLOB_VS = ""
 
 static const char* BLOB_FS = ""
   "#version 150\n"
+  "uniform vec3 u_blob_color;"
   "out vec4 fragcolor;"
   "void main() {"
-  "  fragcolor = vec4(1.0, 1.0, 0.0, 1.0);"
+  "  fragcolor = vec4(u_blob_color, 1.0);"
   "}"
   "";
 
@@ -56,7 +62,7 @@ static const char* BLOB_FS = ""
 
 struct BlobVertex {                                     /* vertex that is used to render the triangulated hand. */
   BlobVertex();
-BlobVertex(vec2 p):pos(p){}
+  BlobVertex(vec2 p):pos(p){}
   vec2 pos;
 };
 
@@ -85,6 +91,7 @@ class Tracking {
   bool setup();
   void track(unsigned char* pixels);                  /* this will track the blobs in the given grayscale image */
   void draw(float tx, float ty);                      /* draw the contours + translate by `tx` and `ty` */
+  void setTimeOfYear(float t);                        /* gets called when the time of year changes and the colors of the blobs needs to be updated */
 
  private:
   bool setupGraphics();                               /* setup opengl related objects */
@@ -127,6 +134,10 @@ class Tracking {
   std::vector<GLint> blob_offsets;                    /* offsets for the sperate blobs; used with multi draw */
   std::vector<GLsizei> blob_counts;                   /* number of vertices per blob */
   std::vector<BlobVertex> blob_vertices;              /* the bob vertices */
+  GLint u_blob_color;                                 /* uniform to the blob color */
+  float blob_scale;
+  float blob_offset;
+
   
   /* K-Means clustering */
   std::vector<vec2> closest_points;                   /* closest points in the detected contours.. closest to the center. used to detect peaks in blobs that will be tracked */

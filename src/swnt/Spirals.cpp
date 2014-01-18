@@ -28,6 +28,13 @@ Spirals::Spirals(Settings& settings, Tracking& tracker, Graphics& graphics, Flow
   ,min_tail_size(5)
   ,spawn_per_tracked(10)
 {
+#if 0
+  max_tail_size = 50;
+  min_tail_size = 50;
+  spawn_per_tracked = 2;
+  min_strip_width = 50;
+  max_strip_width = 50;
+#endif
 }
 
 bool Spirals::setup() {
@@ -130,6 +137,9 @@ bool Spirals::setupGraphics() {
 
   // Load the texture for the spiral
   diffuse_tex = graphics.createTexture(rx_to_data_path("images/spiral_diffuse.png"));
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
   printf("spirals.diffuse_tex: %d\n", diffuse_tex);
   return true;
 }
@@ -290,7 +300,7 @@ void Spirals::updateVertices() {
         // Get perpendicular vertex
         perc = float(i)/(p->tail.size()-1);
         dir = p->tail[i+1] - p->tail[i];
-        perp = normalized(cross(dir, rotate_axis)) * (p->strip_width * perc);
+        perp = normalized(cross(dir, rotate_axis)) * (p->strip_width); //  * perc);
 
         // vertex A
         SpiralVertex v;
@@ -298,7 +308,7 @@ void Spirals::updateVertices() {
         v.age_perc = p->age_perc;
         v.pos_perc = perc;
         v.tex.x = perc;
-        v.tex.y = -1.0f;
+        v.tex.y = 0.0f;
         vertices.push_back(v);
 
         // vertex B
@@ -347,6 +357,7 @@ void Spirals::draw(float alpha) {
   glUniformMatrix4fv(glGetUniformLocation(prog, "u_pm"), 1, GL_FALSE, pm.ptr());
   glUniformMatrix4fv(glGetUniformLocation(prog, "u_vm"), 1, GL_FALSE, vm.ptr());
   glUniform1f(glGetUniformLocation(prog, "u_alpha"), alpha);
+  glUniform1f(glGetUniformLocation(prog, "u_time"), rx_millis());
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, diffuse_tex);
@@ -395,11 +406,8 @@ void Spirals::applyVortexToField() {
 void Spirals::refresh() {
   assert(settings.color_dx < settings.colors.size());
   glUseProgram(prog);
-
-  //glUniform3fv(glGetUniformLocation(prog, "u_col_from"), 1, settings.colors[settings.color_dx].spiral_from.ptr());
-  //glUniform3fv(glGetUniformLocation(prog, "u_col_to"), 1, settings.colors[settings.color_dx].spiral_to.ptr());
-  glUniform3fv(glGetUniformLocation(prog, "u_col_from"), 1, settings.curr_colors.hand.ptr());
-  glUniform3fv(glGetUniformLocation(prog, "u_col_to"), 1, settings.curr_colors.hand.ptr());
+  glUniform3fv(glGetUniformLocation(prog, "u_col_from"), 1, settings.curr_colors.flow_lines.ptr());
+  glUniform3fv(glGetUniformLocation(prog, "u_col_to"), 1, settings.curr_colors.flow_lines.ptr());
 }
 
 void Spirals::applyCenterForce() {

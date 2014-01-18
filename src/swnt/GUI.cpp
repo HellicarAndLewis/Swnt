@@ -82,7 +82,7 @@ bool GUI::setup(int w, int h) {
   TwAddVarRW(bar, "Sun Color Blue", TW_TYPE_FLOAT, &swnt.water.sun_color[2], "min=-5.0 max=5.0 step=0.1 group='Water'");
   TwAddVarRW(bar, "Sun Shininess", TW_TYPE_FLOAT, &swnt.water.sun_shininess, "min=0.0 max=50.0 step=0.1 group='Water'");
   TwAddVarRW(bar, "Maximum Foam Depth", TW_TYPE_FLOAT, &swnt.water.foam_depth, "min=0.0 max=50.0 step=0.1 group='Water'");
-  TwAddVarRW(bar, "Maximum Water Depth", TW_TYPE_FLOAT, &swnt.water.max_depth, "min=0.0 max=5.0 step=0.01 group='Water'");
+  TwAddVarRW(bar, "Maximum Water Depth", TW_TYPE_FLOAT, &swnt.water.max_depth, "min=0.0 max=50.0 step=0.01 group='Water'");
   //  TwAddVarRW(bar, "Diffuse Intensity", TW_TYPE_FLOAT, &swnt.water.ads_intensities[1], "min=-10.0 max=10.0 step=0.01 group='Water'");
   //  TwAddVarRW(bar, "Specular Intensity", TW_TYPE_FLOAT, &swnt.water.ads_intensities[2], "min=-10.0 max=10.0 step=0.01 group='Water'");
   TwAddVarRW(bar, "Final Intensity", TW_TYPE_FLOAT, &swnt.water.ads_intensities[6], "min=0.0 max=2.0 step=0.01 group='Water'");
@@ -114,7 +114,7 @@ bool GUI::setup(int w, int h) {
 #endif
 
   // rendering
-  //TwAddVarRW(bar, "Draw Flow Field", TW_TYPE_BOOLCPP, &swnt.draw_flow, "group='Rendering'");
+  TwAddVarRW(bar, "Draw Flow Field", TW_TYPE_BOOLCPP, &swnt.draw_flow, "group='Rendering'");
   TwAddVarRW(bar, "Draw Water", TW_TYPE_BOOLCPP, &swnt.draw_water, "group='Rendering'");
   //TwAddVarRW(bar, "Draw Debug Eddy", TW_TYPE_BOOLCPP, &swnt.draw_vortex, "group='Rendering'");
   TwAddVarRW(bar, "Draw Tracking (Blobs, Points, Contours) ", TW_TYPE_BOOLCPP, &swnt.draw_tracking, "group='Rendering'");
@@ -124,29 +124,29 @@ bool GUI::setup(int w, int h) {
   TwDefine("SWNT/Rendering opened=false");
 
   // general
-  TwAddVarRW(bar, "Override Values With GUI", TW_TYPE_BOOLCPP, &swnt.override_with_gui, "group='General'");
-  TwAddVarCB(bar, "Time Of Day", TW_TYPE_FLOAT, set_time_of_day, get_time_of_day, this, "group='General' min=0.25 max=0.75 step=0.001");
-  TwAddVarCB(bar, "Time Of Year", TW_TYPE_FLOAT, set_time_of_year, get_time_of_year, this, "group='General' min=0.0 max=1.0 step=0.01");
+  TwAddVarRW(bar, "Override Values With GUI", TW_TYPE_BOOLCPP, &swnt.override_with_gui, "group='Colors And Time'");
+  TwAddVarCB(bar, "Time Of Day", TW_TYPE_FLOAT, set_time_of_day, get_time_of_day, this, "group='Colors And Time' min=0.25 max=0.75 step=0.001");
+  TwAddVarCB(bar, "Time Of Year", TW_TYPE_FLOAT, set_time_of_year, get_time_of_year, this, "group='Colors And Time' min=0.0 max=1.0 step=0.01");
 
   // colors
   if(swnt.settings.colors.size() == 4) {
-    TwAddVarRW(bar, "Hand Winter", TW_TYPE_COLOR3F, swnt.settings.colors[0].hand.ptr(), "group='General'");
-    TwAddVarRW(bar, "Hand Spring", TW_TYPE_COLOR3F, swnt.settings.colors[1].hand.ptr(), "group='General'");
-    TwAddVarRW(bar, "Hand Summer", TW_TYPE_COLOR3F, swnt.settings.colors[2].hand.ptr(), "group='General'");
-    TwAddVarRW(bar, "Hand Autumn", TW_TYPE_COLOR3F, swnt.settings.colors[3].hand.ptr(), "group='General'");
+    TwAddVarRW(bar, "Hand Winter", TW_TYPE_COLOR3F, swnt.settings.colors[0].hand.ptr(), "group='Colors And Time'");
+    TwAddVarRW(bar, "Hand Spring", TW_TYPE_COLOR3F, swnt.settings.colors[1].hand.ptr(), "group='Colors And Time'");
+    TwAddVarRW(bar, "Hand Summer", TW_TYPE_COLOR3F, swnt.settings.colors[2].hand.ptr(), "group='Colors And Time'");
+    TwAddVarRW(bar, "Hand Autumn", TW_TYPE_COLOR3F, swnt.settings.colors[3].hand.ptr(), "group='Colors And Time'");
 
-    TwAddVarRW(bar, "Spiral Winter", TW_TYPE_COLOR3F, swnt.settings.colors[0].spiral_from.ptr(), "group='General'");
-    TwAddVarRW(bar, "Spiral Spring", TW_TYPE_COLOR3F, swnt.settings.colors[1].spiral_from.ptr(), "group='General'");
-    TwAddVarRW(bar, "Spiral Summer", TW_TYPE_COLOR3F, swnt.settings.colors[2].spiral_from.ptr(), "group='General'");
-    TwAddVarRW(bar, "Spiral Autumn", TW_TYPE_COLOR3F, swnt.settings.colors[3].spiral_from.ptr(), "group='General'");
+    TwAddVarRW(bar, "Spiral Winter", TW_TYPE_COLOR3F, swnt.settings.colors[0].spiral_from.ptr(), "group='Colors And Time'");
+    TwAddVarRW(bar, "Spiral Spring", TW_TYPE_COLOR3F, swnt.settings.colors[1].spiral_from.ptr(), "group='Colors And Time'");
+    TwAddVarRW(bar, "Spiral Summer", TW_TYPE_COLOR3F, swnt.settings.colors[2].spiral_from.ptr(), "group='Colors And Time'");
+    TwAddVarRW(bar, "Spiral Autumn", TW_TYPE_COLOR3F, swnt.settings.colors[3].spiral_from.ptr(), "group='Colors And Time'");
 
-    TwAddVarRW(bar, "Water Winter", TW_TYPE_COLOR3F, swnt.settings.colors[0].water.ptr(), "group='General'");
-    TwAddVarRW(bar, "Water Spring", TW_TYPE_COLOR3F, swnt.settings.colors[1].water.ptr(), "group='General'");
-    TwAddVarRW(bar, "Water Summer", TW_TYPE_COLOR3F, swnt.settings.colors[2].water.ptr(), "group='General'");
-    TwAddVarRW(bar, "Water Autumn", TW_TYPE_COLOR3F, swnt.settings.colors[3].water.ptr(), "group='General'");
+    TwAddVarRW(bar, "Water Winter", TW_TYPE_COLOR3F, swnt.settings.colors[0].water.ptr(), "group='Colors And Time'");
+    TwAddVarRW(bar, "Water Spring", TW_TYPE_COLOR3F, swnt.settings.colors[1].water.ptr(), "group='Colors And Time'");
+    TwAddVarRW(bar, "Water Summer", TW_TYPE_COLOR3F, swnt.settings.colors[2].water.ptr(), "group='Colors And Time'");
+    TwAddVarRW(bar, "Water Autumn", TW_TYPE_COLOR3F, swnt.settings.colors[3].water.ptr(), "group='Colors And Time'");
   }
 
-  TwDefine("SWNT/General opened=false");
+  TwDefine("SWNT/'Colors And Time' opened=false");
 
   // kinect
   TwAddVarRW(bar, "Kinect Far", TW_TYPE_FLOAT, &swnt.settings.kinect_far, "group='Kinect' min=0.00 max=5.00 step=0.01");
@@ -161,13 +161,16 @@ bool GUI::setup(int w, int h) {
   TwAddVarRW(bar, "Max Particle Mass", TW_TYPE_FLOAT, &spirals.max_mass, "min=0.0 max=15.0 step=0.001 group='Spirals'");
   TwAddVarRW(bar, "Force Towards Center", TW_TYPE_FLOAT, &spirals.center_force, "min=0.0 max=400.0 step=0.1 group='Spirals'");
   TwAddVarRW(bar, "Velocity Field Force", TW_TYPE_FLOAT, &spirals.field_force, "min=0.0 max=1.0 step=0.01 group='Spirals'");
-  TwAddVarRW(bar, "Min Width", TW_TYPE_FLOAT, &spirals.min_strip_width, "min=0.0 max=15.0 step=0.1 group='Spirals'");
-  TwAddVarRW(bar, "Max Width", TW_TYPE_FLOAT, &spirals.max_strip_width, "min=0.0 max=15.0 step=0.1 group='Spirals'");
+  TwAddVarRW(bar, "Min Width", TW_TYPE_FLOAT, &spirals.min_strip_width, "min=0.0 max=50.0 step=0.1 group='Spirals'");
+  TwAddVarRW(bar, "Max Width", TW_TYPE_FLOAT, &spirals.max_strip_width, "min=0.0 max=50.0 step=0.1 group='Spirals'");
   TwAddVarRW(bar, "Min Tail Size", TW_TYPE_UINT32, &spirals.min_tail_size, "min=2 max=100 step=1 group='Spirals'");
   TwAddVarRW(bar, "Max Tail Size", TW_TYPE_UINT32, &spirals.max_tail_size, "min=2 max=100 step=1 group='Spirals'");
   TwAddVarRW(bar, "Number of Particles To Spawn", TW_TYPE_UINT32, &spirals.spawn_per_tracked, "min=1 max=200 step=1 group='Spirals'");
   TwDefine("SWNT/Spirals opened=false");
 #endif
+
+  TwAddVarRW(bar, "Hand Scale", TW_TYPE_FLOAT, &swnt.tracking.blob_scale, "min=1.0 max=3.0 step=0.01");
+  TwAddVarRW(bar, "Hand Offset", TW_TYPE_FLOAT, &swnt.tracking.blob_offset, "min=-300.0 max=300.0 step=0.5");
 
   TwWindowSize(win_w, win_h);
   return true;

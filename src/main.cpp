@@ -195,6 +195,12 @@ void key_callback(GLFWwindow* win, int key, int scancode, int action, int mods) 
       glfwSetWindowShouldClose(win, GL_TRUE);
       break;
     }
+    case GLFW_KEY_M: {
+      static bool show = false;
+      glfwSetInputMode(win, GLFW_CURSOR, (show) ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_HIDDEN);
+      show = !show;
+      break;
+    }
     case GLFW_KEY_T: {
       int num = 5;
       vec3 dir(rx_random(-1.0,1.0), rx_random(-1.0f, 1.0f), 0.0);

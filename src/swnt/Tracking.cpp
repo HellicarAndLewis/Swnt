@@ -36,6 +36,9 @@ Tracking::Tracking(Settings& settings, Graphics& graphics)
   ,blob_frag(0)
   ,blob_vert(0)
   ,blob_prog(0)
+  ,u_blob_color(-1)
+  ,blob_scale(1.0f)
+  ,blob_offset(0.0f)
 {
 }
 
@@ -65,6 +68,8 @@ bool Tracking::setupGraphics() {
   blob_prog = rx_create_program_with_attribs(blob_vert, blob_frag, 1, blob_atts);
   glUseProgram(blob_prog);
   glUniformMatrix4fv(glGetUniformLocation(blob_prog, "u_pm"), 1, GL_FALSE, settings.ortho_matrix.ptr());
+  u_blob_color = glGetUniformLocation(blob_prog, "u_blob_color");
+  
 
   glGenVertexArrays(1, &blob_vao);
   glBindVertexArray(blob_vao);
@@ -132,12 +137,15 @@ void Tracking::draw(float tx, float ty) {
   // Draw triangulated
   if(draw_triangulated_blobs && blob_counts.size()) {
     mat4 mm;
-    mm.scale(sx, sy, 1.0f);
-
+    mm.translate(blob_offset, blob_offset, 0.0);
+    mm.scale(sx * blob_scale, sy * blob_scale, 1.0f);
+    
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glUseProgram(blob_prog);
     glUniformMatrix4fv(glGetUniformLocation(blob_prog, "u_mm"), 1, GL_FALSE, mm.ptr());
     glBindVertexArray(blob_vao);
     glMultiDrawArrays(GL_TRIANGLES, &blob_offsets.front(), &blob_counts.front(), blob_counts.size());
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   }
 }
 
@@ -408,3 +416,7 @@ void Tracking::clusterPoints() {
   }
 }
 
+void Tracking::setTimeOfYear(float t) {
+  glUseProgram(blob_prog);
+  glUniform3fv(u_blob_color, 1, settings.curr_colors.hand.ptr());
+}

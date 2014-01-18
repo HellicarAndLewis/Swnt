@@ -24,7 +24,7 @@ Swnt::Swnt(Settings& settings)
   ,draw_threshold(true)
   ,draw_water(true)
   ,draw_vortex(false)
-  ,draw_tracking(false)
+  ,draw_tracking(true)
   ,draw_gui(true)
   ,override_with_gui(false)
 #if USE_SPIRALS
@@ -265,6 +265,7 @@ void Swnt::update(float dt) {
   if(weather_changed) {
     has_weather_info = true;
     weather_info = new_info;
+    updateWeatherInfo();
   }
 #endif
 
@@ -389,10 +390,6 @@ void Swnt::draw() {
     ball_drawer.draw();
 #    endif
 
-    if(draw_tracking) {
-      tracking.draw(0.0f, 0.0f);
-    }
-
     #if USE_RGB_SHIFT
     rgb_shift.apply();
     rgb_shift.draw();
@@ -425,12 +422,17 @@ void Swnt::drawScene() {
 #endif
 
   flow.calc(mask.masked_out_pixels);
-  flow.draw();
+  if(draw_flow) {
+    flow.draw();
+  }
 
 #if USE_SPIRALS
   spirals.draw();
 #endif
-    
+
+  if(draw_tracking) {
+    tracking.draw(0.0f, 0.0f);
+  }
 }
 
 // Updates the kinect depth and color buffers.
@@ -651,22 +653,27 @@ void Swnt::setTimeOfDay(float t) {
   else {
     printf("Warning: cannot retrieve tide information.\n");
   }
-    
-  // Update lighting
-  float sun = 0.0f;
+  
+  updateWeatherInfo();
+
+}
+#endif // #USE_TIDES
+
+void Swnt::updateWeatherInfo() {
+
+#if USE_WATER
+  float wind = 0.0f;
   if(has_weather_info) {
-    sun = weather_info.getSun(t);
+    wind = CLAMP(float(weather_info.speed)/100.0f, 0.0f, 1.0f);
   }
   else {
     printf("Verbose: no weather info yet.\n");
   }
 
-#if USE_WATER
-  water.setTimeOfDay(t, sun);
+  water.setWeatherInfo(wind);
 #endif
 
 }
-#endif // #USE_TIDES
 
 void Swnt::updateActivityLevel() {
 
@@ -692,4 +699,6 @@ void Swnt::setTimeOfYear(float t) {
 #if USE_SPIRALS
   spirals.refresh();
 #endif
+
+   tracking.setTimeOfYear(t);
 }

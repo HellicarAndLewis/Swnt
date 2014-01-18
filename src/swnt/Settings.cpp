@@ -174,7 +174,7 @@ void Settings::getColorsForTimeOfYear(float t, ColorSettings& result) {
 
     rx_rgb_to_hsv(col.hand, hand_hsv);
     rx_rgb_to_hsv(col.water, water_hsv);
-    rx_rgb_to_hsv(col.flow_lines, flow_hsv);
+    rx_rgb_to_hsv(col.spiral_from, flow_hsv);
 
     hand_hues.push_back(hand_hsv[0]);
     water_hues.push_back(water_hsv[0]);
@@ -182,11 +182,11 @@ void Settings::getColorsForTimeOfYear(float t, ColorSettings& result) {
 
     hand_sats.push_back(hand_hsv[1]);
     water_sats.push_back(water_hsv[1]);
-    flow_sats.push_back(hand_hsv[1]);
+    flow_sats.push_back(flow_hsv[1]);
 
     hand_vals.push_back(hand_hsv[2]);
     water_vals.push_back(water_hsv[2]);
-    flow_vals.push_back(hand_hsv[2]);
+    flow_vals.push_back(flow_hsv[2]);
   }
 
   rx_hsv_to_rgb(hand_hues.at(t), hand_sats.at(t), hand_vals.at(t), result.hand.x, result.hand.y, result.hand.z);
