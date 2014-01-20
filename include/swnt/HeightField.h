@@ -66,7 +66,7 @@ static const char* HF_DIFFUSE_VERT = ""
 
   "  float f = 4.4 * ((u_right + u_left + u_bottom + u_top) - (4.0 * u_center));"
   "  { "
-  "    float max = 4.5;" // set to 0.5 for slow/stable water
+  "    float max = 0.5;" // set to 0.5 for slow/stable water
   "    if(f > max) { f = max; } else if( f < -max) { f = -max; } "
   "  } "
 
