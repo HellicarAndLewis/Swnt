@@ -189,6 +189,7 @@ bool Kinect::setup() {
   printf("Number of found kinect devices: %d\n", ndevices);
 
   freenect_select_subdevices(ctx, (freenect_device_flags)(FREENECT_DEVICE_MOTOR | FREENECT_DEVICE_CAMERA));
+  //freenect_select_subdevices(ctx, (freenect_device_flags)( FREENECT_DEVICE_CAMERA));
 
   int devnum = 0;
   if(freenect_open_device(ctx, &device, devnum) < 0) {

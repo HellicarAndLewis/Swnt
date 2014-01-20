@@ -115,7 +115,7 @@ bool Settings::load(std::string filepath) {
     return false;
   }
 
-  printf("settings.win_w %d\n", win_w);
+  printf("settings.win_w: %d\n", win_w);
   printf("settings.win_h: %d\n", win_h);
 
   ortho_matrix.ortho(0, win_w, win_h, 0, -1.0f, 1000.0f);

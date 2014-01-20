@@ -54,8 +54,8 @@ int main() {
   }
 
   GLFWwindow* win = NULL;
-  //win = glfwCreateWindow(settings.win_w, settings.win_h, "Swnt", glfwGetPrimaryMonitor(), NULL);
-  win = glfwCreateWindow(settings.win_w, settings.win_h, "Swnt", NULL, NULL);
+  win = glfwCreateWindow(settings.win_w, settings.win_h, "Swnt", glfwGetPrimaryMonitor(), NULL);
+  // win = glfwCreateWindow(settings.win_w, settings.win_h, "Swnt", NULL, NULL);
   if(!win) {
     glfwTerminate();
     exit(EXIT_FAILURE);
@@ -79,7 +79,7 @@ int main() {
   int w,h = 0;
   glfwGetWindowSize(win, &w, &h);
   if(w != settings.win_w || h != settings.win_h) {
-    printf("The created window does not have the asked dimensions!\nTry changing the width and height in the settings: %d x %d", w, h);
+    printf("The created window does not have the asked dimensions!\nTry changing the width and height in the settings: %d x %d\n", w, h);
     ::exit(EXIT_FAILURE);
   }
 
@@ -115,7 +115,7 @@ int main() {
     prev_time = now;
     swnt.update(dt);
     swnt.draw();
-    
+
     glfwSwapBuffers(win);
     glfwPollEvents();
   }

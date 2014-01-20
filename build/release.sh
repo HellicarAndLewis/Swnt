@@ -7,5 +7,10 @@ fi
 cd build.release
 cmake -DCMAKE_BUILD_TYPE=Release ../ 
 cmake --build . --target install
-cd ./../../install/mac-clang-x86_64/bin/
-./swnt
+if [ "$(uname)" == "Darwin" ] ; then 
+    cd ./../../install/mac-clang-x86_64/bin/
+    ./swnt
+else
+  cd ./../../install/linux-gcc-x86_64/bin/
+  ./swnt
+fi
