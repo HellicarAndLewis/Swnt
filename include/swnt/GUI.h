@@ -2,6 +2,10 @@
 #define SWNT_GUI_H
 
 #include <stdio.h>
+#if defined(__linux)
+#  include <GL/glcorearb.h>
+#endif
+
 #include <AntTweakBar.h>
 
 class Swnt;

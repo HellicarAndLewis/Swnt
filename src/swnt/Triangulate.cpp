@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <stdlib.h>
 
-
 Triangulate::Triangulate() {
 }
 

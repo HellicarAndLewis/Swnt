@@ -27,6 +27,7 @@ if(NOT WIN32)
   set(app_sources
     ${sd}/main.cpp
     ${sd}/swnt/Swnt.cpp
+    ${sd}/swnt/GUI.cpp
     ${sd}/swnt/Kinect.cpp
     ${sd}/swnt/Settings.cpp
     ${sd}/swnt/Graphics.cpp
@@ -45,7 +46,6 @@ if(NOT WIN32)
     ${sd}/swnt/effects/Eddy.cpp
     ${sd}/swnt/effects/Splashes.cpp
     ${sd}/swnt/Scene.cpp
-    ${sd}/swnt/GUI.cpp
     ${sd}/swnt/RGBShift.cpp
     ${sd}/swnt/Weather.cpp
     ${sd}/swnt/Audio.cpp
@@ -87,8 +87,6 @@ if(UNIX AND NOT APPLE)
   message(${app_sources})
 endif()
 
-add_executable(${app} ${app_sources})
-
 if(APPLE)
 
   find_library(fr_corefoundation CoreFoundation)
@@ -98,8 +96,7 @@ if(APPLE)
   find_library(fr_corevideo CoreVideo)
   find_library(fr_opencl OpenCL)
 
-  target_link_libraries(
-    ${app}
+  set(app_libs
     ${extern_lib_dir}/libglfw3.a
     ${extern_lib_dir}/libuv.a
     ${extern_lib_dir}/libfreenect.a
@@ -112,8 +109,6 @@ if(APPLE)
     ${extern_lib_dir}/libcurl.a
     ${extern_lib_dir}/libcrypto.a
     ${extern_lib_dir}/libssl.a
-    ${extern_lib_dir}/libao.a
-    ${extern_lib_dir}/libmpg123.a
     ${extern_lib_dir}/libfmodex.dylib
     ${fr_corefoundation}
     ${fr_cocoa}
@@ -124,8 +119,7 @@ if(APPLE)
     -lz
     )
 elseif(UNIX)
-  target_link_libraries(
-    ${app}
+  set(app_libs
     ${extern_lib_dir}/libglfw3.a
     ${extern_lib_dir}/libuv.a
     ${extern_lib_dir}/libfreenect.a
@@ -135,6 +129,12 @@ elseif(UNIX)
     ${extern_lib_dir}/libopencv_imgproc.a
     ${extern_lib_dir}/libopencv_core.a
     ${extern_lib_dir}/libz.a
+    ${extern_lib_dir}/libAntTweakBar.a
+    ${extern_lib_dir}/libcurl.a
+    ${extern_lib_dir}/libssl.a
+    ${extern_lib_dir}/libcrypto.a
+    ${extern_lib_dir}/libcurl.a
+    ${extern_lib_dir}/libfmodex64-4.44.30.so
     GL
     X11
     Xxf86vm
@@ -143,10 +143,11 @@ elseif(UNIX)
     dl
     Xi
     )
+  #set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_PREFIX}/bin)
+  set(CMAKE_INSTALL_RPATH "$ORIGIN")  # look for libraries in the same directory as the executable
 elseif(WIN32)
-  message("Extern dir: ${extern_lib_dir}")
-  target_link_libraries(
-     ${app}
+
+  set(app_libs
      ${extern_lib_dir}/libpng16.lib
      ${extern_lib_dir}/glfw3.lib
      ${extern_lib_dir}/opencv_core300.lib
@@ -170,6 +171,15 @@ elseif(WIN32)
     )
 endif()
 
+add_executable(${app} ${app_sources})
+
+target_link_libraries(${app} ${app_libs})
+
 install(TARGETS ${app} DESTINATION bin)
-install(FILES ${extern_lib_dir}/libfmodex.dylib DESTINATION bin)
+
+if(APPLE)
+  install(FILES ${extern_lib_dir}/libfmodex.dylib DESTINATION bin)
+elseif(UNIX)
+  install(FILES ${extern_lib_dir}/libfmodex64-4.44.30.so DESTINATION bin)
+endif()
 

@@ -6,6 +6,8 @@
 
 using namespace rapidxml;
 
+#define CHECK_SETTING(node) { if (!node) { printf("Error: cannot get element from settings: " #node ". Do you have the latest settings.xml file?\n");  return false; } }
+
 // -------------------------------------------------
 void ColorSettings::print() {
 }
@@ -31,7 +33,7 @@ bool Settings::load(std::string filepath) {
     printf("Error: cannot open: `%s`\n", filepath.c_str());
     return false;
   }
-  printf("--\n");
+
   printf("settings.file: %s\n", filepath.c_str());
 
   std::string xml_str;
@@ -41,33 +43,35 @@ bool Settings::load(std::string filepath) {
   try { 
     doc.parse<0>((char*)xml_str.c_str());
     xml_node<>* cfg = doc.first_node("settings");
-    assert(cfg);
+    CHECK_SETTING(cfg);
 
     // window width
     xml_node<>* ww = cfg->first_node("window_width");
-    assert(ww);
+    CHECK_SETTING(ww);
+
     win_w = rx_to_int(ww->value());
     ocean.win_w = win_w;
 
     // window height
     xml_node<>* wh = cfg->first_node("window_height");
-    assert(wh);
+    CHECK_SETTING(wh);
+
     win_h = rx_to_int(wh->value());
     ocean.win_h = win_h;
 
     // ocean
     {
       xml_node<>* oc = cfg->first_node("ocean");
-      assert(oc);
+      CHECK_SETTING(oc);
 
       xml_node<>* wfx = oc->first_node("wind_force_x");
-      assert(wfx);
+      CHECK_SETTING(wfx);
       
       xml_node<>* wfy = oc->first_node("wind_force_y");
-      assert(wfy);
+      CHECK_SETTING(wfy);
 
       xml_node<>* size = oc->first_node("size");
-      assert(size);
+      CHECK_SETTING(size);
 
       ocean.wind_x = rx_to_float(wfx->value());
       ocean.wind_y = rx_to_float(wfy->value());
@@ -76,16 +80,19 @@ bool Settings::load(std::string filepath) {
 
     // kinect
     xml_node<>* k_near = cfg->first_node("kinect_near");
-    assert(k_near);
+    CHECK_SETTING(k_near);
+
     kinect_near = rx_to_float(k_near->value());
 
     xml_node<>* k_far = cfg->first_node("kinect_far");
-    assert(k_far);
+    CHECK_SETTING(k_far);
+
     kinect_far = rx_to_float(k_far->value());
 
     // colors
     xml_node<>* cols = cfg->first_node("colors")->first_node();
-    assert(cols);
+    CHECK_SETTING(cols);
+
     while(cols) {
       ColorSettings col_setting;
       extractColor(cols->first_node("hand"), col_setting.hand) ;
@@ -116,8 +123,8 @@ bool Settings::load(std::string filepath) {
   return true;
 }
 
-void Settings::extractColor(xml_node<>* n, vec3& col) {
-  assert(n);
+bool Settings::extractColor(xml_node<>* n, vec3& col) {
+  CHECK_SETTING(n);
 
   xml_node<>* c = n->first_node();
   assert(c);
@@ -128,6 +135,8 @@ void Settings::extractColor(xml_node<>* n, vec3& col) {
     dx++;
     c = c->next_sibling();
   }
+
+  return true;
 }
 
 void Settings::setTimeOfYear(float t) {

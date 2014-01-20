@@ -1,4 +1,5 @@
 #include <swnt/Audio.h>
+#include <stdio.h>
 
 // -----------------------------------------
 

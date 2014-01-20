@@ -26,7 +26,7 @@ class Settings {
 
  private:
   void getColorsForTimeOfYear(float t, ColorSettings& result); 
-  void extractColor(rapidxml::xml_node<>* n, vec3& col);
+  bool extractColor(rapidxml::xml_node<>* n, vec3& col);
 
  public:
   int win_w;                           /* width of the window we render */

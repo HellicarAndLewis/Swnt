@@ -1,6 +1,6 @@
 #include <assert.h>
-#include <GLFW/glfw3.h>
 #include <swnt/GUI.h>
+#include <GLFW/glfw3.h>
 #include <swnt/Swnt.h>
 #include <swnt/Types.h>
 #include <swnt/Spirals.h>

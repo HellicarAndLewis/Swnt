@@ -109,6 +109,7 @@ extern "C" {
 }
 
 #include <vector>
+#include <string>
 
 class Triangulate {
  public:
