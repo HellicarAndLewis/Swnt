@@ -56,7 +56,8 @@ static const char* HF_DIFFUSE_VERT = ""
   "}"
 
   "void main() {                  "
-  "  gl_Position = vec4(-1.0 + float(a_tex.x) * (1.0 / " HEIGHT_FIELD_QUOTE(HEIGHT_FIELD_N) ") * 2.0, -1.0 + float(a_tex.y) * (1.0 / " HEIGHT_FIELD_QUOTE(HEIGHT_FIELD_N) ") * 2.0, 0.0, 1.0);"
+  //  "  gl_Position = vec4(-1.0 + float(a_tex.x) * (1.0 / " HEIGHT_FIELD_QUOTE(HEIGHT_FIELD_N) ") * 2.0, -1.0 + float(a_tex.y) * (1.0 / " HEIGHT_FIELD_QUOTE(HEIGHT_FIELD_N) ") * 2.0, 0.0, 1.0);"
+  "  gl_Position = vec4(-1.0 + float(a_tex.x) * (1.0 / 128.0) * 2.0, -1.0 + float(a_tex.y) * (1.0 / 128.0) * 2.0, 0.0, 1.0);"
 
   "  float u_center = get_force( 0,  0);"
   "  float u_left   = get_force(-1,  0);"
