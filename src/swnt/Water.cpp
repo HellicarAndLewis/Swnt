@@ -19,6 +19,7 @@ Water::Water(HeightField& heightField, Settings& settings)
   ,sand_tex(0)
   ,depth_ramp_tex(0)
   ,extra_flow_tex(0)
+  ,force_tex(0)
   ,u_max_foam_depth(0)
   ,u_vortex_intensity(0)
   ,vortex_intensity(1.0)
@@ -100,6 +101,7 @@ bool Water::setupTextures() {
   foam_tex = rx_create_texture(rx_to_data_path("images/water_foam.png"));
   flow_tex = rx_create_texture(rx_to_data_path("images/water_flow.png"));
   sand_tex = rx_create_texture(rx_to_data_path("images/sand.png"));
+  force_tex = rx_create_texture(rx_to_data_path("images/force.png"));
 
   // specify some tex params for the depth ramp. (we need nearest sampling)
   depth_ramp_tex = rx_create_texture(rx_to_data_path("images/depth_ramp.png"));

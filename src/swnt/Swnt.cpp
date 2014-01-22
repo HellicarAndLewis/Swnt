@@ -77,6 +77,8 @@ bool Swnt::setup() {
     return false;
   }
 
+  height_field.print();
+
 #if USE_WATER
 
   if(!water.setup(settings.win_w, settings.win_h)) {
@@ -304,6 +306,8 @@ void Swnt::update(float dt) {
 }
 
 void Swnt::draw() {
+
+   height_field.debugDraw();
 
 #if 0
   height_field.debugDraw();

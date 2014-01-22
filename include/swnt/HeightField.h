@@ -29,11 +29,17 @@
     to set gl_Position.
     
   Things to know / improve:
+  -------------------------
 
   - We're not reusing the attribute less GL_VERTEX_SHADER;
 
   - You can use the vertices_vao/vbo to render the height field, see the 
     debug shaders.
+
+
+  History:
+  ---------
+  - No extra forces, just a plain height field:    https://gist.github.com/roxlu/d98fe791e163bf1aa79e 
 
  */
 #ifndef ROXLU_HEIGHT_FIELD_H
@@ -58,6 +64,10 @@ class HeightField {
   void process();            /* processes the current values, calculates normals, create position texture etc.. */
   void debugDraw();
 
+  void beginDrawForces();
+  void drawForceTexture(GLuint tex, float px, float py, float pw, float ph);  /* all values are in percentages */
+  void endDrawForces();
+
   void print();               /* print some debug info */
 
  private: 
@@ -65,6 +75,7 @@ class HeightField {
   bool setupProcessing();    /* setup GL state for the processing step; calculates normals, positions, texcoord etc.. using the current field values */
   bool setupDebug();         /* setup GL state for debugging */
   bool setupVertices();      /* create the triangle mesh (or the order of vertices, position is extracted from the position texture) */
+  bool setupExtraForces();   /* setup the FBO which is used to capture extra forces */
 
  public:
 
@@ -83,6 +94,11 @@ class HeightField {
   int field_size;             /* the size of our rectangular height field */
   int win_w;                  /* window width, use to reset the viewport */
   int win_h;                  /* window height, used to reset the viewport */
+
+  /* custom forces */
+  Program force_prog;         /* used to add extra forces to the height field */
+  GLuint force_fbo;
+  GLuint force_tex;
 
   /* used to process the height field and extract some usefull data */
   GLuint process_fbo;         /* we use a separate FBO to perform the processing step so we have some space for extra attachments */

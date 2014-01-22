@@ -11,6 +11,8 @@ HeightField::HeightField()
   ,state_diffuse(0)
   ,win_w(0)
   ,win_h(0)
+  ,force_fbo(0)
+  ,force_tex(0)
   ,process_fbo(0)
   ,tex_out_norm(0)
   ,tex_out_pos(0)
@@ -52,6 +54,53 @@ bool HeightField::setup(int w, int h) {
     return false;
   }
 
+  if(!setupExtraForces()) {
+    printf("Error: cannot setup the extra forces.\n");
+    return false;
+  }
+
+  return true;
+}
+
+bool HeightField::setupExtraForces() {
+
+  // Shader
+  force_prog.create(GL_VERTEX_SHADER, rx_to_data_path("shaders/height_field_forces.vert"));
+  force_prog.create(GL_FRAGMENT_SHADER, rx_to_data_path("shaders/height_field_forces.frag"));
+  force_prog.link();
+  glUseProgram(force_prog.id);
+  glUniform1i(glGetUniformLocation(force_prog.id, "u_tex"), 0);
+
+  mat4 pm;
+  pm.ortho(0, field_size, field_size, 0, 0.0f, 100.0);
+  glUniformMatrix4fv(glGetUniformLocation(force_prog.id, "u_pm"), 1, GL_FALSE, pm.ptr());
+
+  // Texture
+  float* forces = new float[field_size * field_size];
+  memset((char*)forces, 0, sizeof(float) * field_size * field_size);
+
+
+  glGenTextures(1, &force_tex);
+  glBindTexture(GL_TEXTURE_2D, force_tex);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, field_size, field_size, 0,  GL_RG, GL_FLOAT, forces);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  // FBO 
+  glGenFramebuffers(1, &force_fbo);
+  glBindFramebuffer(GL_FRAMEBUFFER, force_fbo);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, force_tex, 0);
+
+  if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    printf("Framebuffer for custom forces step not complete.\n");
+    ::exit(EXIT_FAILURE);
+  }
+
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+  delete[] forces;
+  forces = NULL;
+  
   return true;
 }
 
@@ -94,11 +143,14 @@ bool HeightField::setupVertices() {
 }
 
 bool HeightField::setupDebug() {
-  
+
   pm.perspective(60.0f, float(win_w)/win_h, 0.01f, 100.0f);
+#if 0
   vm.lookAt(vec3(0.0f, 20.0f, 0.0f), vec3(0.0f, 0.0f, 0.1f), vec3(0.0f, 1.0f, 0.0f));
-  //vm.translate(0.0f, 0.0f, -30.0f);
-  //vm.rotateX(30 * DEG_TO_RAD);
+#else
+  vm.translate(0.0f, 0.0f, -30.0f);
+  vm.rotateX(30 * DEG_TO_RAD);
+#endif
 
   const char* atts[] = { "a_tex" };
   debug_prog.create(GL_VERTEX_SHADER, rx_to_data_path("shaders/height_field_debug.vert"));
@@ -199,33 +251,32 @@ bool HeightField::setupDiffusing() {
   glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, field_size, field_size, 0, GL_RED, GL_FLOAT, u);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   glGenTextures(1, &tex_u1);
   glBindTexture(GL_TEXTURE_2D, tex_u1);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, field_size, field_size, 0, GL_RED, GL_FLOAT, u);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   glGenTextures(1, &tex_v0);
   glBindTexture(GL_TEXTURE_2D, tex_v0);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, field_size, field_size, 0, GL_RED, GL_FLOAT, v);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   glGenTextures(1, &tex_v1);
   glBindTexture(GL_TEXTURE_2D, tex_v1);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, field_size, field_size, 0, GL_RED, GL_FLOAT, v);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   glGenFramebuffers(1, &field_fbo);
   glBindFramebuffer(GL_FRAMEBUFFER, field_fbo);
@@ -239,6 +290,11 @@ bool HeightField::setupDiffusing() {
     return false;
   }
 
+  GLenum drawbufs[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
+  glDrawBuffers(4, drawbufs);
+  glClearColor(0.0, 0.0, 0.0, 0.0);
+  glClear(GL_COLOR_BUFFER_BIT);
+
   const char* frags[] = { "out_height", "out_vel" } ;
   field_prog.create(GL_VERTEX_SHADER, rx_to_data_path("shaders/height_field.vert"));
   field_prog.create(GL_FRAGMENT_SHADER, rx_to_data_path("shaders/height_field.frag"));
@@ -247,6 +303,8 @@ bool HeightField::setupDiffusing() {
   glUseProgram(field_prog.id);
   glUniform1i(glGetUniformLocation(field_prog.id, "u_height_tex"), 0);
   glUniform1i(glGetUniformLocation(field_prog.id, "u_vel_tex"), 1);
+  glUniform1i(glGetUniformLocation(field_prog.id, "u_force_tex"), 2);
+
   u_dt = glGetUniformLocation(field_prog.id, "u_dt");
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -270,6 +328,9 @@ void HeightField::update(float dt) {
 
   state_diffuse = 1 - state_diffuse;
 
+  glActiveTexture(GL_TEXTURE2);
+  glBindTexture(GL_TEXTURE_2D, force_tex);
+
   if(state_diffuse == 0) {
     // read from u0, write to u1
     // read from v0, write to v1
@@ -279,7 +340,6 @@ void HeightField::update(float dt) {
     glActiveTexture(GL_TEXTURE0);  glBindTexture(GL_TEXTURE_2D, tex_u0);
     glActiveTexture(GL_TEXTURE1);  glBindTexture(GL_TEXTURE_2D, tex_v0);
 
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
   }
   else {
     // read from u1, write to u0
@@ -289,9 +349,19 @@ void HeightField::update(float dt) {
 
     glActiveTexture(GL_TEXTURE0);  glBindTexture(GL_TEXTURE_2D, tex_u1);
     glActiveTexture(GL_TEXTURE1);  glBindTexture(GL_TEXTURE_2D, tex_v1);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
   }
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);  
   
+  // clear the forces buffer.
+#if 1
+  GLenum forces_bufs[] = { GL_COLOR_ATTACHMENT0 } ;
+  glBindFramebuffer(GL_FRAMEBUFFER, force_fbo);
+  glDrawBuffers(1, forces_bufs);
+  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+  glClear(GL_COLOR_BUFFER_BIT);
+#endif
+
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glViewport(0, 0, win_w, win_h);
 }
@@ -328,6 +398,44 @@ void HeightField::process() {
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+
+void HeightField::beginDrawForces() {
+  
+  GLenum drawbufs[] = { GL_COLOR_ATTACHMENT0 } ;
+  glViewport(0, 0, field_size, field_size);
+  glBindFramebuffer(GL_FRAMEBUFFER, force_fbo);
+  glDrawBuffers(1, drawbufs);
+  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+  glClear(GL_COLOR_BUFFER_BIT);
+  
+}
+
+void HeightField::endDrawForces() {
+
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glViewport(0, 0, win_w, win_h);
+
+}
+
+void HeightField::drawForceTexture(GLuint tex, float px, float py, float pw, float ph) {
+  float hw = 0.5 * field_size * pw;
+  float hh = 0.5 * field_size * ph;
+
+  mat4 mm;
+  mm.translate(px * field_size, py * field_size, 0.0f);
+  mm.scale(pw * field_size, ph * field_size, 1.0);
+
+  glUseProgram(force_prog.id);
+  
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, tex);
+
+  glBindVertexArray(field_vao);
+  glUniformMatrix4fv(glGetUniformLocation(force_prog.id, "u_mm"), 1, GL_FALSE, mm.ptr());
+
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+}
+
 void HeightField::debugDraw() {
   glViewport(0, 0, win_w, win_h);
   glBindFramebuffer(GL_FRAMEBUFFER, 0); // tmp
@@ -349,7 +457,13 @@ void HeightField::debugDraw() {
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
   glReadBuffer(GL_COLOR_ATTACHMENT0);
   glBlitFramebuffer(0, 0, field_size, field_size, 0, 0, field_size, field_size, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+  glBlitFramebuffer(0, 0, field_size, field_size, 0, 0, field_size, field_size, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 #endif
+
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, force_fbo);
+  glReadBuffer(GL_COLOR_ATTACHMENT0);
+  glBlitFramebuffer(0, 0, field_size, field_size, field_size, 0, field_size*2, field_size, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
 }
 
 
@@ -361,4 +475,5 @@ void HeightField::print() {
   printf("heightfield.tex_out_norm: %d\n", tex_out_norm);
   printf("heightfield.tex_out_texcoord: %d\n", tex_out_texcoord);
   printf("heightfield.tex_out_pos: %d\n", tex_out_pos);
+  printf("heightfield.force_tex: %d\n", force_tex);
 }

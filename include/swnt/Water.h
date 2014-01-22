@@ -63,6 +63,7 @@ class Water {
   GLuint sand_tex;                                /* the sand / floow texture */
   GLuint depth_ramp_tex;                          /* colors that are selected by depth */
   GLuint extra_flow_tex;                          /* the capture flow texture */
+  GLuint force_tex;                               /* this texture is used to apply an extra force to the height field */
   
   GLuint fbo;                                     /* used to render the extra flow */
 
