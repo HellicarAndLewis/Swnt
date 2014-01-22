@@ -34,6 +34,7 @@ class Effects {
   Swnt& swnt;
   Settings& settings;
   mat4 ortho_pm;
+ private:
   Eddy eddy;
   Splashes splashes;
 };

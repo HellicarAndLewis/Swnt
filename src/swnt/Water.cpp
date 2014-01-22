@@ -3,33 +3,26 @@
 #include <swnt/HeightField.h>
 #include <swnt/Settings.h>
 
-Water::Water(HeightField& hf, Settings& settings)
-  :height_field(hf)
+Water::Water(HeightField& heightField, Settings& settings)
+  :height_field(heightField)
   ,settings(settings)
   ,win_w(0)
   ,win_h(0)
-  ,prog(0)
-  ,vert(0)
-  ,frag(0)
-  ,flow_tex(0)
-  ,normals_tex(0)
-  ,noise_tex(0)
+   //  ,max_depth(3.95)
+  ,max_foam_depth(2.0)
+  ,wind_level(0.0f)
   ,diffuse_tex(0)
+  ,normal_tex(0)
+  ,noise_tex(0)
   ,foam_tex(0)
-  ,force_tex0(0)
-  ,vortex_tex(0)
+  ,flow_tex(0)
   ,sand_tex(0)
   ,depth_ramp_tex(0)
-  ,color_tex(0)
-  ,foam_colors_tex(0)
-  ,foam_ramp_tex(0)
-  ,max_depth(3.95)
-  ,sun_shininess(4.6)
-  ,foam_depth(2.0)
-  ,fbo(0)
   ,extra_flow_tex(0)
-  ,vortex_intensity(2.0)
-  ,wind_level(0.0f)
+  ,u_max_foam_depth(0)
+  ,u_vortex_intensity(0)
+  ,vortex_intensity(1.0)
+  ,fbo(0)
 {
   sun_pos[0] = 0.0;
   sun_pos[1] = 15.0;
@@ -38,194 +31,50 @@ Water::Water(HeightField& hf, Settings& settings)
   sun_color[1] = 3;
   sun_color[2] = 1;
   ads_intensities[0] = -1.90f;  // ambient, the selected color
-  ads_intensities[1] = 0.0f;  // diffuse
-  ads_intensities[2] = 0.75f; // spec
-  ads_intensities[3] = 0.36;  // sun  
-  ads_intensities[4] = 0.88;  // foam
-  ads_intensities[5] = 0.33;  // texture
-  ads_intensities[6] = 1.0;   // overall intensity
+  ads_intensities[1] = 0.0f;    // diffuse
+  ads_intensities[2] = 0.75f;   // spec
+  ads_intensities[3] = 0.36;    // sun  
+  ads_intensities[4] = 0.88;    // foam
+  ads_intensities[5] = 0.33;    // texture
+  ads_intensities[6] = 1.0;     // overall intensity
   ambient_color[0] = 46.0/255.0f;
   ambient_color[1] = 72.0/255.0f;
   ambient_color[2] = 96.0/255.0f;
-
-
-#if 0
-  float r = 0.0/255.0f;
-  float g = 125.0f/255.0f;
-  float b = 155.0f/255.0f;
-  float h,s,v = 0.0f;
-
-  float step = 0.01;
-  for(float i = 0; i < 1.0f; i += step) {
-    for(float j = 0; j < 1.0f; j += step) {
-      for(float k = 0; k < 1.0f; k += step) {
-        r = i;
-        g = j;
-        b = k;
-        rx_rgb_to_hsv(r,g,b, h,s,v);
-        printf("> hsv(%f, %f, %f), rgb(%f, %f, %f)\n", h,s,v, r,g,b);
-        float r1,g1,b1;
-        rx_hsv_to_rgb(h,s,v,r1,g1,b1);
-        printf("< hsv(%f, %f, %f), rgb(%f, %f, %f)\n", h,s,v, r,g,b);
-
-        if(fabs(r1 - r) > 0.001) {
-          //  printf("Red is wrong.\n");
-          //::exit(0);
-        }
-
-        if(fabs(g1 - g) > 0.001) {
-          //printf("Green is wrong.\n");
-          /// ::exit(0);
-        }
-       
-        if(fabs(b1 - b) > 0.001) {
-          //printf("Blue is wrong.\n");
-          //::exit(0);
-        }
-        printf("\n");
-      }
-    }
-  }
-
-  r = 0.0f;
-  g = 0.0f;
-  b = 0.2f;
-  rx_rgb_to_hsv(r,g,b,h,s,v);
-  printf("h: %f, s: %f, v: %f - r: %f, g: %f, b: %f\n", h,s, v, r, g, b);
-    r = g = b = 0;
-  rx_hsv_to_rgb(h,s,v,r,g,b);
-  printf("h: %f, s: %f, v: %f - r: %f, g: %f, b: %f\n", h, s, v, r, g, b);
-#endif
-  
 }
-
-GLuint Water::createTexture(std::string filename) {
- 
-  int w, h, n;
-  unsigned char* pix;
- 
-  if(!rx_load_png(rx_to_data_path(filename), &pix, w, h, n)) {
-    printf("Error: cannot find: %s\n", filename.c_str());
-    return 0;
-  }
- 
-  GLuint tex;
-  GLenum format = GL_RGB;
- 
-  if(n == 4) {
-    format = GL_RGBA;
-  }
- 
-  glGenTextures(1, &tex);
-  glBindTexture(GL_TEXTURE_2D, tex);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, format, GL_UNSIGNED_BYTE, pix);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
- 
-  delete[] pix;
-  pix = NULL;
-  return tex;
-}
-
 
 bool Water::setup(int w, int h) {
-  assert(w && h);
+
+  if(!w || !h) {
+    printf("Error: invalid size: %d x %d\n", w, h);
+    return false;
+  }
 
   win_w = w;
   win_h = h;
 
-  // create shader
-  vert = rx_create_shader(GL_VERTEX_SHADER, WATER_VS);
-  frag = rx_create_shader(GL_FRAGMENT_SHADER, WATER_FS);
-  prog = rx_create_program(vert, frag);
-  glBindAttribLocation(prog, 0, "a_tex");
-  glLinkProgram(prog);
-  rx_print_shader_link_info(prog);
-  glUseProgram(prog);
-  glUniform1i(glGetUniformLocation(prog, "u_tex_pos"),            0);  // VS
-  glUniform1i(glGetUniformLocation(prog, "u_tex_norm"),           1);  // VS
-  glUniform1i(glGetUniformLocation(prog, "u_tex_texcoord"),       2);  // VS
-  //  glUniform1i(glGetUniformLocation(prog, "u_tex_tang"),       3);  // VS
-  glUniform1i(glGetUniformLocation(prog, "u_tex_gradient"),       3);  // VS
-  glUniform1i(glGetUniformLocation(prog, "u_noise_tex"),          4);  // FS
-  glUniform1i(glGetUniformLocation(prog, "u_norm_tex"),           5);  // FS
-  glUniform1i(glGetUniformLocation(prog, "u_flow_tex"),           6);  // FS
-  glUniform1i(glGetUniformLocation(prog, "u_diffuse_tex"),        7);  // FS
-  glUniform1i(glGetUniformLocation(prog, "u_foam_tex"),           8);  // FS
-  glUniform1i(glGetUniformLocation(prog, "u_color_tex"),          9);  // FS
-  glUniform1i(glGetUniformLocation(prog, "u_extra_flow_tex"),     10);  // FS
-  glUniform1i(glGetUniformLocation(prog, "u_foam_delta_tex"),     11);  // FS
-  glUniform1i(glGetUniformLocation(prog, "u_foam_colors"),        12);  // FS
-  glUniform1i(glGetUniformLocation(prog, "u_foam_ramp"),          13);  // FS
-  glUniform1i(glGetUniformLocation(prog, "u_vortex_tex"),         14);  // FS
-  glUniform1i(glGetUniformLocation(prog, "u_sand_tex"),           15);  // FS
-  glUniform1i(glGetUniformLocation(prog, "u_depth_ramp_tex"),           16);  // FS
-
-  //GLint texture_units = 0;
-  //glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &texture_units);
-  //printf("Max units: %d\n", texture_units);
-
-  glUniformMatrix4fv(glGetUniformLocation(prog, "u_pm"), 1, GL_FALSE, height_field.pm.ptr());
-  glUniformMatrix4fv(glGetUniformLocation(prog, "u_vm"), 1, GL_FALSE, height_field.vm.ptr());
-
-  // load textures
-  normals_tex = createTexture("images/water_normals.png");
-  flow_tex = createTexture("images/water_flow.png");
-  noise_tex = createTexture("images/water_noise.png");
-  diffuse_tex = createTexture("images/water_diffuse.png");
-  foam_tex = createTexture("images/water_foam.png");
-  force_tex0 = createTexture("images/force.png");
-  foam_colors_tex = createTexture("images/foam_densities.png");
-  foam_ramp_tex = createTexture("images/foam_ramps.png");
-  vortex_tex = createTexture("images/vortex.png");
-  sand_tex = createTexture("images/sand.png");
-  depth_ramp_tex = createTexture("images/depth_ramp.png");
-  
-  glBindTexture(GL_TEXTURE_2D, foam_colors_tex);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-  glBindTexture(GL_TEXTURE_2D, foam_ramp_tex);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-  glBindTexture(GL_TEXTURE_2D, depth_ramp_tex);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-
-  unsigned char* img_pix = NULL;
-  int img_w, img_h,img_channels = 0;  
-
-  // load diffuse color ramp
-  if(!rx_load_png(rx_to_data_path("images/water_color.png"), &img_pix, img_w, img_h, img_channels)) {
-    printf("Error: cannot load the water_color.png image.\n");
+  if(!setupShaders()) {
+    printf("Error: cannot setup the water shaders.\n");
     return false;
   }
 
-  glGenTextures(1, &color_tex);
-  glBindTexture(GL_TEXTURE_1D, color_tex);
-  glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, img_w, 0, GL_RGB, GL_UNSIGNED_BYTE, img_pix);
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  delete[] img_pix;
-  printf("water.color_tex: %d\n", color_tex);
-  
-  glBindTexture(GL_TEXTURE_2D, flow_tex);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  if(!setupTextures()) {
+    printf("Error: cannot setup water textures.\n");
+    return false;
+  }
+
+  if(!setupFBO()) {
+    printf("Error: cannot setup the water fbo.\n");
+    return false;
+  }
+
+  return true;
+}
 
 
-  // FBO we used for rendering extra diffuse colors to the water
+bool Water::setupFBO() {
   glGenFramebuffers(1, &fbo); 
   glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-
+ 
   glGenTextures(1, &extra_flow_tex);
   glBindTexture(GL_TEXTURE_2D, extra_flow_tex);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, win_w, win_h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
@@ -233,110 +82,128 @@ bool Water::setup(int w, int h) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
+ 
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, extra_flow_tex, 0);
-
+ 
   if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
     printf("Cannot create the framebuffer for the water diffuse capture.\n");
     return false;
   }
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  return true;
+}
 
+bool Water::setupTextures() {
+  diffuse_tex = rx_create_texture(rx_to_data_path("images/water_diffuse.png"));
+  normal_tex = rx_create_texture(rx_to_data_path("images/water_normals.png"));
+  noise_tex = rx_create_texture(rx_to_data_path("images/water_noise.png"));
+  foam_tex = rx_create_texture(rx_to_data_path("images/water_foam.png"));
+  flow_tex = rx_create_texture(rx_to_data_path("images/water_flow.png"));
+  sand_tex = rx_create_texture(rx_to_data_path("images/sand.png"));
+
+  // specify some tex params for the depth ramp. (we need nearest sampling)
+  depth_ramp_tex = rx_create_texture(rx_to_data_path("images/depth_ramp.png"));
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  return true;
+}
+
+
+#define WATER_CHECK_UNIFORM(u, msg) { if (u < 0) { printf("%s\n", msg); return false; } } 
+
+bool Water::setupShaders() {
+
+  const char* atts[] = { "a_tex" } ;
+  water_prog.create(GL_VERTEX_SHADER, rx_to_data_path("shaders/water.vert"));
+  water_prog.create(GL_FRAGMENT_SHADER, rx_to_data_path("shaders/water.frag"));
+  water_prog.link(1, atts);
+
+  glUseProgram(water_prog.id);
+  glUniform1i(glGetUniformLocation(water_prog.id, "u_pos_tex"), 0);
+  glUniform1i(glGetUniformLocation(water_prog.id, "u_norm_tex"), 1);
+  glUniform1i(glGetUniformLocation(water_prog.id, "u_diffuse_tex"), 2);
+  glUniform1i(glGetUniformLocation(water_prog.id, "u_normal_tex"), 3);
+  glUniform1i(glGetUniformLocation(water_prog.id, "u_noise_tex"), 4);
+  glUniform1i(glGetUniformLocation(water_prog.id, "u_foam_tex"), 5);
+  glUniform1i(glGetUniformLocation(water_prog.id, "u_flow_tex"), 6);
+  glUniform1i(glGetUniformLocation(water_prog.id, "u_sand_tex"), 7);
+  glUniform1i(glGetUniformLocation(water_prog.id, "u_depth_ramp_tex"), 8);
+  glUniform1i(glGetUniformLocation(water_prog.id, "u_extra_flow_tex"), 9);
+
+  u_max_foam_depth = glGetUniformLocation(water_prog.id, "u_max_foam_depth");  
+  u_vortex_intensity =glGetUniformLocation(water_prog.id, "u_vortex_intensity");  
+  
+  WATER_CHECK_UNIFORM(u_max_foam_depth, "Cannot find the foam depth uniform.");
+  WATER_CHECK_UNIFORM(u_vortex_intensity, "Cannot find u_vortex_intensity.");
   return true;
 }
 
 void Water::update(float dt) {
+
 }
 
+#define WATER_USE_LINES 0
+
 void Water::draw() {
-  
-  glEnable(GL_DEPTH_TEST);
-  
-  glUseProgram(prog);
-
-  {
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, height_field.tex_pos);
-
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, height_field.tex_norm);
-
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, height_field.tex_texcoord);
-
-    //    glActiveTexture(GL_TEXTURE3);
-    //    glBindTexture(GL_TEXTURE_2D, height_field.tex_tang);
-    glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, height_field.tex_gradient);
-
-    glActiveTexture(GL_TEXTURE4);
-    glBindTexture(GL_TEXTURE_2D,  noise_tex);
-
-    glActiveTexture(GL_TEXTURE5);
-    glBindTexture(GL_TEXTURE_2D, normals_tex);
-
-    glActiveTexture(GL_TEXTURE6);
-    glBindTexture(GL_TEXTURE_2D, flow_tex);
-
-    glActiveTexture(GL_TEXTURE7);
-    glBindTexture(GL_TEXTURE_2D, diffuse_tex);
-
-    glActiveTexture(GL_TEXTURE8);
-    glBindTexture(GL_TEXTURE_2D, foam_tex);
-
-    glActiveTexture(GL_TEXTURE10);
-    glBindTexture(GL_TEXTURE_2D, extra_flow_tex);
-
-    glActiveTexture(GL_TEXTURE9);
-    glBindTexture(GL_TEXTURE_1D, color_tex);
-
-    glActiveTexture(GL_TEXTURE11);
-    glBindTexture(GL_TEXTURE_2D, height_field.tex_foam0);
-
-    glActiveTexture(GL_TEXTURE12);
-    glBindTexture(GL_TEXTURE_2D, foam_colors_tex);
-
-    glActiveTexture(GL_TEXTURE13);
-    glBindTexture(GL_TEXTURE_2D, foam_ramp_tex);
-
-    glActiveTexture(GL_TEXTURE14);
-    glBindTexture(GL_TEXTURE_2D, vortex_tex);
-
-    glActiveTexture(GL_TEXTURE15);
-    glBindTexture(GL_TEXTURE_2D, sand_tex);
-
-    glActiveTexture(GL_TEXTURE16);
-    glBindTexture(GL_TEXTURE_2D, depth_ramp_tex);
-  }
-
+  // @todo - do we want this to be related to real time?
   static float t = 0.0;
   float time0 = fmod(t, 1.0);
   float time1 = fmod(t + 0.5, 1.0);
   t += 0.002;
   
-  glUniform1f(glGetUniformLocation(prog, "u_time"), t);
-  glUniform1f(glGetUniformLocation(prog, "u_time0"), time0);
-  glUniform1f(glGetUniformLocation(prog, "u_time1"), time1);
-  glUniform3fv(glGetUniformLocation(prog, "u_sun_pos"), 1, sun_pos);
-  glUniform3fv(glGetUniformLocation(prog, "u_sun_color"), 1, sun_color);
-  glUniform1f(glGetUniformLocation(prog, "u_max_depth"), max_depth);
-  glUniform1f(glGetUniformLocation(prog, "u_foam_depth"), foam_depth);
-  glUniform1f(glGetUniformLocation(prog, "u_sun_shininess"), sun_shininess);
-  glUniform1fv(glGetUniformLocation(prog, "u_ads_intensities"), 7, ads_intensities);
-  glUniform3fv(glGetUniformLocation(prog, "u_ambient_color"), 1, ambient_color);
-  glUniform1f(glGetUniformLocation(prog, "u_vortex_intensity"), vortex_intensity * wind_level);
+  glBindVertexArray(height_field.vertices_vao);
 
-  //glEnable(GL_CULL_FACE);
-  //  glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  //glFrontFace(GL_CW);
-  glBindVertexArray(height_field.vao);
-  glDrawElements(GL_TRIANGLES, height_field.indices.size(), GL_UNSIGNED_INT, NULL);
-  //glDisable(GL_CULL_FACE);
-  //glFrontFace(GL_CCW);
-  // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  glUseProgram(water_prog.id);
+  glUniform1f(glGetUniformLocation(water_prog.id, "u_time0"), time0);
+  glUniform1f(glGetUniformLocation(water_prog.id, "u_time1"), time1);
+  glUniformMatrix4fv(glGetUniformLocation(water_prog.id, "u_vm"), 1, GL_FALSE, height_field.vm.ptr());
+  glUniformMatrix4fv(glGetUniformLocation(water_prog.id, "u_pm"), 1, GL_FALSE, height_field.pm.ptr());
+  glUniform1f(u_max_foam_depth, max_foam_depth);
+  glUniform1f(u_vortex_intensity, vortex_intensity);
+
+  glActiveTexture(GL_TEXTURE0);  glBindTexture(GL_TEXTURE_2D, height_field.tex_out_pos);
+  glActiveTexture(GL_TEXTURE1);  glBindTexture(GL_TEXTURE_2D, height_field.tex_out_norm);
+  glActiveTexture(GL_TEXTURE2);  glBindTexture(GL_TEXTURE_2D, diffuse_tex);
+  glActiveTexture(GL_TEXTURE3);  glBindTexture(GL_TEXTURE_2D, normal_tex);
+  glActiveTexture(GL_TEXTURE4);  glBindTexture(GL_TEXTURE_2D, noise_tex);
+  glActiveTexture(GL_TEXTURE5);  glBindTexture(GL_TEXTURE_2D, foam_tex);
+  glActiveTexture(GL_TEXTURE6);  glBindTexture(GL_TEXTURE_2D, flow_tex);
+  glActiveTexture(GL_TEXTURE7);  glBindTexture(GL_TEXTURE_2D, sand_tex);
+  glActiveTexture(GL_TEXTURE8);  glBindTexture(GL_TEXTURE_2D, depth_ramp_tex);
+  glActiveTexture(GL_TEXTURE9);  glBindTexture(GL_TEXTURE_2D, extra_flow_tex);
+
+#if WATER_USE_LINES
+  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  glDrawArrays(GL_TRIANGLES, 0, height_field.vertices.size());
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+#else
+  glDrawArrays(GL_TRIANGLES, 0, height_field.vertices.size());
+#endif
 }
 
+void Water::setWeatherInfo(float wind) {
+  wind_level = wind;
+}
+ 
+void Water::setTimeOfYear(float t) {
+  ambient_color[0] = settings.curr_colors.water.x;
+  ambient_color[1] = settings.curr_colors.water.y;
+  ambient_color[2] = settings.curr_colors.water.z;
+}
+ 
+void Water::print() {
+  /*
+  printf("water.flow_tex: %d\n", flow_tex);
+  printf("water.normals_tex: %d\n", normals_tex);
+  printf("water.noise_tex: %d\n", noise_tex);
+  printf("water.diffuse_tex: %d\n", diffuse_tex);
+  printf("water.foam_tex: %d\n", foam_tex);
+  printf("water.color_tex: %d\n", color_tex);
+  printf("water.extra_flow_tex: %d\n", extra_flow_tex);
+  */
+}
 
 void Water::beginGrabFlow() {
   GLenum drawbufs[] = { GL_COLOR_ATTACHMENT0 } ;
@@ -345,39 +212,8 @@ void Water::beginGrabFlow() {
   glClear(GL_COLOR_BUFFER_BIT);
   glViewport(0, 0, win_w, win_h);
 }
-
+ 
 void Water::endGrabFlow() {
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
-
-void Water::blitFlow(float x, float y, float w, float h) {
-  glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
-  glReadBuffer(GL_COLOR_ATTACHMENT0);
-  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-  glBlitFramebuffer(0, 0, win_w, win_h, x, y, w, h, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-}
-
-void Water::setWeatherInfo(float wind) {
-  wind_level = wind;
-}
-
-void Water::setTimeOfYear(float t) {
-  ambient_color[0] = settings.curr_colors.water.x;
-  ambient_color[1] = settings.curr_colors.water.y;
-  ambient_color[2] = settings.curr_colors.water.z;
-}
-
-void Water::setRoughness(float r) {
-  // @todo - Water::setRoughnes(), still necessary?
-  r = CLAMP(r, 0.0f, 1.0f);
-}
-
-void Water::print() {
-  printf("water.flow_tex: %d\n", flow_tex);
-  printf("water.normals_tex: %d\n", normals_tex);
-  printf("water.noise_tex: %d\n", noise_tex);
-  printf("water.diffuse_tex: %d\n", diffuse_tex);
-  printf("water.foam_tex: %d\n", foam_tex);
-  printf("water.color_tex: %d\n", color_tex);
-  printf("water.extra_flow_tex: %d\n", extra_flow_tex);
-}
+ 

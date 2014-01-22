@@ -9,12 +9,12 @@
 #define USE_RGB_SHIFT 0                         /* use an post processing rgb shift effect  */
 #define USE_SCENE 0                            
 #define USE_GUI 1                               /* use a gui to control the parameters of e.g. particles, sun, water */
-#define USE_WEATHER 1                           /* use yahoo weather data */
-#define USE_AUDIO 1                             /* use audio effects */
+#define USE_WEATHER 0                           /* use yahoo weather data */
+#define USE_AUDIO 0                             /* use audio effects */
 #define USE_EFFECTS 1                           /* use effects, like splashing, etc.. */
-#define USE_WATER_BALLS 1                       /* use the water ball simulation */
-#define USE_TIDES 1                             /* parse and use the text file (format 13) with tides info */
-#define USE_SPIRALS 1
+#define USE_WATER_BALLS 0                       /* use the water ball simulation */
+#define USE_TIDES 0                             /* parse and use the text file (format 13) with tides info */
+#define USE_SPIRALS 0
 
 #define EFFECT_NONE 0
 #define EFFECT_MIST 1 // NOT USED ATM

@@ -7,6 +7,7 @@
 #endif
 
 #include <AntTweakBar.h>
+#include <swnt/Types.h>
 
 class Swnt;
 
@@ -19,7 +20,9 @@ class GUI {
  public:
   GUI(Swnt& swnt);
   ~GUI();
+#if USE_GUI
   bool setup(int w, int h);
+#endif
   void onMouseMoved(double x, double y);
   void onMouseClicked(int bt, int action);
   void onKeyPressed(int key, int mod);

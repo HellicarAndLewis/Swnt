@@ -1,581 +1,364 @@
 #include <swnt/HeightField.h>
 
 HeightField::HeightField() 
-  :vert(0)
-  ,frag(0)
-  ,prog(0)
-  ,vao(0)
-  ,vbo_els(0)
-  ,vbo(0)
-  ,fbo0(0)
+  :field_fbo(0)
   ,tex_u0(0)
   ,tex_u1(0)
   ,tex_v0(0)
   ,tex_v1(0)
-  ,tex_norm(0)
-  ,tex_pos(0)
-  ,tex_texcoord(0)
-  ,tex_gradient(0)
-  ,tex_forces(0)
-  ,tex_noise(0)
+  ,field_size(128)
+  ,field_vao(0)
   ,state_diffuse(0)
-  ,fbo1(0)
-  ,tex_foam0(0)
-  ,tex_foam1(0)
-  ,state_foam(0)
-  ,fbo_forces(0)
-  ,frag_forces(0)
-  ,prog_forces(0)
-  ,vao_draw(0)
-  ,vert_draw(0)
-  ,frag_draw(0)
-  ,prog_draw(0)
-  ,vert_pos(0)
-  ,frag_pos(0)
-  ,prog_pos(0)
-  ,prog_render(0)
-  ,vert_render(0)
-  ,frag_render(0)
-  ,vert_norm(0)
-  ,frag_norm(0)
-  ,prog_norm(0)
+  ,win_w(0)
+  ,win_h(0)
+  ,process_fbo(0)
+  ,tex_out_norm(0)
+  ,tex_out_pos(0)
+  ,tex_out_texcoord(0)
+  ,vertices_vbo(0)
+  ,vertices_vao(0)
 {
 }
 
-bool HeightField::setup() {
-  
-  pm.perspective(60.0f, float(HEIGHT_FIELD_W)/HEIGHT_FIELD_H, 0.01, 100.0);
+bool HeightField::setup(int w, int h) {
 
-#if 1
-  vm.lookAt(vec3(0.0, 20.0, 0.0), vec3(0.0, 0.0, 0.1), vec3(0.0, 1.0, 0.0));
-#else
-  vm.rotateX(DEG_TO_RAD * 25);
-  vm.translate(0.0, -10.0, -14.0);
-  //vm.translate(0.0, -4.0, -24.0);
-#endif
+  if(!w || !h) {
+    printf("Error: invalid width/height: %d x %d\n", w, h);
+    return false;
+  }
 
-  // initial data
-  float init_v[HEIGHT_FIELD_NN];
-  float init_u[HEIGHT_FIELD_NN];
-  int upper = HEIGHT_FIELD_N * 0.60;
-  int lower = HEIGHT_FIELD_N * 0.30;
-  for(int i = 0; i < HEIGHT_FIELD_N; ++i) {
-    for(int j = 0; j < HEIGHT_FIELD_N; ++j) {
-      int dx = j * HEIGHT_FIELD_N + i;
-      init_v[dx] = 0.0f;
-      init_u[dx] = 0.0f;
+  win_w = w;
+  win_h = h;
 
-      if(i > lower && i < upper && j > lower && j < upper) {
-        init_u[dx] = 0.0f;
-        init_v[dx] = 0.0f;
-      }
-    }
+  glGenVertexArrays(1, &field_vao);
+
+  if(!setupDiffusing()) {
+    printf("Error: cannot set GL state for the diffuse step.\n");
+    return false;
+  }
+
+  if(!setupProcessing()) {
+    printf("Error: cannot setup the GL state for the processing.\n");
+    return false;
   }
   
-  // create diffuse shader
-  vert = rx_create_shader(GL_VERTEX_SHADER, HF_DIFFUSE_VERT);
-  frag = rx_create_shader(GL_FRAGMENT_SHADER, HF_DIFFUSE_FRAG);
-  prog = rx_create_program(vert, frag);
-  glBindAttribLocation(prog, 0, "a_tex"); // tex
-  glBindFragDataLocation(prog, 0, "u_out"); // new velocity value
-  glBindFragDataLocation(prog, 1, "v_out"); // new height value
-  glLinkProgram(prog);
-  rx_print_shader_link_info(prog);
-  glUseProgram(prog);
-  glUniform1i(glGetUniformLocation(prog, "u_tex_u"), 0);
-  glUniform1i(glGetUniformLocation(prog, "u_tex_v"), 1);
-  glUniform1i(glGetUniformLocation(prog, "u_tex_forces"), 2);
-
-  // create draw shader for debugging
-  vert_draw = rx_create_shader(GL_VERTEX_SHADER, HF_TEXTURE_VS);
-  frag_draw = rx_create_shader(GL_FRAGMENT_SHADER, HF_DEBUG_FLOAT_FS);
-  prog_draw = rx_create_program(vert_draw, frag_draw);
-  glLinkProgram(prog_draw);
-  rx_print_shader_link_info(prog_draw);
-  glUseProgram(prog_draw);
-  glUniform1i(glGetUniformLocation(prog_draw, "u_tex"), 0);
-
-  // create render shader for final result.
-  vert_render = rx_create_shader(GL_VERTEX_SHADER, HF_RENDER_VS);
-  frag_render = rx_create_shader(GL_FRAGMENT_SHADER, HF_RENDER_FS);
-  prog_render = rx_create_program(vert_render, frag_render);
-  glBindAttribLocation(prog_render, 0, "a_tex");
-  glLinkProgram(prog_render);
-  rx_print_shader_link_info(prog_render);
-  glUseProgram(prog_render);
-  glUniformMatrix4fv(glGetUniformLocation(prog_render, "u_pm"), 1, GL_FALSE, pm.ptr());
-  glUniformMatrix4fv(glGetUniformLocation(prog_render, "u_vm"), 1, GL_FALSE, vm.ptr());
-  glUniform1i(glGetUniformLocation(prog_render, "u_tex_u"), 0);
-  glUniform1i(glGetUniformLocation(prog_render, "u_tex_norm"), 1);
-
-  // create normal shader
-  vert_norm = rx_create_shader(GL_VERTEX_SHADER, HF_NORMALS_VS);
-  frag_norm = rx_create_shader(GL_FRAGMENT_SHADER, HF_NORMALS_FS);
-  prog_norm = rx_create_program(vert_norm, frag_norm);
-  glBindAttribLocation(prog_norm, 0, "a_tex");
-  glBindFragDataLocation(prog_norm, 0, "norm_out");
-  glBindFragDataLocation(prog_norm, 1, "grad_out");
-  // glBindFragDataLocation(prog_norm, 1, "tang_out");
-  glLinkProgram(prog_norm);
-  rx_print_shader_link_info(prog_norm);
-  glUseProgram(prog_norm);
-  glUniform1i(glGetUniformLocation(prog_norm, "u_tex_u"), 0);
-  glUniform1i(glGetUniformLocation(prog_norm, "u_tex_pos"), 1);
-
-  // create position/texcoord shader
-  vert_pos = rx_create_shader(GL_VERTEX_SHADER, HF_POSITION_VS);
-  frag_pos = rx_create_shader(GL_FRAGMENT_SHADER, HF_POSITION_FS);
-  prog_pos = rx_create_program(vert_pos, frag_pos);
-  glBindFragDataLocation(prog_pos, 0, "pos_out");
-  glBindFragDataLocation(prog_pos, 1, "tex_out");
-  glBindAttribLocation(prog_pos, 0, "a_pos");
-  glLinkProgram(prog_pos);
-  rx_print_shader_link_info(prog_pos);
-  glUseProgram(prog_pos);
-  glUniform1i(glGetUniformLocation(prog_pos, "u_tex_u"), 0);
-  glUniform1i(glGetUniformLocation(prog_pos, "u_tex_noise"), 1);
-
-  // create shader that is used to draw "force textures"
-  frag_forces = rx_create_shader(GL_FRAGMENT_SHADER, HF_FORCES_FS);
-  prog_forces = rx_create_program(vert_draw, frag_forces);
-  glLinkProgram(prog_forces);
-  rx_print_shader_link_info(prog_forces);
-  glUseProgram(prog_forces);
-  glUniform1i(glGetUniformLocation(prog_forces, "u_tex"), 0);
-
-  glGenVertexArrays(1, &vao_draw);
-  
-  // create textures that will hold the height field
-  glGenTextures(1, &tex_u0);
-  glBindTexture(GL_TEXTURE_2D, tex_u0);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, HEIGHT_FIELD_N, HEIGHT_FIELD_N, 0,  GL_RED, GL_FLOAT, init_u);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-  glGenTextures(1, &tex_u1);
-  glBindTexture(GL_TEXTURE_2D, tex_u1);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, HEIGHT_FIELD_N, HEIGHT_FIELD_N, 0,  GL_RED, GL_FLOAT, init_u);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-  float forces[HEIGHT_FIELD_NN * 2];
-  memset(forces, 0, sizeof(forces));
-  glGenTextures(1, &tex_forces);
-  glBindTexture(GL_TEXTURE_2D, tex_forces);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, HEIGHT_FIELD_N, HEIGHT_FIELD_N, 0,  GL_RG, GL_FLOAT, forces);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-  glGenTextures(1, &tex_v0);
-  glBindTexture(GL_TEXTURE_2D, tex_v0);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, HEIGHT_FIELD_N, HEIGHT_FIELD_N, 0,  GL_RED, GL_FLOAT, init_v);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-  glGenTextures(1, &tex_v1);
-  glBindTexture(GL_TEXTURE_2D, tex_v1);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, HEIGHT_FIELD_N, HEIGHT_FIELD_N, 0,  GL_RED, GL_FLOAT, init_v);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-  glGenTextures(1, &tex_norm);
-  glBindTexture(GL_TEXTURE_2D, tex_norm);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, HEIGHT_FIELD_N, HEIGHT_FIELD_N, 0, GL_RGB, GL_FLOAT, 0);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-  glGenTextures(1, &tex_pos);
-  glBindTexture(GL_TEXTURE_2D, tex_pos);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, HEIGHT_FIELD_N, HEIGHT_FIELD_N, 0, GL_RGB, GL_FLOAT, 0);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-  glGenTextures(1, &tex_texcoord);
-  glBindTexture(GL_TEXTURE_2D, tex_texcoord);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, HEIGHT_FIELD_N, HEIGHT_FIELD_N, 0, GL_RG, GL_FLOAT, 0);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-  glGenTextures(1, &tex_gradient);
-  glBindTexture(GL_TEXTURE_2D, tex_gradient);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, HEIGHT_FIELD_N, HEIGHT_FIELD_N, 0, GL_RGB, GL_FLOAT, 0);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-
-  // fbo0 for the diffuse math, normals, positions, etc..
-  glGenFramebuffers(1, &fbo0);
-  glBindFramebuffer(GL_FRAMEBUFFER, fbo0);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex_u0,       0);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, tex_u1,       0);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, tex_v0,       0);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, tex_v1,       0);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, tex_norm,     0);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT5, GL_TEXTURE_2D, tex_pos,      0);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT6, GL_TEXTURE_2D, tex_texcoord, 0);
-  //  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT7, GL_TEXTURE_2D, tex_tang,     0);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT7, GL_TEXTURE_2D, tex_gradient, 0);
-                
-  if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-    printf("Error: framebuffer is not complete.\n");
-    ::exit(EXIT_FAILURE);
+  if(!setupVertices()) {
+    printf("Error: cannot setup the vertices for the height field.\n");
+    return false;
   }
 
-  // custom forces (fbo0 + tex)
-  glGenFramebuffers(1, &fbo_forces);
-  glBindFramebuffer(GL_FRAMEBUFFER, fbo_forces);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex_forces, 0);
-  if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-    printf("Framebuffer for custom forces step not complete.\n");
-    ::exit(EXIT_FAILURE);
+  if(!setupDebug()) {
+    printf("Error: cannot setup the GL state for debugging.\n");
+    return false;
   }
 
-
-  // +++++++++++++++++++ FOAM +++++++++++++++++++++++++++++++++++++++
-  glGenFramebuffers(1, &fbo1);
-  glBindFramebuffer(GL_FRAMEBUFFER, fbo1);
-
-  glGenTextures(1, &tex_foam0);
-  glBindTexture(GL_TEXTURE_2D, tex_foam0);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, HEIGHT_FIELD_N, HEIGHT_FIELD_N, 0, GL_RED, GL_FLOAT, init_u);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex_foam0, 0);
-
-  glGenTextures(1, &tex_foam1);
-  glBindTexture(GL_TEXTURE_2D, tex_foam1); 
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, HEIGHT_FIELD_N, HEIGHT_FIELD_N, 0, GL_RED, GL_FLOAT, init_u);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, tex_foam1, 0);
-  
-  if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-    printf("Error: the foam framebuffer texture is not complete.\n");
-    ::exit(EXIT_FAILURE);
-  }
-
-  const char* attr[] = { "a_tex" };
-  foam_vert = rx_create_shader(GL_VERTEX_SHADER, HF_FOAM_VS);
-  foam_frag = rx_create_shader(GL_FRAGMENT_SHADER, HF_FOAM_FS);
-  foam_prog = rx_create_program_with_attribs(foam_vert, foam_frag, 1, attr);
-  glUseProgram(foam_prog);
-  glUniform1i(glGetUniformLocation(foam_prog, "u_prev_u_tex"), 0); // texture which hold the previous height fields
-  glUniform1i(glGetUniformLocation(foam_prog, "u_curr_u_tex"), 1); // current height fields (curr - prev => delta)
-  glUniform1i(glGetUniformLocation(foam_prog, "u_prev_foam_tex"), 2); // previous foam, to which we add the new foam
-  // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-  // create buffer
-  std::vector<FieldVertex> field_vertices(HEIGHT_FIELD_NN, FieldVertex());
-  for(int i = 0; i < HEIGHT_FIELD_N; ++i) {
-    for(int j = 0; j < HEIGHT_FIELD_N; ++j) {
-      int dx = j * HEIGHT_FIELD_N + i;
-      field_vertices[dx].set(i, j);
-    }
-  }
-
-  // triangle indices
-  for(int i = 1; i < HEIGHT_FIELD_N - 1; ++i) {
-    for(int j = 1; j < HEIGHT_FIELD_N - 1; ++j) {
-      int a = (j + 0) * HEIGHT_FIELD_N + (i + 0); // bottom left
-      int b = (j + 0) * HEIGHT_FIELD_N + (i + 1); // bottom right
-      int c = (j + 1) * HEIGHT_FIELD_N + (i + 1); // top right
-      int d = (j + 1) * HEIGHT_FIELD_N + (i + 0); // top left
-      indices.push_back(a);
-      indices.push_back(b);
-      indices.push_back(c);
-
-      indices.push_back(a);
-      indices.push_back(c);
-      indices.push_back(d);
-    }
-  }
-
-  glGenVertexArrays(1, &vao);
-  glBindVertexArray(vao);
-
-  glGenBuffers(1, &vbo);
-  glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(FieldVertex) * field_vertices.size(), &field_vertices[0].tex[0], GL_STATIC_DRAW);
-  glEnableVertexAttribArray(0); // tex
-  glVertexAttribIPointer(0, 2, GL_INT, sizeof(FieldVertex), (GLvoid*)0); // tex
-
-  glGenBuffers(1, &vbo_els);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo_els);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLint) * indices.size(), &indices[0], GL_STATIC_DRAW);
-
-  tex_noise = rx_create_texture(rx_to_data_path("images/water_noise.png")); 
-
-  printf("height_field.tex_u0: %d\n", tex_u0);
-  printf("height_field.tex_u1: %d\n", tex_u1);
-  printf("height_field.tex_v0: %d\n", tex_v0);
-  printf("height_field.tex_v1: %d\n", tex_v1);
-  printf("height_field.tex_norm: %d\n", tex_norm);
-  printf("height_field.tex_noise: %d\n", tex_noise);
-  printf("height_field.tex_gradient: %d\n", tex_gradient);
-  printf("height_field.tex_foam0: %d\n", tex_foam0);
-  printf("height_field.tex_foam1: %d\n", tex_foam1);
-  //  printf("height_field.tex_tang: %d\n", tex_tang);
-  
   return true;
 }
 
+bool HeightField::setupVertices() {
+  glGenVertexArrays(1, &vertices_vao);
+  glBindVertexArray(vertices_vao);
 
-void HeightField::drawTexture(GLuint tex, float x, float y, float w, float h) {
+  glGenBuffers(1, &vertices_vbo);
+  glBindBuffer(GL_ARRAY_BUFFER, vertices_vbo);
 
-  mat4 lpm;
-  mat4 lmm;
-  float hw = w * 0.5;
-  float hh = h * 0.5;
-  lpm.ortho(0, HEIGHT_FIELD_W, HEIGHT_FIELD_H, 0, 0.0f, 100.0f);
-  lmm.translate(x + hw, y + hh, 0.0f);
-  lmm.scale(hw, hh, 1.0);
+  std::vector<HeightFieldVertex> tmp(field_size * field_size, HeightFieldVertex());
+  for(int j = 0; j < field_size; ++j) {
+    for(int i = 0; i < field_size; ++i) {
+      int dx = j * field_size + i;
+      tmp[dx].tex.set(i, j);
+    }
+  }
 
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, tex);
-  
-  glBindVertexArray(vao_draw);
-  glUseProgram(prog_draw);
-  glUniformMatrix4fv(glGetUniformLocation(prog_draw, "u_pm"), 1, GL_FALSE, lpm.ptr());
-  glUniformMatrix4fv(glGetUniformLocation(prog_draw, "u_mm"), 1, GL_FALSE, lmm.ptr());
-  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+  for(int j = 0; j < field_size-1; ++j) {
+    for(int i = 0; i < field_size-1; ++i) {
+      int a = (j + 0) * field_size + (i + 0);
+      int b = (j + 0) * field_size + (i + 1);
+      int c = (j + 1) * field_size + (i + 1);
+      int d = (j + 1) * field_size + (i + 0);
+      vertices.push_back(tmp[a]);
+      vertices.push_back(tmp[b]);
+      vertices.push_back(tmp[c]);
 
+      vertices.push_back(tmp[a]);
+      vertices.push_back(tmp[c]);
+      vertices.push_back(tmp[d]);
+    }
+  }
+    
+  glBufferData(GL_ARRAY_BUFFER, sizeof(HeightFieldVertex) * vertices.size(), vertices[0].tex.ptr(), GL_STATIC_DRAW);
+
+  glEnableVertexAttribArray(0); // tex
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(HeightFieldVertex), (GLvoid*)0);
+  return true;
 }
 
-
-// Renders the calculated heights/normls/etc.. to screens
-void HeightField::render() {
+bool HeightField::setupDebug() {
   
-  glUseProgram(prog_render);
+  pm.perspective(60.0f, float(win_w)/win_h, 0.01f, 100.0f);
+  vm.lookAt(vec3(0.0f, 20.0f, 0.0f), vec3(0.0f, 0.0f, 0.1f), vec3(0.0f, 1.0f, 0.0f));
+  //vm.translate(0.0f, 0.0f, -30.0f);
+  //vm.rotateX(30 * DEG_TO_RAD);
 
-  glEnable(GL_DEPTH_TEST);
-  glActiveTexture(GL_TEXTURE0);
+  const char* atts[] = { "a_tex" };
+  debug_prog.create(GL_VERTEX_SHADER, rx_to_data_path("shaders/height_field_debug.vert"));
+  debug_prog.create(GL_FRAGMENT_SHADER, rx_to_data_path("shaders/height_field_debug.frag"));
+  debug_prog.link(1, atts);
+
+  glUseProgram(debug_prog.id);
+  glUniformMatrix4fv(glGetUniformLocation(debug_prog.id, "u_pm"), 1, GL_FALSE, pm.ptr());
+  glUniformMatrix4fv(glGetUniformLocation(debug_prog.id, "u_vm"), 1, GL_FALSE, vm.ptr());
+  glUniform1i(glGetUniformLocation(debug_prog.id, "u_pos_tex"), 0);
+
+  return true;
+}
+
+bool HeightField::setupProcessing() {
+
+  glGenTextures(1, &tex_out_norm);
+  glBindTexture(GL_TEXTURE_2D, tex_out_norm);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, field_size, field_size, 0, GL_RGB, GL_FLOAT, 0);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+  glGenTextures(1, &tex_out_pos);
+  glBindTexture(GL_TEXTURE_2D, tex_out_pos);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F,field_size, field_size, 0, GL_RGB, GL_FLOAT, 0);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+  glGenTextures(1, &tex_out_texcoord);
+  glBindTexture(GL_TEXTURE_2D, tex_out_texcoord);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, field_size, field_size, 0, GL_RG, GL_FLOAT, 0);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+  glGenFramebuffers(1, &process_fbo);
+  glBindFramebuffer(GL_FRAMEBUFFER, process_fbo);
+
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex_out_pos, 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, tex_out_norm, 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, tex_out_texcoord, 0);
+
+  if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    printf("Error: process framebuffer not complete.\n");
+    return false;
+  }
+
+  // Position processing
+  const char* pos_frags[] = { "out_pos" };
+  pos_prog.create(GL_VERTEX_SHADER, rx_to_data_path("shaders/height_field.vert"));
+  pos_prog.create(GL_FRAGMENT_SHADER, rx_to_data_path("shaders/height_field_pos.frag"));
+  pos_prog.link(0, NULL, 1, pos_frags);
+  glUseProgram(pos_prog.id);
+  glUniform1i(glGetUniformLocation(pos_prog.id, "u_height_tex"), 0);
+  glUniform1i(glGetUniformLocation(pos_prog.id, "u_vel_tex"), 1);
+
+
+  // Extra processing
+  const char* process_frags[] = { "out_norm", "out_tex" };
+  process_prog.create(GL_VERTEX_SHADER, rx_to_data_path("shaders/height_field.vert"));
+  process_prog.create(GL_FRAGMENT_SHADER, rx_to_data_path("shaders/height_field_process.frag"));
+  process_prog.link(0, NULL, 2, process_frags);
+  glUseProgram(process_prog.id);
+  glUniform1i(glGetUniformLocation(process_prog.id, "u_height_tex"), 0);
+  glUniform1i(glGetUniformLocation(process_prog.id, "u_vel_tex"), 1);
+  glUniform1i(glGetUniformLocation(process_prog.id, "u_pos_tex"), 2);
+
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+  return true;
+}
+
+bool HeightField::setupDiffusing() {
+
+  // some text data
+  float* u = new float[field_size * field_size];
+  float* v = new float[field_size * field_size];
+  int splash_size = 10;
+  int upper = (field_size * 0.5) + splash_size;
+  int lower = (field_size * 0.5) - splash_size;
+  for(int j = 0; j < field_size; ++j) {
+    for(int i = 0; i < field_size; ++i) {
+      u[j * field_size + i] = 0.0f;
+      v[j * field_size + i] = 0.0f;
+      if(i > lower && i < upper && j > lower && j < upper) {
+        u[j * field_size + i] = 3.5;
+      }
+    }
+  }
+
+  glGenTextures(1, &tex_u0);
   glBindTexture(GL_TEXTURE_2D, tex_u0);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, field_size, field_size, 0, GL_RED, GL_FLOAT, u);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-  glActiveTexture(GL_TEXTURE1);
-  glBindTexture(GL_TEXTURE_2D, tex_norm);
+  glGenTextures(1, &tex_u1);
+  glBindTexture(GL_TEXTURE_2D, tex_u1);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, field_size, field_size, 0, GL_RED, GL_FLOAT, u);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-  glBindVertexArray(vao);
+  glGenTextures(1, &tex_v0);
+  glBindTexture(GL_TEXTURE_2D, tex_v0);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, field_size, field_size, 0, GL_RED, GL_FLOAT, v);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-  //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, NULL);
-  
+  glGenTextures(1, &tex_v1);
+  glBindTexture(GL_TEXTURE_2D, tex_v1);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, field_size, field_size, 0, GL_RED, GL_FLOAT, v);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+
+  glGenFramebuffers(1, &field_fbo);
+  glBindFramebuffer(GL_FRAMEBUFFER, field_fbo);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex_u0, 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, tex_u1, 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, tex_v0, 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, tex_v1, 0);
+
+  if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    printf("Error: diffuse framebuffer not complete.\n");
+    return false;
+  }
+
+  const char* frags[] = { "out_height", "out_vel" } ;
+  field_prog.create(GL_VERTEX_SHADER, rx_to_data_path("shaders/height_field.vert"));
+  field_prog.create(GL_FRAGMENT_SHADER, rx_to_data_path("shaders/height_field.frag"));
+  field_prog.link(0, NULL, 2, frags);
+
+  glUseProgram(field_prog.id);
+  glUniform1i(glGetUniformLocation(field_prog.id, "u_height_tex"), 0);
+  glUniform1i(glGetUniformLocation(field_prog.id, "u_vel_tex"), 1);
+  u_dt = glGetUniformLocation(field_prog.id, "u_dt");
+
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+  delete[] v;
+  delete[] u; 
+  u = NULL;
+  v = NULL;
+  return true;
 }
 
-// Diffuses the heights
-void HeightField::calculateHeights() {
- 
-  glBindFramebuffer(GL_FRAMEBUFFER, fbo0);
-  glViewport(0, 0, HEIGHT_FIELD_N, HEIGHT_FIELD_N);
-  glUseProgram(prog);
-  glBindVertexArray(vao);
+void HeightField::update(float dt) {
+  glDisable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
 
+  glViewport(0, 0, field_size, field_size);
+  glBindFramebuffer(GL_FRAMEBUFFER, field_fbo);
+  glUseProgram(field_prog.id);
+  glBindVertexArray(field_vao);
+  glUniform1f(u_dt, dt);
+
   state_diffuse = 1 - state_diffuse;
-  
-  glActiveTexture(GL_TEXTURE2);
-  glBindTexture(GL_TEXTURE_2D, tex_forces);
 
   if(state_diffuse == 0) {
     // read from u0, write to u1
     // read from v0, write to v1
-    GLenum draw_bufs[] = { GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT3 } ;
-    glDrawBuffers(2, draw_bufs);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, tex_u0);
+    GLenum drawbufs[] = { GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT3 };
+    glDrawBuffers(2, drawbufs);
 
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, tex_v0);
+    glActiveTexture(GL_TEXTURE0);  glBindTexture(GL_TEXTURE_2D, tex_u0);
+    glActiveTexture(GL_TEXTURE1);  glBindTexture(GL_TEXTURE_2D, tex_v0);
+
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
   }
   else {
     // read from u1, write to u0
     // read from v1, write to v0
-    GLenum draw_bufs[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT2 } ;
-    glDrawBuffers(2, draw_bufs);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, tex_u1);
+    GLenum drawbufs[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT2 };
+    glDrawBuffers(2, drawbufs);
 
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, tex_v1);
+    glActiveTexture(GL_TEXTURE0);  glBindTexture(GL_TEXTURE_2D, tex_u1);
+    glActiveTexture(GL_TEXTURE1);  glBindTexture(GL_TEXTURE_2D, tex_v1);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
   }
-
-  glDrawArrays(GL_POINTS, 0, HEIGHT_FIELD_NN);
-
-  // clear the forces buffer.
-  GLenum forces_bufs[] = { GL_COLOR_ATTACHMENT0 } ;
-  glBindFramebuffer(GL_FRAMEBUFFER, fbo_forces);
-  glDrawBuffers(1, forces_bufs);
-  glClear(GL_COLOR_BUFFER_BIT);
-
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  glViewport(0, 0, HEIGHT_FIELD_W, HEIGHT_FIELD_H);
-  
-}
-
-void HeightField::calculatePositions() {
-  
-  static float t = 0.0;
-
-  glViewport(0, 0, HEIGHT_FIELD_N, HEIGHT_FIELD_N);
-
-  GLenum drawbufs[] = { GL_COLOR_ATTACHMENT5, GL_COLOR_ATTACHMENT6 } ;
-  glBindFramebuffer(GL_FRAMEBUFFER, fbo0);
-  glDrawBuffers(2, drawbufs);
-
-  glUseProgram(prog_pos);
-  glBindVertexArray(vao);
-
-  glUniform1f(glGetUniformLocation(prog_pos, "u_time"), t);
-
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, tex_u0);
-
-  glActiveTexture(GL_TEXTURE1);
-  glBindTexture(GL_TEXTURE_2D, tex_noise);
-
-  glDrawArrays(GL_POINTS, 0, HEIGHT_FIELD_NN);
-
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  glViewport(0, 0, HEIGHT_FIELD_W, HEIGHT_FIELD_H);
-  
-  t += 0.001;
-  
-}
-
-// This uses the current height values to produce a texture that will contain the normals
-void HeightField::calculateNormals() {
- 
-  GLenum drawbufs[] = { GL_COLOR_ATTACHMENT4, GL_COLOR_ATTACHMENT7 } ;
-
-  glViewport(0, 0, HEIGHT_FIELD_N, HEIGHT_FIELD_N);
-  glBindFramebuffer(GL_FRAMEBUFFER, fbo0);
-  glDrawBuffers(2, drawbufs);
-
-  glUseProgram(prog_norm);
-  glBindVertexArray(vao);
-  
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, tex_u0);
-
-  glActiveTexture(GL_TEXTURE1);
-  glBindTexture(GL_TEXTURE_2D, tex_pos);
-
-  glDrawArrays(GL_POINTS, 0, HEIGHT_FIELD_NN);
   
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  glViewport(0, 0, HEIGHT_FIELD_W, HEIGHT_FIELD_H);
-  
+  glViewport(0, 0, win_w, win_h);
 }
 
-void HeightField::calculateFoam() {
- 
-  // GLenum drawbufs[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 } ;
-  
-  glBindFramebuffer(GL_FRAMEBUFFER, fbo1);
-  glViewport(0, 0, HEIGHT_FIELD_N, HEIGHT_FIELD_N);
-  glUseProgram(foam_prog);
-  glBindVertexArray(vao);
-  glDisable(GL_BLEND);
-  
-  if(state_foam == 0) {
-    GLenum drawbufs[] = { GL_COLOR_ATTACHMENT0 } ;
+void HeightField::process() {
+  glBindFramebuffer(GL_FRAMEBUFFER, process_fbo);
+  glViewport(0, 0, field_size, field_size);
+  glBindVertexArray(field_vao);
+
+  glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, tex_u0);
+  glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, tex_v0);
+
+  {
+    // Calculate positions.
+    glUseProgram(pos_prog.id);
+
+    GLenum drawbufs[] = { GL_COLOR_ATTACHMENT0 } ; // , GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 } ;
     glDrawBuffers(1, drawbufs);
-
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, tex_foam1);
-  }
-  else {
-    GLenum drawbufs[] = { GL_COLOR_ATTACHMENT1 } ;
-    glDrawBuffers(1, drawbufs);
-
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, tex_foam0);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
   }
 
-  if(state_diffuse == 1) {
-    glActiveTexture(GL_TEXTURE0);  // prev
-    glBindTexture(GL_TEXTURE_2D, tex_u0);
-    glActiveTexture(GL_TEXTURE1); // curr
-    glBindTexture(GL_TEXTURE_2D, tex_u1);
-  }
-  else {
-    glActiveTexture(GL_TEXTURE0);  // prev
-    glBindTexture(GL_TEXTURE_2D, tex_u1);
-    glActiveTexture(GL_TEXTURE1); // curr
-    glBindTexture(GL_TEXTURE_2D, tex_u0);
-  }
+  {
+    // Use positions to calc normals, etc..
+    glUseProgram(process_prog.id);
+    GLenum drawbufs[] = { GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+    glDrawBuffers(2, drawbufs);
 
-  //  glClear(GL_COLOR_BUFFER_BIT);
-  glDrawArrays(GL_POINTS, 0, HEIGHT_FIELD_NN);
+    glActiveTexture(GL_TEXTURE2); 
+    glBindTexture(GL_TEXTURE_2D, tex_out_pos);
+
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+  }
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  glViewport(0, 0, HEIGHT_FIELD_W, HEIGHT_FIELD_H);
-
-  state_foam = 1 - state_foam;
-  
 }
-
-
-void HeightField::beginDrawForces() {
-  
-  GLenum drawbufs[] = { GL_COLOR_ATTACHMENT0 } ;
-  glBindFramebuffer(GL_FRAMEBUFFER, fbo_forces);
-  glDrawBuffers(1, drawbufs);
-  glClear(GL_COLOR_BUFFER_BIT);
-  glViewport(0, 0, HEIGHT_FIELD_N, HEIGHT_FIELD_N);
-  
-}
-
-void HeightField::endDrawForces() {
-
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  glViewport(0, 0, HEIGHT_FIELD_W, HEIGHT_FIELD_H);
-
-}
-
-void HeightField::drawForceTexture(GLuint tex, float px, float py, float pw, float ph) {
-
-  mat4 lpm;
-  mat4 lmm;
-  float hw = 0.5 * HEIGHT_FIELD_N * pw;
-  float hh = 0.5 * HEIGHT_FIELD_N * ph;
-
-#if 0
-  lpm.ortho(0, HEIGHT_FIELD_W, HEIGHT_FIELD_H, 0, 0.0f, 100.0f);
-  lmm.translate( (px * HEIGHT_FIELD_N) + hw, (py * HEIGHT_FIELD_N) + hh, 0.0f);
-  lmm.scale(hw, hh, 1.0);
-#else
-  lpm.ortho(0, HEIGHT_FIELD_N, HEIGHT_FIELD_N, 0, 0.0f, 100.0f);
-  lmm.translate(px * HEIGHT_FIELD_N, py * HEIGHT_FIELD_N, 0.0f);
-  lmm.scale(pw * HEIGHT_FIELD_N, ph * HEIGHT_FIELD_N, 1.0);
-#endif
-
-
-  // glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  // glViewport(0, 0, N, N);
-  glUseProgram(prog_forces);
-
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, tex);
-
-  glBindVertexArray(vao_draw);
-  glUniformMatrix4fv(glGetUniformLocation(prog_forces, "u_pm"), 1, GL_FALSE, lpm.ptr());
-  glUniformMatrix4fv(glGetUniformLocation(prog_forces, "u_mm"), 1, GL_FALSE, lmm.ptr());
-
-  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-  //glViewport(0, 0, W, H);
-
-}
-
 
 void HeightField::debugDraw() {
+  glViewport(0, 0, win_w, win_h);
+  glBindFramebuffer(GL_FRAMEBUFFER, 0); // tmp
+  glDisable(GL_DEPTH_TEST);
 
-  // Draw the height field delta 
-  glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo1);
-  glReadBuffer(GL_COLOR_ATTACHMENT1);
+  glBindVertexArray(vertices_vao);
+  glUseProgram(debug_prog.id);
+
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, tex_out_pos);
+
+  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  //glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+  glDrawArrays(GL_POINTS, 0, vertices.size());
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+#if 1
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, field_fbo);
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-  glBlitFramebuffer(0, 0, HEIGHT_FIELD_N, HEIGHT_FIELD_N, 0, 0, HEIGHT_FIELD_N, HEIGHT_FIELD_N, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+  glReadBuffer(GL_COLOR_ATTACHMENT0);
+  glBlitFramebuffer(0, 0, field_size, field_size, 0, 0, field_size, field_size, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+#endif
+}
 
+
+void HeightField::print() {
+  printf("heightfield.tex_u0: %d\n", tex_u0);
+  printf("heightfield.tex_u1: %d\n", tex_u1);
+  printf("heightfield.tex_v0: %d\n", tex_v0);
+  printf("heightfield.tex_v1: %d\n", tex_v1);
+  printf("heightfield.tex_out_norm: %d\n", tex_out_norm);
+  printf("heightfield.tex_out_texcoord: %d\n", tex_out_texcoord);
+  printf("heightfield.tex_out_pos: %d\n", tex_out_pos);
 }

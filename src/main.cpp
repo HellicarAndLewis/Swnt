@@ -54,8 +54,8 @@ int main() {
   }
 
   GLFWwindow* win = NULL;
-  win = glfwCreateWindow(settings.win_w, settings.win_h, "Swnt", glfwGetPrimaryMonitor(), NULL);
-  //win = glfwCreateWindow(settings.win_w, settings.win_h, "Swnt", NULL, NULL);
+  //win = glfwCreateWindow(settings.win_w, settings.win_h, "Swnt", glfwGetPrimaryMonitor(), NULL);
+  win = glfwCreateWindow(settings.win_w, settings.win_h, "Swnt", NULL, NULL);
   if(!win) {
     glfwTerminate();
     exit(EXIT_FAILURE);
@@ -94,18 +94,33 @@ int main() {
 
   uint64_t prev_time = rx_hrtime();
   float inv_ns = 1.0f / 1000000000.0f;
+  
+  float dt = 1.0f/60.0f;
+  int64_t simulation_step = dt * 1000000ull * 1000ull ;
+  int64_t simulation_time = 0;
+  int64_t started = rx_hrtime();
+  int64_t now = started;
 
   while(!glfwWindowShouldClose(win)) {
     glClearColor(0.094f, 0.074f, 0.184f, 1.0f);
     glClearColor(0,0,0,1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    // perform integration step for height field simulation.
+    now = rx_hrtime() - started;
+    while(simulation_time < now) {
+      swnt.integrate(dt);
+      simulation_time += simulation_step;
+    }
+
 #if USE_WATER
     if(draw_forces) { 
+#if HF_FIXED      
       swnt.height_field.beginDrawForces();
       swnt.height_field.drawForceTexture(swnt.water.force_tex0, force_x, force_y, 0.4, 0.4);
       swnt.height_field.endDrawForces();
       draw_forces = false;
+#endif
     }
 #endif
     
@@ -217,7 +232,7 @@ void key_callback(GLFWwindow* win, int key, int scancode, int action, int mods) 
         vec3 p(pos.x + c * radius, pos.y + s * radius, 0.0);
       //      dir.set(1.0, 0.0, 0.0);
 #if USE_EFFECTS
-        swnt.effects.splashes.createParticle(p, dir);
+        //        swnt.effects.splashes.createParticle(p, dir);
 #endif
       }
       break;
@@ -225,7 +240,7 @@ void key_callback(GLFWwindow* win, int key, int scancode, int action, int mods) 
     case GLFW_KEY_R: {
       printf("Recompiled.\n");
 #if USE_EFFECTS
-      swnt.effects.splashes.prog.recompile();
+      //      swnt.effects.splashes.prog.recompile();
 #endif
       break;
     }

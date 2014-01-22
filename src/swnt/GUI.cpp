@@ -63,6 +63,7 @@ GUI::~GUI() {
   //TwTerminate();
 }
 
+#if USE_GUI
 bool GUI::setup(int w, int h) {
   assert(w);
   assert(h);
@@ -80,9 +81,9 @@ bool GUI::setup(int w, int h) {
   TwAddVarRW(bar, "Sun Color Red", TW_TYPE_FLOAT, &swnt.water.sun_color[0], "min=-5.0 max=5.0 step=0.1 group='Water'");
   TwAddVarRW(bar, "Sun Color Green", TW_TYPE_FLOAT, &swnt.water.sun_color[1], "min=-5.0 max=5.0 step=0.1 group='Water'");
   TwAddVarRW(bar, "Sun Color Blue", TW_TYPE_FLOAT, &swnt.water.sun_color[2], "min=-5.0 max=5.0 step=0.1 group='Water'");
-  TwAddVarRW(bar, "Sun Shininess", TW_TYPE_FLOAT, &swnt.water.sun_shininess, "min=0.0 max=50.0 step=0.1 group='Water'");
-  TwAddVarRW(bar, "Maximum Foam Depth", TW_TYPE_FLOAT, &swnt.water.foam_depth, "min=0.0 max=50.0 step=0.1 group='Water'");
-  TwAddVarRW(bar, "Maximum Water Depth", TW_TYPE_FLOAT, &swnt.water.max_depth, "min=0.0 max=50.0 step=0.01 group='Water'");
+  //  TwAddVarRW(bar, "Sun Shininess", TW_TYPE_FLOAT, &swnt.water.sun_shininess, "min=0.0 max=50.0 step=0.1 group='Water'");
+  TwAddVarRW(bar, "Maximum Foam Depth", TW_TYPE_FLOAT, &swnt.water.max_foam_depth, "min=0.0 max=50.0 step=0.1 group='Water'");
+  // TwAddVarRW(bar, "Maximum Water Depth", TW_TYPE_FLOAT, &swnt.water.max_depth, "min=0.0 max=50.0 step=0.01 group='Water'");
   //  TwAddVarRW(bar, "Diffuse Intensity", TW_TYPE_FLOAT, &swnt.water.ads_intensities[1], "min=-10.0 max=10.0 step=0.01 group='Water'");
   //  TwAddVarRW(bar, "Specular Intensity", TW_TYPE_FLOAT, &swnt.water.ads_intensities[2], "min=-10.0 max=10.0 step=0.01 group='Water'");
   TwAddVarRW(bar, "Final Intensity", TW_TYPE_FLOAT, &swnt.water.ads_intensities[6], "min=0.0 max=2.0 step=0.01 group='Water'");
@@ -96,6 +97,7 @@ bool GUI::setup(int w, int h) {
 
   // splashes
 #if USE_EFFECTS  
+#if HF_FIXED
   Splashes& sp = swnt.effects.splashes;
   TwAddVarRW(bar, "Minimum Lifetime", TW_TYPE_FLOAT, &sp.lifetime_min, "min=0.0 max=300.0 step=1.0 group='Splashes'");
   TwAddVarRW(bar, "Maximum Lifetime", TW_TYPE_FLOAT, &sp.lifetime_max, "min=0.0 max=300.0 step=1.0 group='Splashes'");
@@ -111,6 +113,7 @@ bool GUI::setup(int w, int h) {
   TwAddVarRW(bar, "Maximum Splash Size", TW_TYPE_FLOAT, &sp.size_max, "min=0.0 max=300.0 step=1.0 group='Splashes'");
   TwAddVarRW(bar, "Animation Speed Of Texture", TW_TYPE_FLOAT, &sp.texture_anim_speed, "min=0.0 max=2.0 step=0.01 group='Splashes'");
   TwDefine("SWNT/Splashes opened=false");
+#endif
 #endif
 
   // rendering
@@ -175,6 +178,7 @@ bool GUI::setup(int w, int h) {
   TwWindowSize(win_w, win_h);
   return true;
 }
+#endif // USE_GUI
 
 void GUI::onResize(int w, int h) {
   win_w = w;

@@ -72,11 +72,12 @@ Swnt::~Swnt() {
 
 bool Swnt::setup() {
 
-#if USE_WATER
-  if(!height_field.setup()) {
+  if(!height_field.setup(settings.win_w, settings.win_h)) {
     printf("Error: cannot setupthe height field.\n");
     return false;
   }
+
+#if USE_WATER
 
   if(!water.setup(settings.win_w, settings.win_h)) {
     printf("Error: cannot setup water.\n");
@@ -84,11 +85,12 @@ bool Swnt::setup() {
   }
   water.print();
 #endif
-
+#if 1
   if(!graphics.setup()) {
     printf("Error: cannot setup the graphics model.\n");
     return false;
   }
+#endif
  
 #if USE_KINECT
   if(!setupKinect()) {
@@ -175,6 +177,7 @@ bool Swnt::setup() {
 #endif
 
 #if USE_EFFECTS
+  
   if(!effects.setup(settings.win_w, settings.win_h)) {
     printf("Error: cannot setup effects.\n");
     return false;
@@ -240,7 +243,13 @@ bool Swnt::setupKinect() {
 }
 #endif
 
+void Swnt::integrate(float dt) {
+  height_field.update(dt);
+}
+
 void Swnt::update(float dt) {
+
+  height_field.process();
 
   updateActivityLevel();
 
@@ -251,10 +260,13 @@ void Swnt::update(float dt) {
   mask.update();
 
 #if USE_WATER
+  /*
   height_field.calculateHeights();
   height_field.calculatePositions();
   height_field.calculateNormals();
   height_field.calculateFoam();
+  */
+
   water.update(1.0f/60.0f);
 #endif
 
@@ -294,7 +306,7 @@ void Swnt::update(float dt) {
 void Swnt::draw() {
 
 #if 0
-  water.draw();
+  height_field.debugDraw();
   return ;
 #endif
 
@@ -343,6 +355,7 @@ void Swnt::draw() {
 
 #if USE_WATER_BALLS
     // apply forces onto the water, when water balls are flushing away
+#if HF_FIXED
     if(flush_points.size()) {
       height_field.beginDrawForces();
       for(std::vector<vec2>::iterator it = flush_points.begin(); it != flush_points.end(); ++it) {
@@ -351,6 +364,8 @@ void Swnt::draw() {
       }
       height_field.endDrawForces();
     }
+#endif
+
 #endif
 
     // capture the mask shape
@@ -394,8 +409,9 @@ void Swnt::draw() {
     rgb_shift.apply();
     rgb_shift.draw();
     #endif
-  }
+
 #endif  // USE_KINECT
+  } // if(state == STATE_RENDER_SCENE)
 
 #if USE_GUI
   if(draw_gui) {
@@ -416,8 +432,10 @@ void Swnt::drawScene() {
 
 #if USE_EFFECTS
   if(draw_vortex) {
+#if HF_FIXED
     effects.splashes.drawExtraDiffuse();
     effects.splashes.drawExtraFlow();
+#endif
   }
 #endif
 
@@ -661,7 +679,7 @@ void Swnt::setTimeOfDay(float t) {
 
 void Swnt::updateWeatherInfo() {
 
-#if USE_WATER
+#if USE_WEATHER
   float wind = 0.0f;
   if(has_weather_info) {
     wind = CLAMP(float(weather_info.speed)/100.0f, 0.0f, 1.0f);
@@ -669,7 +687,9 @@ void Swnt::updateWeatherInfo() {
   else {
     printf("Verbose: no weather info yet.\n");
   }
+#endif
 
+#if USE_WATER && USE_WEATHER
   water.setWeatherInfo(wind);
 #endif
 
@@ -679,12 +699,14 @@ void Swnt::updateActivityLevel() {
 
   activity_level = CLAMP(activity_level * 0.9 + float(tracking.num_tracked) * 0.1, 0.0f, 1.0f);
 
+#if USE_AUDIO
   if(tracking.prev_num_tracked < tracking.num_tracked) {
     audio.playOnce(SOUND_GLOOB);
   }
   else if(tracking.prev_num_tracked > tracking.num_tracked) {
     audio.playOnce(SOUND_SPLASH);
   }
+#endif
 }
 
 void Swnt::setTimeOfYear(float t) {

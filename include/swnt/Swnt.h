@@ -72,6 +72,7 @@ class Swnt {
   Swnt(Settings& settings);
   ~Swnt();
   bool setup();
+  void integrate(float dt);          /* perform a physics integration step */
   void update(float dt);
   void draw();
   void print();                      /* print some debug info */
@@ -133,8 +134,9 @@ class Swnt {
   unsigned char* depth_image;
 #endif
 
-#if USE_WATER
   HeightField height_field;
+
+#if USE_WATER
   Water water;
 #endif
 
