@@ -14,13 +14,12 @@
 #define USE_EFFECTS 1                           /* use effects, like splashing, etc.. */
 #define USE_WATER_BALLS 0                       /* use the water ball simulation */
 #define USE_TIDES 0                             /* parse and use the text file (format 13) with tides info */
-#define USE_SPIRALS 0
+#define USE_SPIRALS 1
 
 #define EFFECT_NONE 0
 #define EFFECT_MIST 1 // NOT USED ATM
 #define EFFECT_EDDY 2
 #define EFFECT_SPLASHES 3
-
 
 #define SOUND_WATER_FLOWING 0
 #define SOUND_WAVES_CRASHING 1

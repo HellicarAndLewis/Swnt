@@ -113,6 +113,7 @@ int main() {
       simulation_time += simulation_step;
     }
 
+
 #if USE_WATER
     if(draw_forces) { 
       //#if HF_FIXED      

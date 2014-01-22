@@ -76,15 +76,16 @@ bool HeightField::setupExtraForces() {
   glUniformMatrix4fv(glGetUniformLocation(force_prog.id, "u_pm"), 1, GL_FALSE, pm.ptr());
 
   // Texture
-  float* forces = new float[field_size * field_size];
-  memset((char*)forces, 0, sizeof(float) * field_size * field_size);
-
+  float* forces = new float[field_size * field_size * 2];
+  memset((char*)forces, 0, sizeof(float) * field_size * field_size * 2);
 
   glGenTextures(1, &force_tex);
   glBindTexture(GL_TEXTURE_2D, force_tex);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, field_size, field_size, 0,  GL_RG, GL_FLOAT, forces);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
   // FBO 
   glGenFramebuffers(1, &force_fbo);
@@ -233,6 +234,10 @@ bool HeightField::setupDiffusing() {
   // some text data
   float* u = new float[field_size * field_size];
   float* v = new float[field_size * field_size];
+  size_t nbytes = field_size * field_size * sizeof(float);
+  memset((char*)u, 0x00, nbytes);
+  memset((char*)v, 0x00, nbytes);
+
   int splash_size = 10;
   int upper = (field_size * 0.5) + splash_size;
   int lower = (field_size * 0.5) - splash_size;
@@ -241,7 +246,7 @@ bool HeightField::setupDiffusing() {
       u[j * field_size + i] = 0.0f;
       v[j * field_size + i] = 0.0f;
       if(i > lower && i < upper && j > lower && j < upper) {
-        u[j * field_size + i] = 3.5;
+        u[j * field_size + i] = 0.0;
       }
     }
   }
@@ -400,21 +405,18 @@ void HeightField::process() {
 
 
 void HeightField::beginDrawForces() {
-  
   GLenum drawbufs[] = { GL_COLOR_ATTACHMENT0 } ;
   glViewport(0, 0, field_size, field_size);
   glBindFramebuffer(GL_FRAMEBUFFER, force_fbo);
   glDrawBuffers(1, drawbufs);
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glClear(GL_COLOR_BUFFER_BIT);
-  
 }
 
 void HeightField::endDrawForces() {
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glViewport(0, 0, win_w, win_h);
-
 }
 
 void HeightField::drawForceTexture(GLuint tex, float px, float py, float pw, float ph) {
@@ -463,7 +465,7 @@ void HeightField::debugDraw() {
   glBindFramebuffer(GL_READ_FRAMEBUFFER, force_fbo);
   glReadBuffer(GL_COLOR_ATTACHMENT0);
   glBlitFramebuffer(0, 0, field_size, field_size, field_size, 0, field_size*2, field_size, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 

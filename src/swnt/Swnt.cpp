@@ -307,8 +307,6 @@ void Swnt::update(float dt) {
 
 void Swnt::draw() {
 
-   height_field.debugDraw();
-
 #if 0
   height_field.debugDraw();
   return ;
