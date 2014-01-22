@@ -85,6 +85,7 @@ class HeightField {
   GLuint tex_u1;              /* height value */
   GLuint tex_v0;              /* velocity at which u diffuses */
   GLuint tex_v1;              /* velocity at which u diffuses */
+  GLuint tex_noise;           /* used to offset the height values a little bit */
   GLint u_dt;                 /* reference to our dt uniform */
   GLuint field_vao;           /* we need a vao to render attribute less vertices */
   Program field_prog;         /* this program does the diffuse step */
@@ -94,6 +95,7 @@ class HeightField {
   int field_size;             /* the size of our rectangular height field */
   int win_w;                  /* window width, use to reset the viewport */
   int win_h;                  /* window height, used to reset the viewport */
+
 
   /* custom forces */
   Program force_prog;         /* used to add extra forces to the height field */

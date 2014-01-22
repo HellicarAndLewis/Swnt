@@ -6,6 +6,7 @@ HeightField::HeightField()
   ,tex_u1(0)
   ,tex_v0(0)
   ,tex_v1(0)
+  ,tex_noise(0)
   ,field_size(128)
   ,field_vao(0)
   ,state_diffuse(0)
@@ -146,7 +147,7 @@ bool HeightField::setupVertices() {
 bool HeightField::setupDebug() {
 
   pm.perspective(60.0f, float(win_w)/win_h, 0.01f, 100.0f);
-#if 0
+#if 1
   vm.lookAt(vec3(0.0f, 20.0f, 0.0f), vec3(0.0f, 0.0f, 0.1f), vec3(0.0f, 1.0f, 0.0f));
 #else
   vm.translate(0.0f, 0.0f, -30.0f);
@@ -212,7 +213,9 @@ bool HeightField::setupProcessing() {
   glUseProgram(pos_prog.id);
   glUniform1i(glGetUniformLocation(pos_prog.id, "u_height_tex"), 0);
   glUniform1i(glGetUniformLocation(pos_prog.id, "u_vel_tex"), 1);
+  glUniform1i(glGetUniformLocation(pos_prog.id, "u_noise_tex"), 2);
 
+  tex_noise = rx_create_texture(rx_to_data_path("images/water_noise.png"));
 
   // Extra processing
   const char* process_frags[] = { "out_norm", "out_tex" };
@@ -372,16 +375,20 @@ void HeightField::update(float dt) {
 }
 
 void HeightField::process() {
+  static float t = 0.0f;
+
   glBindFramebuffer(GL_FRAMEBUFFER, process_fbo);
   glViewport(0, 0, field_size, field_size);
   glBindVertexArray(field_vao);
 
   glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, tex_u0);
   glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, tex_v0);
+  glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, tex_noise);
 
   {
     // Calculate positions.
     glUseProgram(pos_prog.id);
+    glUniform1f(glGetUniformLocation(pos_prog.id, "u_time"), t);
 
     GLenum drawbufs[] = { GL_COLOR_ATTACHMENT0 } ; // , GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 } ;
     glDrawBuffers(1, drawbufs);
@@ -401,6 +408,7 @@ void HeightField::process() {
   }
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  t += 0.001;
 }
 
 
