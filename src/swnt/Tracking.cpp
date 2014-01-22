@@ -20,7 +20,9 @@ Tracking::Tracking(Settings& settings, Graphics& graphics)
   :settings(settings)
   ,graphics(graphics)
   ,draw_contours(false)
+#if USE_TRIANGULATION
   ,draw_triangulated_blobs(true)
+#endif
   ,draw_tracking_points(false)
   ,contour_threshold(100)
   ,vao(0)
@@ -30,6 +32,7 @@ Tracking::Tracking(Settings& settings, Graphics& graphics)
   ,tan_count(0)
   ,tan_offset(0)
   ,num_tracked(0)
+#if USE_TRIANGULATION
   ,blob_vertices_vbo(0)
   ,blob_vao(0)
   ,blob_vertices_allocated(0)
@@ -39,6 +42,7 @@ Tracking::Tracking(Settings& settings, Graphics& graphics)
   ,u_blob_color(-1)
   ,blob_scale(1.0f)
   ,blob_offset(0.0f)
+#endif
 {
 }
 
@@ -61,6 +65,7 @@ bool Tracking::setupGraphics() {
   glEnableVertexAttribArray(0); // pos
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (GLvoid*)0);
 
+#if USE_TRIANGULATION
   // program to render the triangulated blobs
   const char* blob_atts[] = { "a_pos" } ;
   blob_vert = rx_create_shader(GL_VERTEX_SHADER, BLOB_VS);
@@ -77,6 +82,8 @@ bool Tracking::setupGraphics() {
   glBindBuffer(GL_ARRAY_BUFFER, blob_vertices_vbo);
   glEnableVertexAttribArray(0); // pos
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(BlobVertex), (GLvoid*)0);
+#endif
+
   return true;
 }
 
@@ -135,6 +142,7 @@ void Tracking::draw(float tx, float ty) {
   }
 
   // Draw triangulated
+#if USE_TRIANGULATION
   if(draw_triangulated_blobs && blob_counts.size()) {
     mat4 mm;
     mm.translate(blob_offset, blob_offset, 0.0);
@@ -147,6 +155,7 @@ void Tracking::draw(float tx, float ty) {
     glMultiDrawArrays(GL_TRIANGLES, &blob_offsets.front(), &blob_counts.front(), blob_counts.size());
     //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   }
+#endif
 }
 
 bool Tracking::findContours(unsigned char* pixels) { 
@@ -169,9 +178,12 @@ void Tracking::updateVertices() {
   closest_points.clear();
   closest_dirs.clear();
   closest_centers.clear();
+
+#if USE_TRIANGULATION
   blob_offsets.clear();
   blob_counts.clear();
   blob_vertices.clear();
+#endif
 
   if(!contours.size()) {
     return;
@@ -195,8 +207,10 @@ void Tracking::updateVertices() {
       size_t start_nvertices = contour_vertices.size();
       contour_offsets.push_back(contour_vertices.size());
 
+      #if USE_TRIANGULATION
       int last_point = 0;
       tri.clear();
+      #endif
 
       for(size_t i = 0; i < pts.size(); ++i) {
 
@@ -219,13 +233,15 @@ void Tracking::updateVertices() {
         // library may crash in these situations when the angle between points is too small,
         // because of rounding issue, etc..  I found that adding every 5th element seems
         // to work well.
+        #if USE_TRIANGULATION
         if((i - last_point) >= 5) {
           tri.add(pt.x, pt.y);
           last_point = int(i);
         }
+        #endif
       }
 
-      #if 1
+      #if USE_TRIANGULATION
       if(tri.size() > 3) {
 
         struct triangulateio out;
@@ -305,6 +321,7 @@ void Tracking::updateVertices() {
     }
   }
 
+#if USE_TRIANGULATION
   // Update the triangulate vertices.
   if(blob_vertices.size()) {
 
@@ -319,6 +336,7 @@ void Tracking::updateVertices() {
       glBufferSubData(GL_ARRAY_BUFFER, 0, nbytes_needed, blob_vertices[0].pos.ptr());
     }
   }
+#endif
 }
 
 
@@ -417,6 +435,8 @@ void Tracking::clusterPoints() {
 }
 
 void Tracking::setTimeOfYear(float t) {
+#if USE_TRIANGULATION  
   glUseProgram(blob_prog);
   glUniform3fv(u_blob_color, 1, settings.curr_colors.hand.ptr());
+#endif
 }

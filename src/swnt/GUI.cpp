@@ -75,22 +75,25 @@ bool GUI::setup(int w, int h) {
   TwDefine("SWNT size='300 750'");
 
   // water
+  /*
   TwAddVarRW(bar, "Sun Position X", TW_TYPE_FLOAT, &swnt.water.sun_pos[0], "min=-1000.0 max=1000.0 step=5.0 group='Water'");
   TwAddVarRW(bar, "Sun Position Y", TW_TYPE_FLOAT, &swnt.water.sun_pos[1], "min=-1000.0 max=1000.0 step=5.0 group='Water'");
   TwAddVarRW(bar, "Sun Position Z", TW_TYPE_FLOAT, &swnt.water.sun_pos[2], "min=-1000.0 max=1000.0 step=5.0 group='Water'");
+  */
   TwAddVarRW(bar, "Sun Color Red", TW_TYPE_FLOAT, &swnt.water.sun_color[0], "min=-5.0 max=5.0 step=0.1 group='Water'");
   TwAddVarRW(bar, "Sun Color Green", TW_TYPE_FLOAT, &swnt.water.sun_color[1], "min=-5.0 max=5.0 step=0.1 group='Water'");
   TwAddVarRW(bar, "Sun Color Blue", TW_TYPE_FLOAT, &swnt.water.sun_color[2], "min=-5.0 max=5.0 step=0.1 group='Water'");
-  //  TwAddVarRW(bar, "Sun Shininess", TW_TYPE_FLOAT, &swnt.water.sun_shininess, "min=0.0 max=50.0 step=0.1 group='Water'");
+  TwAddVarRW(bar, "Sun Shininess", TW_TYPE_FLOAT, &swnt.water.sun_shininess, "min=0.0 max=50.0 step=0.1 group='Water'");
+  TwAddVarRW(bar, "Sun Intensity", TW_TYPE_FLOAT, &swnt.water.sun_intensity, "min=-10.0 max=10.0 step=0.01 group='Water'");
   TwAddVarRW(bar, "Maximum Foam Depth", TW_TYPE_FLOAT, &swnt.water.max_foam_depth, "min=0.0 max=50.0 step=0.1 group='Water'");
   // TwAddVarRW(bar, "Maximum Water Depth", TW_TYPE_FLOAT, &swnt.water.max_depth, "min=0.0 max=50.0 step=0.01 group='Water'");
   //  TwAddVarRW(bar, "Diffuse Intensity", TW_TYPE_FLOAT, &swnt.water.ads_intensities[1], "min=-10.0 max=10.0 step=0.01 group='Water'");
   //  TwAddVarRW(bar, "Specular Intensity", TW_TYPE_FLOAT, &swnt.water.ads_intensities[2], "min=-10.0 max=10.0 step=0.01 group='Water'");
-  TwAddVarRW(bar, "Final Intensity", TW_TYPE_FLOAT, &swnt.water.ads_intensities[6], "min=0.0 max=2.0 step=0.01 group='Water'");
-  TwAddVarRW(bar, "Sun Intensity", TW_TYPE_FLOAT, &swnt.water.ads_intensities[3], "min=-10.0 max=10.0 step=0.01 group='Water'");
-  TwAddVarRW(bar, "Foam Intensity", TW_TYPE_FLOAT, &swnt.water.ads_intensities[4], "min=-10.0 max=10.0 step=0.01 group='Water'");
-  TwAddVarRW(bar, "Diffuse Texture Intensity", TW_TYPE_FLOAT, &swnt.water.ads_intensities[5], "min=-10.0 max=10.0 step=0.01 group='Water'");
-  TwAddVarRW(bar, "Ambient Intensity", TW_TYPE_FLOAT, &swnt.water.ads_intensities[0], "min=-10.0 max=10.0 step=0.01 group='Water'");
+  TwAddVarRW(bar, "Final Intensity", TW_TYPE_FLOAT, &swnt.water.final_intensity, "min=0.0 max=2.0 step=0.01 group='Water'");
+
+  TwAddVarRW(bar, "Foam Intensity", TW_TYPE_FLOAT, &swnt.water.foam_intensity, "min=-10.0 max=10.0 step=0.01 group='Water'");
+  TwAddVarRW(bar, "Diffuse Texture Intensity", TW_TYPE_FLOAT, &swnt.water.diffuse_intensity, "min=-10.0 max=10.0 step=0.01 group='Water'");
+  TwAddVarRW(bar, "Ambient Intensity", TW_TYPE_FLOAT, &swnt.water.ambient_intensity, "min=-10.0 max=10.0 step=0.01 group='Water'");
   TwAddVarRW(bar, "Ambient Color", TW_TYPE_COLOR3F, &swnt.water.ambient_color, "group='Water'");
   TwAddVarRW(bar, "Vortex Amount", TW_TYPE_FLOAT, &swnt.water.vortex_intensity, "group='Water' min=0.0 max=5.0 step=0.01");
   TwDefine("SWNT/Water opened=false");
@@ -120,10 +123,12 @@ bool GUI::setup(int w, int h) {
   TwAddVarRW(bar, "Draw Flow Field", TW_TYPE_BOOLCPP, &swnt.draw_flow, "group='Rendering'");
   TwAddVarRW(bar, "Draw Water", TW_TYPE_BOOLCPP, &swnt.draw_water, "group='Rendering'");
   //TwAddVarRW(bar, "Draw Debug Eddy", TW_TYPE_BOOLCPP, &swnt.draw_vortex, "group='Rendering'");
+#if USE_TRIANGULATION
   TwAddVarRW(bar, "Draw Tracking (Blobs, Points, Contours) ", TW_TYPE_BOOLCPP, &swnt.draw_tracking, "group='Rendering'");
   TwAddVarRW(bar, "Draw Triangulated Blobs", TW_TYPE_BOOLCPP, &swnt.tracking.draw_triangulated_blobs, "group='Rendering'");
   TwAddVarRW(bar, "Draw Points of Tracked Blobs", TW_TYPE_BOOLCPP, &swnt.tracking.draw_tracking_points, "group='Rendering'");
   TwAddVarRW(bar, "Draw Blob Contours", TW_TYPE_BOOLCPP, &swnt.tracking.draw_contours, "group='Rendering'");
+#endif
   TwDefine("SWNT/Rendering opened=false");
 
   // general
@@ -172,8 +177,10 @@ bool GUI::setup(int w, int h) {
   TwDefine("SWNT/Spirals opened=false");
 #endif
 
+#if USE_TRIANGULATION
   TwAddVarRW(bar, "Hand Scale", TW_TYPE_FLOAT, &swnt.tracking.blob_scale, "min=1.0 max=3.0 step=0.01");
   TwAddVarRW(bar, "Hand Offset", TW_TYPE_FLOAT, &swnt.tracking.blob_offset, "min=-300.0 max=300.0 step=0.5");
+#endif
 
   TwWindowSize(win_w, win_h);
   return true;

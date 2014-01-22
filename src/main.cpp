@@ -116,13 +116,10 @@ int main() {
 
 #if USE_WATER
     if(draw_forces) { 
-      //#if HF_FIXED      
-      printf("- add force.\n");
       swnt.height_field.beginDrawForces();
       swnt.height_field.drawForceTexture(swnt.water.force_tex, force_x, force_y, 0.4, 0.4);
       swnt.height_field.endDrawForces();
       draw_forces = false;
-      //#endif
     }
 #endif
     

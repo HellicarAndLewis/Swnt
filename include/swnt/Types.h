@@ -15,6 +15,7 @@
 #define USE_WATER_BALLS 0                       /* use the water ball simulation */
 #define USE_TIDES 0                             /* parse and use the text file (format 13) with tides info */
 #define USE_SPIRALS 1
+#define USE_TRIANGULATION 0
 
 #define EFFECT_NONE 0
 #define EFFECT_MIST 1 // NOT USED ATM

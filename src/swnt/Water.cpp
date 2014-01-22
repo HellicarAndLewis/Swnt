@@ -8,8 +8,7 @@ Water::Water(HeightField& heightField, Settings& settings)
   ,settings(settings)
   ,win_w(0)
   ,win_h(0)
-   //  ,max_depth(3.95)
-  ,max_foam_depth(2.0)
+  ,max_foam_depth(2.8)
   ,wind_level(0.0f)
   ,diffuse_tex(0)
   ,normal_tex(0)
@@ -22,7 +21,21 @@ Water::Water(HeightField& heightField, Settings& settings)
   ,force_tex(0)
   ,u_max_foam_depth(0)
   ,u_vortex_intensity(0)
+  ,u_sun_color(0)
+  ,u_sun_intensity(0)
+  ,u_sun_shininess(0)
+  ,u_ambient_color(0)
+  ,u_ambient_intensity(0)
+  ,u_diffuse_intensity(0)
+  ,u_foam_intensity(0)
+  ,u_final_intensity(0)
   ,vortex_intensity(1.0)
+  ,sun_intensity(0.15f)
+  ,sun_shininess(45.0f)
+  ,ambient_intensity(0.05f)
+  ,diffuse_intensity(0.58f)
+  ,foam_intensity(0.83f)
+  ,final_intensity(1.0f)
   ,fbo(0)
 {
   sun_pos[0] = 0.0;
@@ -135,10 +148,26 @@ bool Water::setupShaders() {
   glUniform1i(glGetUniformLocation(water_prog.id, "u_extra_flow_tex"), 9);
 
   u_max_foam_depth = glGetUniformLocation(water_prog.id, "u_max_foam_depth");  
-  u_vortex_intensity =glGetUniformLocation(water_prog.id, "u_vortex_intensity");  
+  u_vortex_intensity = glGetUniformLocation(water_prog.id, "u_vortex_intensity");  
+  u_sun_color = glGetUniformLocation(water_prog.id, "u_sun_color");  
+  u_sun_intensity = glGetUniformLocation(water_prog.id, "u_sun_intensity");  
+  u_sun_shininess = glGetUniformLocation(water_prog.id, "u_sun_shininess");  
+  u_ambient_color = glGetUniformLocation(water_prog.id, "u_ambient_color");  
+  u_ambient_intensity = glGetUniformLocation(water_prog.id, "u_ambient_intensity");  
+  u_diffuse_intensity = glGetUniformLocation(water_prog.id, "u_diffuse_intensity");  
+  u_foam_intensity = glGetUniformLocation(water_prog.id, "u_foam_intensity");  
+  u_final_intensity =glGetUniformLocation(water_prog.id, "u_final_intensity");  
   
   WATER_CHECK_UNIFORM(u_max_foam_depth, "Cannot find the foam depth uniform.");
   WATER_CHECK_UNIFORM(u_vortex_intensity, "Cannot find u_vortex_intensity.");
+  WATER_CHECK_UNIFORM(u_sun_color, "Cannot find the sun color uniform");
+  WATER_CHECK_UNIFORM(u_sun_intensity, "Cannot find the sun intensity uniform");
+  WATER_CHECK_UNIFORM(u_sun_shininess, "Cannot find u_sun_shininess");
+  WATER_CHECK_UNIFORM(u_ambient_color, "Cannot find u_ambient_color");
+  WATER_CHECK_UNIFORM(u_ambient_intensity, "Cannot find u_ambient_intensity");
+  WATER_CHECK_UNIFORM(u_diffuse_intensity, "Cannot find u_diffuse_intensity");
+  WATER_CHECK_UNIFORM(u_foam_intensity, "Cannot find u_foam_intensity");
+  WATER_CHECK_UNIFORM(u_final_intensity, "Cannot find u_final_intensity");
   return true;
 }
 
@@ -164,6 +193,14 @@ void Water::draw() {
   glUniformMatrix4fv(glGetUniformLocation(water_prog.id, "u_pm"), 1, GL_FALSE, height_field.pm.ptr());
   glUniform1f(u_max_foam_depth, max_foam_depth);
   glUniform1f(u_vortex_intensity, vortex_intensity);
+  glUniform3fv(u_sun_color, 1, sun_color);
+  glUniform1f(u_sun_intensity, sun_intensity);
+  glUniform1f(u_sun_shininess, sun_shininess);
+  glUniform3fv(u_ambient_color, 1, ambient_color);
+  glUniform1f(u_ambient_intensity, ambient_intensity);
+  glUniform1f(u_diffuse_intensity, diffuse_intensity);
+  glUniform1f(u_foam_intensity, foam_intensity);
+  glUniform1f(u_final_intensity, final_intensity);
 
   glActiveTexture(GL_TEXTURE0);  glBindTexture(GL_TEXTURE_2D, height_field.tex_out_pos);
   glActiveTexture(GL_TEXTURE1);  glBindTexture(GL_TEXTURE_2D, height_field.tex_out_norm);

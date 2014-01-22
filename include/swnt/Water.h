@@ -73,10 +73,24 @@ class Water {
   float foam_depth;                               
   float sun_pos[3];                               /* position of the sun */
   float sun_color[3];                             /* color of the sun */
-
   float vortex_intensity;
+  float sun_intensity;
+  float ambient_intensity;
+  float sun_shininess;
+  float diffuse_intensity;
+  float foam_intensity;
+  float final_intensity;
+
   GLint u_max_foam_depth;                         /* points to the u_max_foam_depth uniform, used to influence the amount of foam */
   GLint u_vortex_intensity;                       /* points to u_vortex_intensity */
+  GLint u_sun_color;                              /* points to the sun color uniform */
+  GLint u_sun_intensity;                          /* points to the sun intensity uniform */
+  GLint u_sun_shininess;
+  GLint u_ambient_color;
+  GLint u_ambient_intensity;
+  GLint u_diffuse_intensity;
+  GLint u_foam_intensity;
+  GLint u_final_intensity;
 
   float wind_level;                              /* the wind level is set by setWeatherInfo() and is used to change the vortex intensity */
 

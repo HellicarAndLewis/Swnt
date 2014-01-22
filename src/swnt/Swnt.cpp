@@ -20,7 +20,7 @@ Swnt::Swnt(Settings& settings)
   ,depth_image(NULL)
 #endif
   ,state(STATE_RENDER_SCENE)
-  ,draw_flow(true)
+  ,draw_flow(false)
   ,draw_threshold(true)
   ,draw_water(true)
   ,draw_vortex(false)
@@ -307,7 +307,6 @@ void Swnt::update(float dt) {
 
 void Swnt::draw() {
 
-  height_field.debugDraw();
 
 #if 0
   height_field.debugDraw();
@@ -359,7 +358,6 @@ void Swnt::draw() {
 
 #if USE_WATER_BALLS
     // apply forces onto the water, when water balls are flushing away
-#if HF_FIXED
     if(flush_points.size()) {
       height_field.beginDrawForces();
       for(std::vector<vec2>::iterator it = flush_points.begin(); it != flush_points.end(); ++it) {
@@ -368,8 +366,6 @@ void Swnt::draw() {
       }
       height_field.endDrawForces();
     }
-#endif
-
 #endif
 
     // capture the mask shape

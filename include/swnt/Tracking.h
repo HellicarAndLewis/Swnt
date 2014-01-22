@@ -104,11 +104,15 @@ class Tracking {
   Graphics& graphics;
 
   bool draw_contours;                                 /* draw the contour lines, used while debugging */
+#if USE_TRIANGULATION
   bool draw_triangulated_blobs;                       /* draw the triangulated versions of the detected blobs */
+#endif
   bool draw_tracking_points;                          /* draw the tracked points, used while debugging */
 
   /* Triangulates the detected contours. */
+#if USE_TRIANGULATION
   Triangulate tri;
+#endif
 
   /* Contour detection + tracking */
   size_t contour_threshold;                           /* we only use contours whos size contains more points then this */
@@ -125,6 +129,7 @@ class Tracking {
   size_t allocated_bytes;                             /* used to grow the vbo when necessary */
 
   /* GL - drawing triangulated blobs */
+#if USE_TRIANGULATION
   GLuint blob_vertices_vbo;                           /* vbo that holds the vertices of the triangulated blobs */
   size_t blob_vertices_allocated;                     /* number of allocated bytes for the blob vertices vbo */
   GLuint blob_vao;                                    /* vao, used to rended the triangulated blobs */
@@ -137,7 +142,7 @@ class Tracking {
   GLint u_blob_color;                                 /* uniform to the blob color */
   float blob_scale;
   float blob_offset;
-
+#endif
   
   /* K-Means clustering */
   std::vector<vec2> closest_points;                   /* closest points in the detected contours.. closest to the center. used to detect peaks in blobs that will be tracked */

@@ -409,6 +409,8 @@ void HeightField::process() {
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   t += 0.001;
+
+  glViewport(0,0,win_w,win_h);
 }
 
 

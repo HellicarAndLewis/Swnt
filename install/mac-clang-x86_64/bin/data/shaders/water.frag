@@ -5,6 +5,14 @@ uniform float u_time0;                 /* the first time ramp to mix the flow te
 uniform float u_time1;                 /* the second time ramp to mix the flow textures */
 uniform float u_max_foam_depth;        /* a value around 4.0 which indicates the max depth of the water; used to calculate the foam level */
 uniform float u_vortex_intensity;      /* extra flow color, vortex intensity */
+uniform vec3 u_sun_color;              /* the sun color */
+uniform float u_sun_intensity;         /* intensity of the sun */
+uniform float u_sun_shininess;         /* specularity level */
+uniform vec3 u_ambient_color;          /* overall color */
+uniform float u_ambient_intensity; 
+uniform float u_diffuse_intensity;
+uniform float u_foam_intensity;
+uniform float u_final_intensity;
 
 uniform sampler2D u_diffuse_tex;        /* water texture */
 uniform sampler2D u_normal_tex;         /* water normals from texture */
@@ -51,8 +59,8 @@ void main() {
   vec3 peturped_normal = normalize(moved_normal + v_norm);
   //vec3 peturped_normal = v_norm;
 
-  vec3 foam0 = texture(u_foam_tex, texcoord0).rgb;
-  vec3 foam1 = texture(u_foam_tex, texcoord1).rgb;
+  vec3 foam0 = texture(u_foam_tex, texcoord0 * 4.0).rgb;
+  vec3 foam1 = texture(u_foam_tex, texcoord1 * 4.0).rgb;
   vec3 moved_foam = mix(foam0, foam1, lerp);
 
   // Diffuse Lighting
@@ -71,7 +79,7 @@ void main() {
   s = normalize(sun_dir);
   v = normalize(-v_eye_pos);
   r = normalize(reflect(s, n));
-  vec3 spec =  vec3(1.0, 0.0, 0.0) * pow(clamp(dot(r, v), 0.0, 1.0), 8.0); 
+  vec3 spec = sdn * u_sun_color * pow(clamp(dot(r, v), 0.0, 1.0), u_sun_shininess); 
 
   // Refraction + depth based coloring
   // -------------------------------------------------------------
@@ -79,8 +87,12 @@ void main() {
   float depth_perc = 0.1 + clamp(v_world_pos.y/u_max_foam_depth, 0.0, 1.0);
   vec4 depth_color = texture(u_depth_ramp_tex, vec2(depth_perc));
 
-  fragcolor.rgb = moved_diffuse * (1.0 - depth_perc) + depth_perc * moved_foam + spec;
+  fragcolor.rgb = moved_diffuse * (1.0 - depth_perc) * u_diffuse_intensity;
+  fragcolor.rgb += u_ambient_color * sdn * u_ambient_intensity;
+  fragcolor.rgb += (depth_perc * moved_foam * u_foam_intensity);
+  fragcolor.rgb += (spec * max(u_sun_intensity, 0.0));
   fragcolor.rgb = mix(fragcolor.rgb, sand_color * depth_color.rgb, depth_color.a);
+  fragcolor.rgb = fragcolor.rgb * u_final_intensity;
   
 #if 0
   fragcolor.rgb = texture(u_diffuse_tex, v_tex).rgb;
