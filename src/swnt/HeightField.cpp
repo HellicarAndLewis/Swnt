@@ -149,58 +149,58 @@ bool HeightField::setup() {
   glGenTextures(1, &tex_u0);
   glBindTexture(GL_TEXTURE_2D, tex_u0);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, HEIGHT_FIELD_N, HEIGHT_FIELD_N, 0,  GL_RED, GL_FLOAT, init_u);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
   glGenTextures(1, &tex_u1);
   glBindTexture(GL_TEXTURE_2D, tex_u1);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, HEIGHT_FIELD_N, HEIGHT_FIELD_N, 0,  GL_RED, GL_FLOAT, init_u);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
   float forces[HEIGHT_FIELD_NN * 2];
   memset(forces, 0, sizeof(forces));
   glGenTextures(1, &tex_forces);
   glBindTexture(GL_TEXTURE_2D, tex_forces);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, HEIGHT_FIELD_N, HEIGHT_FIELD_N, 0,  GL_RG, GL_FLOAT, forces);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
   glGenTextures(1, &tex_v0);
   glBindTexture(GL_TEXTURE_2D, tex_v0);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, HEIGHT_FIELD_N, HEIGHT_FIELD_N, 0,  GL_RED, GL_FLOAT, init_v);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
   glGenTextures(1, &tex_v1);
   glBindTexture(GL_TEXTURE_2D, tex_v1);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, HEIGHT_FIELD_N, HEIGHT_FIELD_N, 0,  GL_RED, GL_FLOAT, init_v);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
   glGenTextures(1, &tex_norm);
   glBindTexture(GL_TEXTURE_2D, tex_norm);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, HEIGHT_FIELD_N, HEIGHT_FIELD_N, 0, GL_RGB, GL_FLOAT, 0);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
   glGenTextures(1, &tex_pos);
   glBindTexture(GL_TEXTURE_2D, tex_pos);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, HEIGHT_FIELD_N, HEIGHT_FIELD_N, 0, GL_RGB, GL_FLOAT, 0);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
   glGenTextures(1, &tex_texcoord);
   glBindTexture(GL_TEXTURE_2D, tex_texcoord);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, HEIGHT_FIELD_N, HEIGHT_FIELD_N, 0, GL_RG, GL_FLOAT, 0);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
   glGenTextures(1, &tex_gradient);
   glBindTexture(GL_TEXTURE_2D, tex_gradient);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, HEIGHT_FIELD_N, HEIGHT_FIELD_N, 0, GL_RGB, GL_FLOAT, 0);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 
   // fbo0 for the diffuse math, normals, positions, etc..
