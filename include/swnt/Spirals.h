@@ -56,6 +56,7 @@ static const char* SPIRAL_FS = ""
   "  fragcolor.a = (1.0 - v_tex.s) * (1.0 - v_age_perc) * diffuse_tc.a; " //  * diffuse_tc.r * (1.0 - (pow(v_age_perc, 4.0))) * u_alpha;"
   "  fragcolor.rgb = mix(u_col_from, u_col_to, v_tex.s) * diffuse_tc.r;"
   // "  fragcolor.rgb = diffuse_tc.rgb * diffuse_tc.r;"
+  " fragcolor.rgb = u_col_from;"
   //"  fragcolor = vec4(v_tex.s, v_tex.t, 0.0, 1.0);"
   "}"
   "";
@@ -93,7 +94,6 @@ class Spirals {
   bool setup();
   void update(float dt);
   void draw();
-  void drawDisplacement();
   void refresh();                            /* will change to the current setting values */
 
  private: 
@@ -141,14 +141,5 @@ class Spirals {
   GLuint diffuse_tex;                          /* the diffuse texture used for the spirals */
   mat4 pm;                                     /* projection matrix .. ortho graphic projection */
   mat4 vm;                                     /* view matrix */
-
-  /* Displacement test */
-  GLuint displacement_frag;
-  GLuint displacement_prog;
-  GLuint displacement_fbo;
-  GLuint displacement_tex;
-
-  /* Physics */
-  Particle* center_particle;
 };
 #endif

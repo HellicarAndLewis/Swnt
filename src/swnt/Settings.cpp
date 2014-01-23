@@ -22,6 +22,7 @@ Settings::Settings()
   ,kinect_far(1.8f)
   ,color_dx(0)
   ,radius(350.0f)
+  ,max_wind(30.0)
 {
 }
 
@@ -55,9 +56,16 @@ bool Settings::load(std::string filepath) {
     // window height
     xml_node<>* wh = cfg->first_node("window_height");
     CHECK_SETTING(wh);
-
     win_h = rx_to_int(wh->value());
     ocean.win_h = win_h;
+    
+    // max wind
+    xml_node<>* max_w = cfg->first_node("max_wind");
+    CHECK_SETTING(max_w);
+    max_wind = rx_to_float(max_w->value());
+    if(max_wind == 0) {
+      max_wind = 1.0f;
+    }
 
     // ocean
     {

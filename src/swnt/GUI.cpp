@@ -86,9 +86,6 @@ bool GUI::setup(int w, int h) {
   TwAddVarRW(bar, "Sun Shininess", TW_TYPE_FLOAT, &swnt.water.sun_shininess, "min=0.0 max=50.0 step=0.1 group='Water'");
   TwAddVarRW(bar, "Sun Intensity", TW_TYPE_FLOAT, &swnt.water.sun_intensity, "min=-10.0 max=10.0 step=0.01 group='Water'");
   TwAddVarRW(bar, "Maximum Foam Depth", TW_TYPE_FLOAT, &swnt.water.max_foam_depth, "min=0.0 max=50.0 step=0.1 group='Water'");
-  // TwAddVarRW(bar, "Maximum Water Depth", TW_TYPE_FLOAT, &swnt.water.max_depth, "min=0.0 max=50.0 step=0.01 group='Water'");
-  //  TwAddVarRW(bar, "Diffuse Intensity", TW_TYPE_FLOAT, &swnt.water.ads_intensities[1], "min=-10.0 max=10.0 step=0.01 group='Water'");
-  //  TwAddVarRW(bar, "Specular Intensity", TW_TYPE_FLOAT, &swnt.water.ads_intensities[2], "min=-10.0 max=10.0 step=0.01 group='Water'");
   TwAddVarRW(bar, "Final Intensity", TW_TYPE_FLOAT, &swnt.water.final_intensity, "min=0.0 max=2.0 step=0.01 group='Water'");
 
   TwAddVarRW(bar, "Foam Intensity", TW_TYPE_FLOAT, &swnt.water.foam_intensity, "min=-10.0 max=10.0 step=0.01 group='Water'");
@@ -100,7 +97,7 @@ bool GUI::setup(int w, int h) {
 
   // splashes
 #if USE_EFFECTS  
-#if HF_FIXED
+#if 0
   Splashes& sp = swnt.effects.splashes;
   TwAddVarRW(bar, "Minimum Lifetime", TW_TYPE_FLOAT, &sp.lifetime_min, "min=0.0 max=300.0 step=1.0 group='Splashes'");
   TwAddVarRW(bar, "Maximum Lifetime", TW_TYPE_FLOAT, &sp.lifetime_max, "min=0.0 max=300.0 step=1.0 group='Splashes'");
@@ -122,7 +119,8 @@ bool GUI::setup(int w, int h) {
   // rendering
   TwAddVarRW(bar, "Draw Flow Field", TW_TYPE_BOOLCPP, &swnt.draw_flow, "group='Rendering'");
   TwAddVarRW(bar, "Draw Water", TW_TYPE_BOOLCPP, &swnt.draw_water, "group='Rendering'");
-  //TwAddVarRW(bar, "Draw Debug Eddy", TW_TYPE_BOOLCPP, &swnt.draw_vortex, "group='Rendering'");
+  TwAddVarRW(bar, "Draw Vortex", TW_TYPE_BOOLCPP, &swnt.draw_vortex, "group='Rendering'");
+  TwAddVarRW(bar, "Draw Kinect Threshold", TW_TYPE_BOOLCPP, &swnt.draw_threshold, "group='Rendering'");
 #if USE_TRIANGULATION
   TwAddVarRW(bar, "Draw Tracking (Blobs, Points, Contours) ", TW_TYPE_BOOLCPP, &swnt.draw_tracking, "group='Rendering'");
   TwAddVarRW(bar, "Draw Triangulated Blobs", TW_TYPE_BOOLCPP, &swnt.tracking.draw_triangulated_blobs, "group='Rendering'");
@@ -159,6 +157,7 @@ bool GUI::setup(int w, int h) {
   // kinect
   TwAddVarRW(bar, "Kinect Far", TW_TYPE_FLOAT, &swnt.settings.kinect_far, "group='Kinect' min=0.00 max=5.00 step=0.01");
   TwAddVarRW(bar, "Kinect Near", TW_TYPE_FLOAT, &swnt.settings.kinect_near, "group='Kinect' min=0.00 max=5.00 step=0.01");
+  TwAddVarRW(bar, "Kinect Max Water Bulge Force", TW_TYPE_FLOAT, &swnt.height_field.force_max, "group='Kinect' min=0.00 max=10.00 step=0.01");
   TwDefine("SWNT/Kinect opened=false");
 
 #if USE_SPIRALS

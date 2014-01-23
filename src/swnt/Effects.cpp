@@ -43,6 +43,5 @@ void Effects::drawExtraFlow() {
 }
 
 void Effects::drawExtraDiffuse() {
-  //  eddy.drawExtraDiffuse();
   splashes.drawExtraDiffuse();
 }

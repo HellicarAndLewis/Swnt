@@ -101,6 +101,8 @@ class HeightField {
   Program force_prog;         /* used to add extra forces to the height field */
   GLuint force_fbo;
   GLuint force_tex;
+  float force_max;            /* maximum force level we apply with draw force texture */
+  GLint u_force;
 
   /* used to process the height field and extract some usefull data */
   GLuint process_fbo;         /* we use a separate FBO to perform the processing step so we have some space for extra attachments */

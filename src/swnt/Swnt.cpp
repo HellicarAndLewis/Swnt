@@ -23,7 +23,7 @@ Swnt::Swnt(Settings& settings)
   ,draw_flow(false)
   ,draw_threshold(true)
   ,draw_water(true)
-  ,draw_vortex(false)
+  ,draw_vortex(true)
   ,draw_tracking(true)
   ,draw_gui(true)
   ,override_with_gui(false)
@@ -362,7 +362,7 @@ void Swnt::draw() {
       height_field.beginDrawForces();
       for(std::vector<vec2>::iterator it = flush_points.begin(); it != flush_points.end(); ++it) {
         vec2& p = *it;
-        height_field.drawForceTexture(water.force_tex0, 1.0 - p.x, p.y, 0.4, 0.4);
+        height_field.drawForceTexture(water.force_tex, 1.0 - p.x, p.y, 0.1, 0.1);
       }
       height_field.endDrawForces();
     }
@@ -379,9 +379,11 @@ void Swnt::draw() {
     mask.endDepthGrab();
 
 #if USE_EFFECTS
-    water.beginGrabFlow();
+    if(draw_vortex) {
+      water.beginGrabFlow();
       effects.drawExtraFlow();
-    water.endGrabFlow();
+      water.endGrabFlow();
+    }
 #endif
     
 
@@ -395,7 +397,9 @@ void Swnt::draw() {
     mask.maskOutDepth();
     mask.maskOutScene();
 
-    //mask.drawHand();
+    if(draw_threshold) {
+      mask.drawHand();
+    }
 
     tracking.track(mask.masked_out_pixels);
 
@@ -682,7 +686,7 @@ void Swnt::updateWeatherInfo() {
 #if USE_WEATHER
   float wind = 0.0f;
   if(has_weather_info) {
-    wind = CLAMP(float(weather_info.speed)/100.0f, 0.0f, 1.0f);
+    wind = CLAMP(float(weather_info.speed)/settings.max_wind, 0.0f, 1.0f);
   }
   else {
     printf("Verbose: no weather info yet.\n");

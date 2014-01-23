@@ -39,6 +39,7 @@ class Settings {
   mat4 depth_ortho_matrix;             /* when we render the depth image we use this ortho matrix */
   float kinect_near;                   /* mask out everything between kinect_near and kinect_far */
   float kinect_far;                    /* "" */
+  float max_wind;                /* we use the wind speed from the weather info to influence the vortex */
   std::vector<ColorSettings> colors;   /* the colors used when rendering */
   size_t color_dx;                     /* the current color palette to use */
   float radius;                        /* radius of the overlay */

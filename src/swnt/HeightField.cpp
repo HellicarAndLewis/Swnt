@@ -14,6 +14,8 @@ HeightField::HeightField()
   ,win_h(0)
   ,force_fbo(0)
   ,force_tex(0)
+  ,force_max(1.5f)
+  ,u_force(0)
   ,process_fbo(0)
   ,tex_out_norm(0)
   ,tex_out_pos(0)
@@ -314,6 +316,7 @@ bool HeightField::setupDiffusing() {
   glUniform1i(glGetUniformLocation(field_prog.id, "u_force_tex"), 2);
 
   u_dt = glGetUniformLocation(field_prog.id, "u_dt");
+  u_force = glGetUniformLocation(field_prog.id, "u_force");
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -333,6 +336,7 @@ void HeightField::update(float dt) {
   glUseProgram(field_prog.id);
   glBindVertexArray(field_vao);
   glUniform1f(u_dt, dt);
+  glUniform1f(u_force, force_max);
 
   state_diffuse = 1 - state_diffuse;
 
@@ -362,13 +366,11 @@ void HeightField::update(float dt) {
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);  
   
   // clear the forces buffer.
-#if 1
   GLenum forces_bufs[] = { GL_COLOR_ATTACHMENT0 } ;
   glBindFramebuffer(GL_FRAMEBUFFER, force_fbo);
   glDrawBuffers(1, forces_bufs);
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glClear(GL_COLOR_BUFFER_BIT);
-#endif
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glViewport(0, 0, win_w, win_h);
@@ -413,7 +415,6 @@ void HeightField::process() {
   glViewport(0,0,win_w,win_h);
 }
 
-
 void HeightField::beginDrawForces() {
   GLenum drawbufs[] = { GL_COLOR_ATTACHMENT0 } ;
   glViewport(0, 0, field_size, field_size);
@@ -438,7 +439,7 @@ void HeightField::drawForceTexture(GLuint tex, float px, float py, float pw, flo
   mm.scale(pw * field_size, ph * field_size, 1.0);
 
   glUseProgram(force_prog.id);
-  
+
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, tex);
 
@@ -460,24 +461,20 @@ void HeightField::debugDraw() {
   glBindTexture(GL_TEXTURE_2D, tex_out_pos);
 
   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  //glDrawArrays(GL_TRIANGLES, 0, vertices.size());
   glDrawArrays(GL_POINTS, 0, vertices.size());
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-#if 1
   glBindFramebuffer(GL_READ_FRAMEBUFFER, field_fbo);
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
   glReadBuffer(GL_COLOR_ATTACHMENT0);
   glBlitFramebuffer(0, 0, field_size, field_size, 0, 0, field_size, field_size, GL_COLOR_BUFFER_BIT, GL_LINEAR);
   glBlitFramebuffer(0, 0, field_size, field_size, 0, 0, field_size, field_size, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-#endif
 
   glBindFramebuffer(GL_READ_FRAMEBUFFER, force_fbo);
   glReadBuffer(GL_COLOR_ATTACHMENT0);
   glBlitFramebuffer(0, 0, field_size, field_size, field_size, 0, field_size*2, field_size, GL_COLOR_BUFFER_BIT, GL_LINEAR);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
-
 
 void HeightField::print() {
   printf("heightfield.tex_u0: %d\n", tex_u0);

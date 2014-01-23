@@ -300,8 +300,7 @@ void Weather::update() {
   uint64_t now = uv_hrtime();
   if(now > timeout) {
     fetchYahooRSS();
-    printf("TTL: %lld\n", ttl);
-    uint64_t minutes = 1;
+    uint64_t minutes = ttl;
     timeout = now + minutes * (1000000ull * 1000ull * 60ull);
   }
 }

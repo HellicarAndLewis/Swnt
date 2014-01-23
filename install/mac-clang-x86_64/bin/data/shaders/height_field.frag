@@ -9,6 +9,7 @@
 
 #version 150
 
+uniform float u_force;                /* the force we apply using the force texture */
 uniform sampler2D u_force_tex;        /* texture which will contain the extra force that we add to the height field */
 uniform sampler2D u_height_tex;       /* the current height values */
 uniform sampler2D u_vel_tex;          /* the current velocity values; that we use to diffuse */
@@ -19,7 +20,7 @@ out float out_vel;
 in vec2 v_tex;
 
 float get_force(float f0, vec2 f1) {
-  float k = 8.5;
+  float k = u_force;
   return f0 + (f1.r * k) - (f1.g * k);
 }
 

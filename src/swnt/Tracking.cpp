@@ -74,7 +74,6 @@ bool Tracking::setupGraphics() {
   glUseProgram(blob_prog);
   glUniformMatrix4fv(glGetUniformLocation(blob_prog, "u_pm"), 1, GL_FALSE, settings.ortho_matrix.ptr());
   u_blob_color = glGetUniformLocation(blob_prog, "u_blob_color");
-  
 
   glGenVertexArrays(1, &blob_vao);
   glBindVertexArray(blob_vao);
@@ -148,12 +147,10 @@ void Tracking::draw(float tx, float ty) {
     mm.translate(blob_offset, blob_offset, 0.0);
     mm.scale(sx * blob_scale, sy * blob_scale, 1.0f);
     
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glUseProgram(blob_prog);
     glUniformMatrix4fv(glGetUniformLocation(blob_prog, "u_mm"), 1, GL_FALSE, mm.ptr());
     glBindVertexArray(blob_vao);
     glMultiDrawArrays(GL_TRIANGLES, &blob_offsets.front(), &blob_counts.front(), blob_counts.size());
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   }
 #endif
 }
@@ -165,7 +162,6 @@ bool Tracking::findContours(unsigned char* pixels) {
   int w = settings.image_processing_w;
   int h = settings.image_processing_h;
   cv::Mat input_image(h, w, CV_8UC1, pixels, cv::Mat::AUTO_STEP);
-  //cv::findContours(input_image, contours, cv::RETR_LIST, cv::CHAIN_APPROX_SIMPLE);
   cv::findContours(input_image, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
   return contours.size();
 }
