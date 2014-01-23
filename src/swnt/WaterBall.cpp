@@ -46,15 +46,6 @@ bool WaterBall::setup(int w, int h) {
   position.set(w * 0.5, h * 0.5);
   spawn_timeout = rx_hrtime() + (spawn_delay * 1000);
 
-  /*
-  float cx = w * 0.5;
-  float cy = h * 0.5;
-  int num = 40;
-  for(int i = 0; i < num; ++i) {
-    addDrop(vec2(rx_random(0, w), rx_random(0, h)), 1.0f);
-  }
-  */
-
   state = WATERDROP_STATE_FREE;
 
   return true;
@@ -71,16 +62,7 @@ void WaterBall::update(float dt) {
       uint64_t now = rx_hrtime();
       if(now >= spawn_timeout) {
         spawn_timeout = now + spawn_delay * 1000000ull;
-
         addRandomDrop();
-    
-        /*
-          if(drops.size() == 10) {
-          printf("We reached N drops, flush!\n");
-          state = WATERDROP_STATE_FLUSH;
-          flush_timeout = now + flush_delay * 1000000LLU;
-          }
-        */
       }
     }
   }
@@ -204,31 +186,8 @@ void WaterBall::update(float dt) {
 
     ++it;
   }
-  /*
-  glBindBuffer(GL_ARRAY_BUFFER, basic_vbo);
-
-  size_t bytes_needed = sizeof(WaterDrop) * drops.size();
-  if(bytes_needed > bytes_allocated) {
-    glBufferData(GL_ARRAY_BUFFER, bytes_needed, drops[0].position.ptr(), GL_STREAM_DRAW);
-  }
-  else {
-    glBufferSubData(GL_ARRAY_BUFFER, 0, bytes_needed, drops[0].position.ptr());
-  }
-  */
 }
 
-/*
-void WaterBall::draw() {
-  
-  if(state == WATERDROP_STATE_NONE) {
-    return;
-  }
-
-  drawParticlesWithAlpha();
-  drawParticlesWithWaterEffect();
-  drawRenderBuffers();
-}
-*/
 
 void WaterBall::addDrop(vec2 position, float mass) {
   if(mass < 0.01) {

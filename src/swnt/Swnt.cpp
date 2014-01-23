@@ -405,10 +405,6 @@ void Swnt::draw() {
 
     mask.draw_hand = draw_threshold;
 
-#    if USE_WATER_BALLS
-    ball_drawer.draw();
-#    endif
-
     #if USE_RGB_SHIFT
     rgb_shift.apply();
     rgb_shift.draw();
@@ -422,8 +418,6 @@ void Swnt::draw() {
     gui.draw();
   }
 #endif
-
-  // height_field.debugDraw();
 }
 
 void Swnt::drawScene() {
