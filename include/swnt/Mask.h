@@ -19,17 +19,24 @@ static const char* MASK_VS = ""
   "#version 150\n"
   "uniform mat4 u_pm;"
   "in vec4 a_pos;"
+  "in vec2 a_tex;"
+  "out vec2 v_tex;"
   "void main() {"
   "  gl_Position = u_pm * a_pos; "
+  "  v_tex = a_tex;"
   "}"
   "";
 
 static const char* MASK_FS = ""
   "#version 150\n"
+  "uniform sampler2D u_mask_tex;"
   "out vec4 fragcolor; "
+  "in vec2 v_tex;"
   "void main() {"
-  "  fragcolor.rgb = vec3(1.0);"
-  "  fragcolor.a = 1.0;"
+  "  float t = texture(u_mask_tex, v_tex).r;"
+  "  fragcolor.rgb = vec3(1.0 - t);"
+  "  fragcolor.a = 1.0 - t;"
+  "  fragcolor = texture(u_mask_tex, v_tex);"
   "}"
   "";
 
@@ -43,7 +50,9 @@ static const char* MASKED_OUT_FS = ""
   "  vec4 mask_tc = texture(u_mask_tex, v_tex);"
   "  vec4 depth_tc = texture(u_depth_tex, v_tex);"
   "  fragcolor.a = 1.0;"
-  "  fragcolor.rgb = vec3(depth_tc.r) * ceil(mask_tc.r * 1000);"
+  //  "  fragcolor.rgb = vec3(depth_tc.r) * ceil(mask_tc.r * 1000);"
+  // "  fragcolor.rgb = clamp(vec3(depth_tc.r) * ceil(mask_tc.r ), 0.0, 1.0);"
+  "  fragcolor.rgb = depth_tc.rgb;" // * mask_tc.rgb;"
   "}"
   "";
 
@@ -61,7 +70,7 @@ static const char* MASKED_OUT_SCENE_FS = ""
   "  vec4 scene_tc = texture(u_scene_tex, v_tex);"
   "  vec4 thresh_tc = texture(u_thresh_tex, vec2(v_tex.s, 1.0 - v_tex.t));"
   "  fragcolor.a = mask_tc.r * scene_tc.a; "
-  "  fragcolor.rgb = scene_tc.rgb;"
+  "  fragcolor.rgb = scene_tc.rgb * mask_tc.a;"
 
   // @todo remove u_draw_hand from shader
 #if 0
@@ -93,14 +102,17 @@ static const char* DRAW_MASKED_FS = ""
 /* Draws the hand (last minute change) */
 static const char* MASK_HAND_FS = ""
   "#version 150\n"
+  "uniform vec3 u_hand_color;"
   "uniform sampler2D u_hand_tex;"
+  "uniform sampler2D u_mask_tex;"
   "uniform vec3 u_color;"
   "in vec2 v_tex;"
   "out vec4 fragcolor;"
   
   "void main() {"
   "   float t = texture(u_hand_tex, v_tex).r;"
-  "   fragcolor = vec4(t, 1.0, 0.0, 1.0); "
+  "   float a = texture(u_mask_tex, v_tex).a;"
+  "   fragcolor = vec4(u_hand_color, t) * a; "
   "}";
 
 
@@ -157,6 +169,7 @@ class Mask {
   GLuint mask_vert;                        /* we use our own simple mask vertex shader */
   GLuint mask_frag;                        /* mask fragment shader, used to draw the mask shape vertices */
   GLuint mask_prog;                        /* the shader program that we use to draw the mask shape vertices */
+  GLuint mask_diffuse_tex;                 /* last minute change: needed to soften the edges of the mask; using a texture */
 
   GLuint masked_out_vao;                   /* vao that we use to draw the masked out textures */
   GLuint masked_out_fbo;                   /* the fbo that will hold the mask shape + the masked out result */
@@ -182,11 +195,16 @@ class Mask {
   GLuint hand_prog;
   GLuint hand_vert;
   GLuint hand_frag;
+  float hand_rotation;
+  bool hand_flip_x;
+  bool hand_flip_y;
 
   /* Mask vertices (the circular shape that we use to mask is drawn using vertices) */
   int resolution;
-  vec2 center;
-  std::vector<vec2> vertices;
+  VertexPT center;
+  //vec2 center;
+  //  std::vector<vec2> vertices;
+  std::vector<VertexPT> vertices;
   Perlin perlin;                            /* used to animate the radius of the mask */
   size_t bytes_allocated;                   /* number of bytes allocated in the vbo */
   float scale;                              /* scale of the mask that we use with "scale_range" to modify the radius of the mask. e.g. when scale_range is 20, the a scale value of 1.0 means that we add 20 to the radius */

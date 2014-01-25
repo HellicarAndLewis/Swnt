@@ -9,7 +9,7 @@
 
   <!-- 1.3, 1.8 (for installation) or 0.3, 1.2 (for desktop) --> 
   <kinect_near>0.3</kinect_near> <!-- everything before this distance is not used -->
-  <kinect_far>1.2</kinect_far> <!-- everything after this point is not used -->
+  <kinect_far>1.0</kinect_far> <!-- everything after this point is not used -->
 
   <max_wind>35</max_wind> <!-- used to calculate the vortex visibility -->
   <colors>

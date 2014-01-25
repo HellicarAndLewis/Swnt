@@ -274,8 +274,8 @@ void Spirals::applyVortexToField() {
 void Spirals::refresh() {
   assert(settings.color_dx < settings.colors.size());
   glUseProgram(prog);
-  glUniform3fv(glGetUniformLocation(prog, "u_col_from"), 1, settings.curr_colors.flow_lines.ptr());
-  glUniform3fv(glGetUniformLocation(prog, "u_col_to"), 1, settings.curr_colors.flow_lines.ptr());
+  glUniform3fv(glGetUniformLocation(prog, "u_col_from"), 1, settings.curr_colors.spiral_from.ptr());
+  glUniform3fv(glGetUniformLocation(prog, "u_col_to"), 1, settings.curr_colors.spiral_from.ptr());
 }
 
 void Spirals::applyCenterForce() {

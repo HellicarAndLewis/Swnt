@@ -71,7 +71,7 @@ void Flow::updateFlowTexture() {
 }
 
 void Flow::draw() {
-  glDisable(GL_DEPTH);
+  glDisable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
   assert(settings.color_dx < settings.colors.size());
 

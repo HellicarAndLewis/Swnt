@@ -43,7 +43,9 @@ static const char* THRESHOLD_FS = ""
   "void main() {"
   "  vec4 tc = texture(u_tex, v_tex);"
   "  fragcolor = vec4(1.0, 0.0, 0.0, 1.0);"
-  "  fragcolor.r = step(0.5, tc.r); "
+  "  fragcolor.r = (tc.r > 0.5) ? 1.0 : 0.0; "
+  // "  fragcolor.r = step(0.5, tc.r); "
+  // "  fragcolor.r = tc.r;"
   "}"
   "";
 

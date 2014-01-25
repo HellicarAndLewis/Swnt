@@ -58,7 +58,7 @@ bool Blur::setupFBO() {
  
   glGenRenderbuffers(1, &depth);
   glBindRenderbuffer(GL_RENDERBUFFER, depth);
-  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT32, win_w, win_h);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, win_w, win_h);
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth);
  
   glGenTextures(1, &tex0);
@@ -126,7 +126,7 @@ bool Blur::setupShader() {
         << "void main() {\n"
         << "  fragcolor = texture(u_scene_tex, v_tex) * " << weights[0] << ";\n";
  
-  for(int i = 1 ; i <= num_els; ++i) {
+  for(int i = 1 ; i < num_els; ++i) {
     yblur << "  fragcolor += texture(u_scene_tex, v_tex + vec2(0.0, " << float(i) * dy << ")) * " << weights[i] << ";\n" ;
     yblur << "  fragcolor += texture(u_scene_tex, v_tex - vec2(0.0, " << float(i) * dy << ")) * " << weights[i] << ";\n" ;
     xblur << "  fragcolor += texture(u_scene_tex, v_tex + vec2(" << float(i) * dx << ", 0.0)) * " << weights[i] << ";\n" ;
@@ -135,7 +135,7 @@ bool Blur::setupShader() {
  
   yblur << "}";
   xblur << "}";
- 
+
   delete weights;
   weights = NULL;
  
@@ -144,6 +144,9 @@ bool Blur::setupShader() {
   std::string xblur_s = xblur.str();
   const char* yblur_vss = yblur_s.c_str();
   const char* xblur_vss = xblur_s.c_str();
+
+  //printf("%s\n\n", yblur_vss);
+  //printf("%s\n\n", xblur_vss);
 
   // y-blur
   vert = rx_create_shader(GL_VERTEX_SHADER, B_VS);

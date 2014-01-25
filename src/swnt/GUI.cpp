@@ -146,6 +146,11 @@ bool GUI::setup(int w, int h) {
     TwAddVarRW(bar, "Spiral Summer", TW_TYPE_COLOR3F, swnt.settings.colors[2].spiral_from.ptr(), "group='Colors And Time'");
     TwAddVarRW(bar, "Spiral Autumn", TW_TYPE_COLOR3F, swnt.settings.colors[3].spiral_from.ptr(), "group='Colors And Time'");
 
+    TwAddVarRW(bar, "Grid Winter", TW_TYPE_COLOR3F, swnt.settings.colors[0].flow_lines.ptr(), "group='Colors And Time'");
+    TwAddVarRW(bar, "Grid Spring", TW_TYPE_COLOR3F, swnt.settings.colors[1].flow_lines.ptr(), "group='Colors And Time'");
+    TwAddVarRW(bar, "Grid Summer", TW_TYPE_COLOR3F, swnt.settings.colors[2].flow_lines.ptr(), "group='Colors And Time'");
+    TwAddVarRW(bar, "Grid Autumn", TW_TYPE_COLOR3F, swnt.settings.colors[3].flow_lines.ptr(), "group='Colors And Time'");
+
     TwAddVarRW(bar, "Water Winter", TW_TYPE_COLOR3F, swnt.settings.colors[0].water.ptr(), "group='Colors And Time'");
     TwAddVarRW(bar, "Water Spring", TW_TYPE_COLOR3F, swnt.settings.colors[1].water.ptr(), "group='Colors And Time'");
     TwAddVarRW(bar, "Water Summer", TW_TYPE_COLOR3F, swnt.settings.colors[2].water.ptr(), "group='Colors And Time'");
@@ -158,6 +163,9 @@ bool GUI::setup(int w, int h) {
   TwAddVarRW(bar, "Kinect Far", TW_TYPE_FLOAT, &swnt.settings.kinect_far, "group='Kinect' min=0.00 max=5.00 step=0.01");
   TwAddVarRW(bar, "Kinect Near", TW_TYPE_FLOAT, &swnt.settings.kinect_near, "group='Kinect' min=0.00 max=5.00 step=0.01");
   TwAddVarRW(bar, "Kinect Max Water Bulge Force", TW_TYPE_FLOAT, &swnt.height_field.force_max, "group='Kinect' min=0.00 max=10.00 step=0.01");
+  TwAddVarRW(bar, "Flip Hands Horizontally", TW_TYPE_BOOLCPP, &swnt.mask.hand_flip_y, "group='Kinect'");
+  TwAddVarRW(bar, "Flip Hands Vertically", TW_TYPE_BOOLCPP, &swnt.mask.hand_flip_x, "group='Kinect'");
+  TwAddVarRW(bar, "Kinect Image Rotation", TW_TYPE_FLOAT, &swnt.mask.hand_rotation, "group='Kinect' min=0.0 max=360.0 step=0.5");
   TwDefine("SWNT/Kinect opened=false");
 
 #if USE_SPIRALS
@@ -180,6 +188,7 @@ bool GUI::setup(int w, int h) {
   TwAddVarRW(bar, "Hand Scale", TW_TYPE_FLOAT, &swnt.tracking.blob_scale, "min=1.0 max=3.0 step=0.01");
   TwAddVarRW(bar, "Hand Offset", TW_TYPE_FLOAT, &swnt.tracking.blob_offset, "min=-300.0 max=300.0 step=0.5");
 #endif
+
 
   TwWindowSize(win_w, win_h);
   return true;

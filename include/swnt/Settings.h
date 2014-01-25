@@ -14,7 +14,7 @@ struct ColorSettings {
   vec3 hand;
   vec3 spiral_from;
   vec3 spiral_to;
-  vec3 flow_lines;
+  vec3 flow_lines;     
   vec3 water;
 };
 

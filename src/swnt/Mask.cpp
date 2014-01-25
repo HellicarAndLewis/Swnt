@@ -15,6 +15,7 @@ Mask::Mask(Settings& settings, Graphics& graphics)
   ,mask_vert(0)
   ,mask_frag(0)
   ,mask_prog(0)
+  ,mask_diffuse_tex(0)
   ,masked_out_vao(0)
   ,masked_out_fbo(0)
   ,masked_out_tex(0)
@@ -29,6 +30,9 @@ Mask::Mask(Settings& settings, Graphics& graphics)
   ,hand_prog(0)
   ,hand_vert(0)
   ,hand_frag(0)
+  ,hand_rotation(0)
+  ,hand_flip_x(false)
+  ,hand_flip_y(false)
   ,perlin(4, 4, 1, 34)
   ,bytes_allocated(0)
   ,scale(1.0)
@@ -41,8 +45,9 @@ Mask::~Mask() {
 
 bool Mask::setup() {
 
-  center.x = settings.win_w * 0.5;
-  center.y = settings.win_h * 0.5;
+  center.pos.x = settings.win_w * 0.5;
+  center.pos.y = settings.win_h * 0.5;
+  center.tex.set(0.0, 0.0);
 
   if(!createShader()) {
     printf("Error: cannot create mask shader.\n");
@@ -65,7 +70,7 @@ bool Mask::setup() {
     return false;
   }
 
-  if(!blur.setup(settings.image_processing_w, settings.image_processing_h, 5, 5)) {
+  if(!blur.setup(settings.image_processing_w, settings.image_processing_h, 4, 5)) {
     printf("Error: cannot setup the blur shader.\n");
     return false;
   }
@@ -90,7 +95,9 @@ bool Mask::createBuffers() {
     glGenBuffers(1, &mask_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, mask_vbo);
     glEnableVertexAttribArray(0); // pos
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vec2), (GLvoid*)0);
+    glEnableVertexAttribArray(1); // tex
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexPT), (GLvoid*)0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(VertexPT), (GLvoid*)12);
   }
   
   // Masking out GL 
@@ -122,14 +129,20 @@ void Mask::updateVertices() {
 #else
     float change = 0.0f;
 #endif
-    vec2 p(center.x + cos(a * i) * (radius + change), center.y + sin(a * i) * (radius + change));
-    vertices.push_back(p);
+    VertexPT pt;
+    pt.pos.set(center.pos.x + cos(a * i) * (radius + change), 
+               center.pos.y + sin(a * i) * (radius + change),
+               0.0f);
+    pt.tex.set(perc, 0.95f);
+    vertices.push_back(pt);
+    //vec2 p(center.x + cos(a * i) * (radius + change), center.y + sin(a * i) * (radius + change));
+    //vertices.push_back(p);
   }
 
   t += 0.001;
 
   glBindBuffer(GL_ARRAY_BUFFER, mask_vbo);
-  size_t needed = sizeof(vec2) * vertices.size();
+  size_t needed = sizeof(VertexPT) * vertices.size();
   if(needed > bytes_allocated) {
     glBufferData(GL_ARRAY_BUFFER, needed, vertices[0].ptr(), GL_STREAM_DRAW);
     bytes_allocated = needed;
@@ -147,8 +160,13 @@ bool Mask::createShader() {
   mask_frag = rx_create_shader(GL_FRAGMENT_SHADER, MASK_FS);
   mask_prog = rx_create_program(mask_vert, mask_frag);
   glBindAttribLocation(mask_prog, 0, "a_pos");
+  glBindAttribLocation(mask_prog, 1, "a_tex");
   glLinkProgram(mask_prog);
   rx_print_shader_link_info(mask_prog);
+  glUseProgram(mask_prog);
+  glUniform1i(glGetUniformLocation(mask_prog, "u_mask_tex"), 0);
+
+  mask_diffuse_tex = rx_create_texture(rx_to_data_path("images/mask_diffuse.png"));
 
   // Shader that masks out the shape of the mask in the depth image of the kinect
   masked_out_vert = rx_create_shader(GL_VERTEX_SHADER, TEX_VS);
@@ -179,6 +197,11 @@ bool Mask::createShader() {
   glUniform1i(glGetUniformLocation(mask_tex_prog, "u_diffuse_tex"), 1);
   glUniformMatrix4fv(glGetUniformLocation(mask_tex_prog, "u_pm"), 1, GL_FALSE, graphics.tex_pm.ptr());
 
+  mat4 mm;
+  mm.translate(settings.win_w * 0.5, settings.win_h * 0.5, 0.0f);
+  mm.scale(settings.win_w * 0.5, settings.win_h * 0.5, 1.0);
+  glUniformMatrix4fv(glGetUniformLocation(mask_tex_prog, "u_mm"), 1, GL_FALSE, mm.ptr());
+
   // Last minute change - hand prog
   hand_vert = rx_create_shader(GL_VERTEX_SHADER, TEX_VS);
   hand_frag = rx_create_shader(GL_FRAGMENT_SHADER, MASK_HAND_FS);
@@ -188,12 +211,7 @@ bool Mask::createShader() {
   glUseProgram(hand_prog);
   glUniformMatrix4fv(glGetUniformLocation(hand_prog, "u_pm"), 1, GL_FALSE, graphics.tex_pm.ptr());
   glUniform1i(glGetUniformLocation(hand_prog, "u_hand_tex"), 0);
-
-  mat4 mm;
-  mm.translate(settings.win_w * 0.5, settings.win_h * 0.5, 0.0f);
-  mm.scale(settings.win_w * 0.5, settings.win_h * 0.5, 1.0);
-  glUniformMatrix4fv(glGetUniformLocation(mask_tex_prog, "u_mm"), 1, GL_FALSE, mm.ptr());
-
+  glUniform1i(glGetUniformLocation(hand_prog, "u_mask_tex"), 1);
   return true;
 }
 
@@ -324,8 +342,11 @@ void Mask::drawMask() {
   glBindVertexArray(mask_vao);
   glUseProgram(mask_prog);
   glUniformMatrix4fv(glGetUniformLocation(mask_prog, "u_pm"), 1, GL_FALSE, settings.ortho_matrix.ptr());
-  glDrawArrays(GL_TRIANGLE_FAN, 0, vertices.size());
 
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, mask_diffuse_tex);
+
+  glDrawArrays(GL_TRIANGLE_FAN, 0, vertices.size());
 }
 
 // Use the mask to remove all the depth pixels. we also blur + threshold the masked_out image
@@ -363,9 +384,13 @@ void Mask::maskOutDepth() {
   thresh.threshold();
 
    // Download the pixels e.g.
-  glViewport(0.0f, 0.0f, settings.win_w, settings.win_h);
+#if 1
+  glReadBuffer(GL_COLOR_ATTACHMENT0);
+ 
   glBindTexture(GL_TEXTURE_2D, thresh.output_tex);
   glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_UNSIGNED_BYTE, masked_out_pixels);
+  glViewport(0.0f, 0.0f, settings.win_w, settings.win_h);
+#endif
 
   #if 0
   static int c = 0;
@@ -441,37 +466,41 @@ void Mask::refresh() {
 }
 
 void Mask::drawHand() {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+#if 0 
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   maskOutTexture(thresh.output_tex);
-  return;
-    glBindVertexArray(graphics.tex_vao);
-    glUseProgram(hand_prog);
+#else 
+
+  // last minute changes to the hand.
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  glBindVertexArray(graphics.tex_vao);
+  glUseProgram(hand_prog);
 
   mat4 hmm;
   float hw = settings.win_w * 0.5;
   float hh = settings.win_h * 0.5;
+  int hand_scale_x = ((hand_flip_x) ? -1 : 1);
+  int hand_scale_y = ((hand_flip_y) ? -1 : 1);
   hmm.identity();
-   hmm.scale(0.2, 0.2, 1.0);
-   //mm.translate(-0.01, -0.01, 0.0);
-  //  mm.scale(hw, hh, 1.0f);
+  hmm.translate(hw, hh, 0.0);
+  hmm.rotateZ(hand_rotation * DEG_TO_RAD);
+  hmm.scale(hw * hand_scale_x, hh * hand_scale_y, 1.0f);
 
-  /*
-  mat4 mm;
-  mm.translate(settings.win_w * 0.5, settings.win_h * 0.5, 0.0f);
-  mm.scale(settings.win_w * 0.5, settings.win_h * 0.5, 1.0);
-   */
-   glUniformMatrix4fv(glGetUniformLocation(hand_prog, "u_mm"), 1, GL_FALSE, hmm.ptr());
+  glUniformMatrix4fv(glGetUniformLocation(hand_prog, "u_mm"), 1, GL_FALSE, hmm.ptr());
+  glUniform3fv(glGetUniformLocation(hand_prog, "u_hand_color"), 1, settings.curr_colors.hand.ptr());
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, thresh.output_tex);
 
- 
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D, mask_tex);
+
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-  //maskOutTexture(blur.tex0);
-  //blur.setAsReadBuffer();
-  //glBlitFramebuffer(0, 0, 640, 480, 0, 0, 640, 480, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+#endif
 }
 
 void Mask::setScale(float s) {

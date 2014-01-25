@@ -178,6 +178,10 @@ void Settings::getColorsForTimeOfYear(float t, ColorSettings& result) {
   Spline<float> water_sats;
   Spline<float> water_vals;
 
+  Spline<float> spiral_hues;
+  Spline<float> spiral_sats;
+  Spline<float> spiral_vals;
+
   Spline<float> flow_hues;
   Spline<float> flow_sats;
   Spline<float> flow_vals;
@@ -185,28 +189,34 @@ void Settings::getColorsForTimeOfYear(float t, ColorSettings& result) {
   float hand_hsv[3];
   float water_hsv[3];
   float flow_hsv[3];
+  float spiral_hsv[3];
 
   for(int i = 0; i < colors.size(); ++i) {
     ColorSettings col = colors[i];
 
     rx_rgb_to_hsv(col.hand, hand_hsv);
     rx_rgb_to_hsv(col.water, water_hsv);
-    rx_rgb_to_hsv(col.spiral_from, flow_hsv);
+    rx_rgb_to_hsv(col.flow_lines, flow_hsv);
+    rx_rgb_to_hsv(col.spiral_from, spiral_hsv);
 
     hand_hues.push_back(hand_hsv[0]);
     water_hues.push_back(water_hsv[0]);
     flow_hues.push_back(flow_hsv[0]);
+    spiral_hues.push_back(spiral_hsv[0]);
 
     hand_sats.push_back(hand_hsv[1]);
     water_sats.push_back(water_hsv[1]);
     flow_sats.push_back(flow_hsv[1]);
+    spiral_sats.push_back(spiral_hsv[1]);
 
     hand_vals.push_back(hand_hsv[2]);
     water_vals.push_back(water_hsv[2]);
     flow_vals.push_back(flow_hsv[2]);
+    spiral_vals.push_back(spiral_hsv[2]);
   }
 
   rx_hsv_to_rgb(hand_hues.at(t), hand_sats.at(t), hand_vals.at(t), result.hand.x, result.hand.y, result.hand.z);
   rx_hsv_to_rgb(water_hues.at(t), water_sats.at(t), water_vals.at(t), result.water.x, result.water.y, result.water.z);
   rx_hsv_to_rgb(flow_hues.at(t), flow_sats.at(t), flow_vals.at(t), result.flow_lines.x, result.flow_lines.y, result.flow_lines.z);
+  rx_hsv_to_rgb(spiral_hues.at(t), spiral_sats.at(t), spiral_vals.at(t), result.spiral_from.x, result.spiral_from.y, result.spiral_from.z);
 }
