@@ -7,6 +7,7 @@
 #ifndef ROXLU_THRESHOLD_SHADER_H
 #define ROXLU_THRESHOLD_SHADER_H
 
+#define ROXLU_USE_MATH
 #define ROXLU_USE_OPENGL
 #include <tinylib.h>
 

@@ -6,10 +6,14 @@
 
 */
 
+#define ROXLU_USE_ALL
+#define ROXLU_IMPLEMENTATION
+#include <tinylib.h>
+
 #include <swnt/Types.h>
 #include <swnt/Settings.h>
 #include <swnt/Swnt.h>
-#include <tinylib.h>
+
 #include <iostream>
 
 #if defined(__linux)
@@ -34,6 +38,11 @@ float force_x = 0.0f;
 float force_y = 0.0f;
 
 int main() {
+  vec2 v(10,40);
+  v = normalized(v);
+  vec2 b(40,44);
+  float d = dot(v,b);
+  printf(">>>>>> %f\n", d);
 
   glfwSetErrorCallback(error_callback);
 

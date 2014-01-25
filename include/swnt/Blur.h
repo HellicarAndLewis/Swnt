@@ -16,6 +16,7 @@
 #ifndef ROXLU_BLUR_H
 #define ROXLU_BLUR_H
 
+#define ROXLU_USE_MATH
 #define ROXLU_USE_OPENGL
 #include <tinylib.h>
  
