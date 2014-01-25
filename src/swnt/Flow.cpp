@@ -75,13 +75,14 @@ void Flow::draw() {
   glDisable(GL_BLEND);
   assert(settings.color_dx < settings.colors.size());
 
+
   if(field_vertices.size()) {
     glBindVertexArray(field_vao);
     glUseProgram(graphics.v_prog);
 
     mat4 mm;
     mm.translate(0, 0.0, 0);
-    glUniform3fv(glGetUniformLocation(graphics.v_prog, "u_color"), 1, settings.colors[settings.color_dx].flow_lines.ptr());
+    glUniform3fv(glGetUniformLocation(graphics.v_prog, "u_color"), 1, settings.curr_colors.flow_lines.ptr());
     glUniformMatrix4fv(glGetUniformLocation(graphics.v_prog, "u_mm"), 1, GL_FALSE, mm.ptr());
     glUniformMatrix4fv(glGetUniformLocation(graphics.v_prog, "u_pm"), 1, GL_FALSE, settings.ortho_matrix.ptr());
     glDrawArrays(GL_LINES, 0, field_vertices.size());

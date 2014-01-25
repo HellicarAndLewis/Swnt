@@ -26,6 +26,9 @@ Mask::Mask(Settings& settings, Graphics& graphics)
   ,masked_scene_prog(0)
   ,mask_tex_frag(0)
   ,mask_tex_prog(0)
+  ,hand_prog(0)
+  ,hand_vert(0)
+  ,hand_frag(0)
   ,perlin(4, 4, 1, 34)
   ,bytes_allocated(0)
   ,scale(1.0)
@@ -167,14 +170,24 @@ bool Mask::createShader() {
   // Shader that will mask out a generic texture
   mask_tex_frag = rx_create_shader(GL_FRAGMENT_SHADER, DRAW_MASKED_FS);
   mask_tex_prog = rx_create_program(graphics.tex_vs, mask_tex_frag);
-  glBindAttribLocation(mask_tex_prog, 0, "a_pos");
-  glBindAttribLocation(mask_tex_prog, 1, "a_tex");
+  glBindAttribLocation(mask_tex_prog, 0, "a_pos"); // @todo hmm we don't have this
+  glBindAttribLocation(mask_tex_prog, 1, "a_tex"); // @todo and this one...
   glLinkProgram(mask_tex_prog);
   rx_print_shader_link_info(mask_tex_prog);
   glUseProgram(mask_tex_prog);
   glUniform1i(glGetUniformLocation(mask_tex_prog, "u_mask_tex"), 0);
   glUniform1i(glGetUniformLocation(mask_tex_prog, "u_diffuse_tex"), 1);
   glUniformMatrix4fv(glGetUniformLocation(mask_tex_prog, "u_pm"), 1, GL_FALSE, graphics.tex_pm.ptr());
+
+  // Last minute change - hand prog
+  hand_vert = rx_create_shader(GL_VERTEX_SHADER, TEX_VS);
+  hand_frag = rx_create_shader(GL_FRAGMENT_SHADER, MASK_HAND_FS);
+  hand_prog = rx_create_program(hand_vert, hand_frag);
+  glLinkProgram(hand_prog);
+  rx_print_shader_link_info(hand_prog);
+  glUseProgram(hand_prog);
+  glUniformMatrix4fv(glGetUniformLocation(hand_prog, "u_pm"), 1, GL_FALSE, graphics.tex_pm.ptr());
+  glUniform1i(glGetUniformLocation(hand_prog, "u_hand_tex"), 0);
 
   mat4 mm;
   mm.translate(settings.win_w * 0.5, settings.win_h * 0.5, 0.0f);
@@ -428,13 +441,37 @@ void Mask::refresh() {
 }
 
 void Mask::drawHand() {
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   maskOutTexture(thresh.output_tex);
+  return;
+    glBindVertexArray(graphics.tex_vao);
+    glUseProgram(hand_prog);
+
+  mat4 hmm;
+  float hw = settings.win_w * 0.5;
+  float hh = settings.win_h * 0.5;
+  hmm.identity();
+   hmm.scale(0.2, 0.2, 1.0);
+   //mm.translate(-0.01, -0.01, 0.0);
+  //  mm.scale(hw, hh, 1.0f);
+
+  /*
+  mat4 mm;
+  mm.translate(settings.win_w * 0.5, settings.win_h * 0.5, 0.0f);
+  mm.scale(settings.win_w * 0.5, settings.win_h * 0.5, 1.0);
+   */
+   glUniformMatrix4fv(glGetUniformLocation(hand_prog, "u_mm"), 1, GL_FALSE, hmm.ptr());
+
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, thresh.output_tex);
+
+ 
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
   //maskOutTexture(blur.tex0);
-  //  blur.setAsReadBuffer();
-  //  glBlitFramebuffer(0, 0, 640, 480, 0, 0, 640, 480, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+  //blur.setAsReadBuffer();
+  //glBlitFramebuffer(0, 0, 640, 480, 0, 0, 640, 480, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 }
 
 void Mask::setScale(float s) {

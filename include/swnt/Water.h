@@ -64,6 +64,7 @@ class Water {
   GLuint depth_ramp_tex;                          /* colors that are selected by depth */
   GLuint extra_flow_tex;                          /* the capture flow texture */
   GLuint force_tex;                               /* this texture is used to apply an extra force to the height field */
+  GLuint vortex_tex;                              /* the vortex we draw in the center of the water, just an png */
   
   GLuint fbo;                                     /* used to render the extra flow */
 

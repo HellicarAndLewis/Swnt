@@ -90,6 +90,20 @@ static const char* DRAW_MASKED_FS = ""
   "}"
   "";
 
+/* Draws the hand (last minute change) */
+static const char* MASK_HAND_FS = ""
+  "#version 150\n"
+  "uniform sampler2D u_hand_tex;"
+  "uniform vec3 u_color;"
+  "in vec2 v_tex;"
+  "out vec4 fragcolor;"
+  
+  "void main() {"
+  "   float t = texture(u_hand_tex, v_tex).r;"
+  "   fragcolor = vec4(t, 1.0, 0.0, 1.0); "
+  "}";
+
+
 class Mask {
 
  public:
@@ -163,6 +177,11 @@ class Mask {
   /* Grabbing the depth */
   GLuint depth_tex;                        /* we render the depth image from the kinect into this texture. this only does a simple "blit" we assume the depth pixels are already converted to meters */
   GLuint depth_fbo;                        /* fbo we used to grab the depth texture/image */
+
+  /* Last minute change - drawing the hand */
+  GLuint hand_prog;
+  GLuint hand_vert;
+  GLuint hand_frag;
 
   /* Mask vertices (the circular shape that we use to mask is drawn using vertices) */
   int resolution;

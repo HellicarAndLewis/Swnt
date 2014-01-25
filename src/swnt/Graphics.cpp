@@ -45,6 +45,7 @@ bool Graphics::setup() {
   glLinkProgram(v_prog);
   rx_print_shader_link_info(v_prog);
   glUseProgram(v_prog);
+
   float col[3] = {1.0, 0.0, 0.0};
   glUniform3fv(glGetUniformLocation(v_prog, "u_color"), 1, col);
 

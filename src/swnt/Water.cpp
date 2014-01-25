@@ -19,6 +19,7 @@ Water::Water(HeightField& heightField, Settings& settings)
   ,depth_ramp_tex(0)
   ,extra_flow_tex(0)
   ,force_tex(0)
+  ,vortex_tex(0)
   ,u_max_foam_depth(0)
   ,u_vortex_intensity(0)
   ,u_sun_color(0)
@@ -115,6 +116,7 @@ bool Water::setupTextures() {
   flow_tex = rx_create_texture(rx_to_data_path("images/water_flow.png"));
   sand_tex = rx_create_texture(rx_to_data_path("images/sand.png"));
   force_tex = rx_create_texture(rx_to_data_path("images/force.png"));
+  vortex_tex = rx_create_texture(rx_to_data_path("images/vortex.png"));
 
   // specify some tex params for the depth ramp. (we need nearest sampling)
   depth_ramp_tex = rx_create_texture(rx_to_data_path("images/depth_ramp.png"));
@@ -146,6 +148,7 @@ bool Water::setupShaders() {
   glUniform1i(glGetUniformLocation(water_prog.id, "u_sand_tex"), 7);
   glUniform1i(glGetUniformLocation(water_prog.id, "u_depth_ramp_tex"), 8);
   glUniform1i(glGetUniformLocation(water_prog.id, "u_extra_flow_tex"), 9);
+  glUniform1i(glGetUniformLocation(water_prog.id, "u_vortex_tex"), 10);
 
   u_max_foam_depth = glGetUniformLocation(water_prog.id, "u_max_foam_depth");  
   u_vortex_intensity = glGetUniformLocation(water_prog.id, "u_vortex_intensity");  
@@ -212,6 +215,7 @@ void Water::draw() {
   glActiveTexture(GL_TEXTURE7);  glBindTexture(GL_TEXTURE_2D, sand_tex);
   glActiveTexture(GL_TEXTURE8);  glBindTexture(GL_TEXTURE_2D, depth_ramp_tex);
   glActiveTexture(GL_TEXTURE9);  glBindTexture(GL_TEXTURE_2D, extra_flow_tex);
+  glActiveTexture(GL_TEXTURE10);  glBindTexture(GL_TEXTURE_2D, vortex_tex);
 
 #if WATER_USE_LINES
   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
