@@ -52,7 +52,7 @@ static const char* MASKED_OUT_FS = ""
   "  fragcolor.a = 1.0;"
   //  "  fragcolor.rgb = vec3(depth_tc.r) * ceil(mask_tc.r * 1000);"
   // "  fragcolor.rgb = clamp(vec3(depth_tc.r) * ceil(mask_tc.r ), 0.0, 1.0);"
-  "  fragcolor.rgb = depth_tc.rgb;" // * mask_tc.rgb;"
+  "  fragcolor.rgb = depth_tc.rgb * mask_tc.r;"
   "}"
   "";
 
