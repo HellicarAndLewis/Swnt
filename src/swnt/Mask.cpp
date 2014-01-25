@@ -383,11 +383,14 @@ void Mask::maskOutDepth() {
   blur.setAsReadBuffer();
   thresh.threshold();
 
+  GLenum e = glGetError();
+  if(e != GL_NO_ERROR) {
+    printf("ERROR\n");
+  }
    // Download the pixels e.g.
 #if 1
-  glReadBuffer(GL_COLOR_ATTACHMENT0);
- 
-  glBindTexture(GL_TEXTURE_2D, thresh.output_tex);
+  //  glReadBuffer(GL_COLOR_ATTACHMENT0);
+   glBindTexture(GL_TEXTURE_2D, thresh.output_tex);
   glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_UNSIGNED_BYTE, masked_out_pixels);
   glViewport(0.0f, 0.0f, settings.win_w, settings.win_h);
 #endif
