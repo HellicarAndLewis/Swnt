@@ -395,7 +395,7 @@ void Swnt::draw() {
     mask.maskOutScene();
 
     if(draw_threshold) {
-      mask.drawHand();
+       mask.drawHand();
     }
 
     tracking.track(mask.masked_out_pixels);

@@ -351,6 +351,7 @@ void Mask::drawMask() {
 
 // Use the mask to remove all the depth pixels. we also blur + threshold the masked_out image
 void Mask::maskOutDepth() {
+
   assert(masked_out_pixels);
 
   mat4 mm;
@@ -383,13 +384,13 @@ void Mask::maskOutDepth() {
   blur.setAsReadBuffer();
   thresh.threshold();
 
-   // Download the pixels e.g.
+  glViewport(0.0f, 0.0f, settings.win_w, settings.win_h);
+
 #if 1
-  glReadBuffer(GL_COLOR_ATTACHMENT0);
- 
+  //  glReadBuffer(GL_COLOR_ATTACHMENT0);
+  // Download the pixels e.g.
   glBindTexture(GL_TEXTURE_2D, thresh.output_tex);
   glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_UNSIGNED_BYTE, masked_out_pixels);
-  glViewport(0.0f, 0.0f, settings.win_w, settings.win_h);
 #endif
 
   #if 0
@@ -466,6 +467,7 @@ void Mask::refresh() {
 }
 
 void Mask::drawHand() {
+
 #if 0 
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -475,7 +477,7 @@ void Mask::drawHand() {
   // last minute changes to the hand.
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
+  
   glBindVertexArray(graphics.tex_vao);
   glUseProgram(hand_prog);
 
@@ -499,6 +501,7 @@ void Mask::drawHand() {
   glBindTexture(GL_TEXTURE_2D, mask_tex);
 
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+  glDisable(GL_BLEND);
 
 #endif
 }

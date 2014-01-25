@@ -57,8 +57,8 @@ int main() {
   }
 
   GLFWwindow* win = NULL;
-  //win = glfwCreateWindow(settings.win_w, settings.win_h, "Swnt", glfwGetPrimaryMonitor(), NULL);
-  win = glfwCreateWindow(settings.win_w, settings.win_h, "Swnt", NULL, NULL);
+  win = glfwCreateWindow(settings.win_w, settings.win_h, "Swnt", glfwGetPrimaryMonitor(), NULL);
+  //win = glfwCreateWindow(settings.win_w, settings.win_h, "Swnt", NULL, NULL);
   if(!win) {
     glfwTerminate();
     exit(EXIT_FAILURE);

@@ -12,7 +12,7 @@
 #define USE_WEATHER 1                           /* use yahoo weather data */
 #define USE_AUDIO 1                             /* use audio effects */
 #define USE_EFFECTS 1                           /* use effects, like splashing, etc.. */
-#define USE_WATER_BALLS 0                       /* use the water ball simulation */
+#define USE_WATER_BALLS 1                       /* use the water ball simulation */
 #define USE_TIDES 1                             /* parse and use the text file (format 13) with tides info */
 #define USE_SPIRALS 1
 #define USE_TRIANGULATION 0
