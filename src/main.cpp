@@ -38,12 +38,6 @@ float force_x = 0.0f;
 float force_y = 0.0f;
 
 int main() {
-  vec2 v(10,40);
-  v = normalized(v);
-  vec2 b(40,44);
-  float d = dot(v,b);
-  printf(">>>>>> %f\n", d);
-
   glfwSetErrorCallback(error_callback);
 
   if(!glfwInit()) {
@@ -63,8 +57,8 @@ int main() {
   }
 
   GLFWwindow* win = NULL;
-  //win = glfwCreateWindow(settings.win_w, settings.win_h, "Swnt", glfwGetPrimaryMonitor(), NULL);
-  win = glfwCreateWindow(settings.win_w, settings.win_h, "Swnt", NULL, NULL);
+  win = glfwCreateWindow(settings.win_w, settings.win_h, "Swnt", glfwGetPrimaryMonitor(), NULL);
+  //win = glfwCreateWindow(settings.win_w, settings.win_h, "Swnt", NULL, NULL);
   if(!win) {
     glfwTerminate();
     exit(EXIT_FAILURE);
@@ -89,7 +83,7 @@ int main() {
   glfwGetWindowSize(win, &w, &h);
   if(w != settings.win_w || h != settings.win_h) {
     printf("The created window does not have the asked dimensions!\nTry changing the width and height in the settings: %d x %d\n", w, h);
-    ::exit(EXIT_FAILURE);
+     ::exit(EXIT_FAILURE);
   }
 
   // ----------------------------------------------------------------

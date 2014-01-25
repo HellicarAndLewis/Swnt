@@ -186,7 +186,6 @@ std::string weather_fetch_url(std::string url) {
     curl_easy_cleanup(curl);
     curl = NULL;
     return result;
-
 }
 
 std::string weather_download_yahoo_rss() {

@@ -20,12 +20,12 @@ Swnt::Swnt(Settings& settings)
   ,depth_image(NULL)
 #endif
   ,state(STATE_RENDER_SCENE)
-  ,draw_flow(false)
+  ,draw_flow(true)
   ,draw_threshold(true)
   ,draw_water(true)
   ,draw_vortex(true)
   ,draw_tracking(true)
-  ,draw_gui(true)
+  ,draw_gui(false)
   ,override_with_gui(false)
 #if USE_SPIRALS
   ,spirals(settings, tracking, graphics, flow)
@@ -169,7 +169,13 @@ bool Swnt::setup() {
   if(!audio.add(SOUND_GLOOB, rx_to_data_path("audio/gloob.mp3"), FMOD_SOFTWARE)) {
     return false;
   }
-  if(!audio.add(SOUND_SPLASH, rx_to_data_path("audio/splash.mp3"), FMOD_SOFTWARE)) {
+  if(!audio.add(SOUND_SPLASH0, rx_to_data_path("audio/splash0.mp3"), FMOD_SOFTWARE)) {
+    return false;
+  }
+  if(!audio.add(SOUND_SPLASH1, rx_to_data_path("audio/splash1.mp3"), FMOD_SOFTWARE)) {
+    return false;
+  }
+  if(!audio.add(SOUND_SPLASH2, rx_to_data_path("audio/splash2.mp3"), FMOD_SOFTWARE)) {
     return false;
   }
 
@@ -262,13 +268,6 @@ void Swnt::update(float dt) {
   mask.update();
 
 #if USE_WATER
-  /*
-  height_field.calculateHeights();
-  height_field.calculatePositions();
-  height_field.calculateNormals();
-  height_field.calculateFoam();
-  */
-
   water.update(1.0f/60.0f);
 #endif
 
@@ -306,7 +305,6 @@ void Swnt::update(float dt) {
 }
 
 void Swnt::draw() {
-
 
 #if 0
   height_field.debugDraw();
@@ -385,7 +383,6 @@ void Swnt::draw() {
       water.endGrabFlow();
     }
 #endif
-    
 
     // capture the scene
     mask.beginSceneGrab();
@@ -405,12 +402,19 @@ void Swnt::draw() {
 
     mask.draw_hand = draw_threshold;
 
+#   if USE_WATER_BALLS
+    ball_drawer.draw();
+#   endif 
+
     #if USE_RGB_SHIFT
     rgb_shift.apply();
     rgb_shift.draw();
     #endif
 
+
 #endif  // USE_KINECT
+
+
   } // if(state == STATE_RENDER_SCENE)
 
 #if USE_GUI
@@ -449,6 +453,7 @@ void Swnt::drawScene() {
   if(draw_tracking) {
     tracking.draw(0.0f, 0.0f);
   }
+
 }
 
 // Updates the kinect depth and color buffers.
@@ -702,7 +707,10 @@ void Swnt::updateActivityLevel() {
     audio.playOnce(SOUND_GLOOB);
   }
   else if(tracking.prev_num_tracked > tracking.num_tracked) {
-    audio.playOnce(SOUND_SPLASH);
+    int sounds[] = { SOUND_SPLASH0, SOUND_SPLASH1, SOUND_SPLASH2 } ;
+    static int sound_dx = 0;
+    sound_dx = ++sound_dx % 3;
+    audio.playOnce(sounds[sound_dx]);
   }
 #endif
 }
