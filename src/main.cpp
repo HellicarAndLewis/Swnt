@@ -57,8 +57,8 @@ int main() {
   }
 
   GLFWwindow* win = NULL;
-  //win = glfwCreateWindow(settings.win_w, settings.win_h, "Swnt", glfwGetPrimaryMonitor(), NULL);
-  win = glfwCreateWindow(settings.win_w, settings.win_h, "Swnt", NULL, NULL);
+  win = glfwCreateWindow(settings.win_w, settings.win_h, "Swnt", glfwGetPrimaryMonitor(), NULL);
+  //win = glfwCreateWindow(settings.win_w, settings.win_h, "Swnt", NULL, NULL);
   if(!win) {
     glfwTerminate();
     exit(EXIT_FAILURE);
@@ -89,6 +89,7 @@ int main() {
   // ----------------------------------------------------------------
   // THIS IS WHERE YOU START CALLING OPENGL FUNCTIONS, NOT EARLIER!!
   // ----------------------------------------------------------------
+  glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
   if(!swnt.setup()) {
     printf("Error: Swnt::setup() failed, see log for more info.\n");
@@ -137,7 +138,6 @@ int main() {
     glfwPollEvents();
   }
 
-
   glfwTerminate();
 
   return EXIT_SUCCESS;
@@ -161,18 +161,6 @@ void key_callback(GLFWwindow* win, int key, int scancode, int action, int mods) 
   }
 
   switch(key) {
-#if USE_AUDIO
-    case GLFW_KEY_I: {
-      printf("audio.play(SOUND_WAVES_CRASHING)\n");
-      swnt.audio.play(SOUND_WAVES_CRASHING);
-      break;
-    }
-    case GLFW_KEY_O: {
-      printf("audio.stop(SOUND_WAVES_CRASHING)\n");
-      swnt.audio.stop(SOUND_WAVES_CRASHING);
-      break;
-    }
-#endif
     case GLFW_KEY_1: {
       swnt.draw_water = !swnt.draw_water;
       break;
@@ -199,51 +187,14 @@ void key_callback(GLFWwindow* win, int key, int scancode, int action, int mods) 
 #endif      
       break;
     }
-    case GLFW_KEY_SPACE: {
-      break;
-    }
-    case GLFW_KEY_LEFT: {
-      break;
-    }
-    case GLFW_KEY_RIGHT: {
-      break;
-    }
     case GLFW_KEY_ESCAPE: {
       glfwSetWindowShouldClose(win, GL_TRUE);
       break;
     }
     case GLFW_KEY_M: {
-      static bool show = false;
+      static bool show = true;
       glfwSetInputMode(win, GLFW_CURSOR, (show) ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_HIDDEN);
       show = !show;
-      break;
-    }
-    case GLFW_KEY_T: {
-      int num = 5;
-      vec3 dir(rx_random(-1.0,1.0), rx_random(-1.0f, 1.0f), 0.0);
-      float angle = rx_random(0, TWO_PI);
-      float total_angle = 40 * DEG_TO_RAD;
-      float part_angle = total_angle / num;
-      float radius = 150;
-      vec3 pos(512.0f, 384.0, 0.0);
-      for(int i = 0; i < num; ++i) {
-
-        float c = cos(i*part_angle);
-        float s = sin(i * part_angle);
-        dir.set(c, s, 0.0);
-        vec3 p(pos.x + c * radius, pos.y + s * radius, 0.0);
-      //      dir.set(1.0, 0.0, 0.0);
-#if USE_EFFECTS
-        //        swnt.effects.splashes.createParticle(p, dir);
-#endif
-      }
-      break;
-    }
-    case GLFW_KEY_R: {
-      printf("Recompiled.\n");
-#if USE_EFFECTS
-      //      swnt.effects.splashes.prog.recompile();
-#endif
       break;
     }
   };
@@ -271,10 +222,8 @@ void cursor_callback(GLFWwindow* win, double x, double y) {
 #if USE_GUI
   swnt.gui.onMouseMoved(x, y);
 #endif
-
   force_x = x/1280.0;
   force_y = (720-y)/720.0;
-  // printf("force_x: %f, force_y: %f\n", force_x, force_y);
 }
 
 void scroll_callback(GLFWwindow* window, double x, double y) {
