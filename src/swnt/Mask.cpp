@@ -138,7 +138,6 @@ void Mask::updateVertices() {
     //vec2 p(center.x + cos(a * i) * (radius + change), center.y + sin(a * i) * (radius + change));
     //vertices.push_back(p);
   }
-
   t += 0.001;
 
   glBindBuffer(GL_ARRAY_BUFFER, mask_vbo);
@@ -328,7 +327,7 @@ void Mask::beginMaskGrab() {
   GLenum drawbufs[] = { GL_COLOR_ATTACHMENT1 };
   glBindFramebuffer(GL_FRAMEBUFFER, scene_fbo);
   glDrawBuffers(1, drawbufs);
-  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glClear(GL_COLOR_BUFFER_BIT);
   glViewport(0.0f, 0.0f, settings.win_w, settings.win_h);
 }
@@ -339,10 +338,12 @@ void Mask::endMaskGrab() {
 }
 
 void Mask::drawMask() {
+
   glBindVertexArray(mask_vao);
   glUseProgram(mask_prog);
-  glUniformMatrix4fv(glGetUniformLocation(mask_prog, "u_pm"), 1, GL_FALSE, settings.ortho_matrix.ptr());
 
+  glUniformMatrix4fv(glGetUniformLocation(mask_prog, "u_pm"), 1, GL_FALSE, settings.ortho_matrix.ptr());
+  
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, mask_diffuse_tex);
 
@@ -384,11 +385,10 @@ void Mask::maskOutDepth() {
   blur.setAsReadBuffer();
   thresh.threshold();
 
-  glViewport(0.0f, 0.0f, settings.win_w, settings.win_h);
-
   // Download the pixels e.g.
   glBindTexture(GL_TEXTURE_2D, thresh.output_tex);
   glGetTexImage(GL_TEXTURE_2D, 0, GL_RED, GL_UNSIGNED_BYTE, masked_out_pixels);
+  glViewport(0.0f, 0.0f, settings.win_w, settings.win_h);
 
   #if 0
   static int c = 0;
@@ -398,6 +398,7 @@ void Mask::maskOutDepth() {
     rx_save_png(n, masked_out_pixels, 640, 480, 1);
   }
   #endif
+
 }
 
 void Mask::drawThresholded() {
@@ -426,7 +427,6 @@ void Mask::maskOutScene() {
   glBindTexture(GL_TEXTURE_2D, mask_tex);
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, scene_tex);
-
   glActiveTexture(GL_TEXTURE2);
   glBindTexture(GL_TEXTURE_2D, thresh.output_tex);
 

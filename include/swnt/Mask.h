@@ -50,9 +50,7 @@ static const char* MASKED_OUT_FS = ""
   "  vec4 mask_tc = texture(u_mask_tex, v_tex);"
   "  vec4 depth_tc = texture(u_depth_tex, v_tex);"
   "  fragcolor.a = 1.0;"
-  //  "  fragcolor.rgb = vec3(depth_tc.r) * ceil(mask_tc.r * 1000);"
-  // "  fragcolor.rgb = clamp(vec3(depth_tc.r) * ceil(mask_tc.r ), 0.0, 1.0);"
-  "  fragcolor.rgb = depth_tc.rgb * mask_tc.r;"
+  "  fragcolor.rgb = depth_tc.rgb * mask_tc.rgb;"
   "}"
   "";
 

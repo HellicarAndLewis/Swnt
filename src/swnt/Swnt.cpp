@@ -356,6 +356,7 @@ void Swnt::draw() {
 
 #if USE_WATER_BALLS
     // apply forces onto the water, when water balls are flushing away
+
     if(flush_points.size()) {
       height_field.beginDrawForces();
       for(std::vector<vec2>::iterator it = flush_points.begin(); it != flush_points.end(); ++it) {
@@ -364,6 +365,7 @@ void Swnt::draw() {
       }
       height_field.endDrawForces();
     }
+
 #endif
 
     // capture the mask shape
@@ -395,7 +397,7 @@ void Swnt::draw() {
     mask.maskOutScene();
 
     if(draw_threshold) {
-       mask.drawHand();
+        mask.drawHand();
     }
 
     tracking.track(mask.masked_out_pixels);
@@ -403,7 +405,7 @@ void Swnt::draw() {
     mask.draw_hand = draw_threshold;
 
 #   if USE_WATER_BALLS
-    ball_drawer.draw();
+     ball_drawer.draw();
 #   endif 
 
     #if USE_RGB_SHIFT
@@ -515,6 +517,7 @@ void Swnt::print() {
 #if USE_WATER_BALLS 
 
 void Swnt::updateWaterBalls() {
+
   flush_points.clear();
   ball_drawer.update(0.016f);
 
@@ -607,13 +610,7 @@ void Swnt::updateWaterBalls() {
       ::exit(EXIT_FAILURE);
     }
 
-    //printf("Tracking: %d, WaterBall: %p, Number of WaterBalls: %ld, age: %d, (%f, %f), state: %d\n", found_tracked_ball.tracked_id, found_tracked_ball.water_ball, ball_drawer.balls.size(), tracked->age, tracked->position.x, tracked->position.y, found_tracked_ball.water_ball->state);
-    //printf("Ball found: %p  total tracked now: %ld. Created balls: %ld, age: %d\n", found, tracked_balls.size(), ball_drawer.balls.size());
-
-    //found->position.set(tracked->position.x * scale_x, settings.win_h - (tracked->position.y * scale_y)); 
-    //found->enable();
     found->position.set(tracked->position.x * scale_x, (tracked->position.y * scale_y)); 
-    //found->position.set(312, 0);
    
   }
 

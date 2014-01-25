@@ -346,6 +346,7 @@ void WaterBallDrawer::update(float dt) {
 
   //printf("We got: %ld drops, took: %f ms.\n", drops.size(), (rx_hrtime() - n)/1000000.0);
 
+  // TMP - this was enabled (?)
   drawParticlesWithAlpha();
 }
 
@@ -365,6 +366,7 @@ void WaterBallDrawer::drawParticlesWithAlpha() {
   glClear(GL_COLOR_BUFFER_BIT);
   glViewport(0, 0, win_w, win_h);
 
+
   glBindVertexArray(basic_vao);
   glUseProgram(basic_prog.id);
 
@@ -376,10 +378,12 @@ void WaterBallDrawer::drawParticlesWithAlpha() {
 
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  //glBlendFunc(GL_ONE, GL_ONE);
+
   glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, drops.size());
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glDisable(GL_BLEND);
+
 }
 
 void WaterBallDrawer::drawParticlesWithWaterEffect() {
@@ -388,7 +392,6 @@ void WaterBallDrawer::drawParticlesWithWaterEffect() {
     return;
   }
 
-  //glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glDisable(GL_DEPTH_TEST);
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
