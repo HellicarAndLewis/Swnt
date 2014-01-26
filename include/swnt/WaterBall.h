@@ -111,6 +111,7 @@ class WaterBallDrawer {
   GLuint scene_normals_tex;
   size_t bytes_allocated;                     /* number of bytes we allocted on gpu */
   mat4 pm;                                    /* projection matrix; ortho */
+  float alpha;                                /* last minute change: alpha for the water */
 };
 
 

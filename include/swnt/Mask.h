@@ -121,6 +121,7 @@ static const char* MASK_HAND_FS = ""
   "uniform vec3 u_hand_color;"
   "uniform sampler2D u_hand_tex;"
   "uniform sampler2D u_mask_tex;"
+  "uniform float u_alpha;"
   "uniform vec3 u_color;"
   "in vec2 v_tex;"
   "out vec4 fragcolor;"
@@ -129,6 +130,7 @@ static const char* MASK_HAND_FS = ""
   "   float t = texture(u_hand_tex, v_tex).r;"
   "   float a = texture(u_mask_tex, v_tex).a;"
   "   fragcolor = vec4(u_hand_color, t) * a; "
+  "   fragcolor.a = u_alpha * t;"
   "}";
 
 
@@ -218,6 +220,7 @@ class Mask {
   float hand_sy;                           /* y scaling for the thresholded hand */
   float hand_tx;                           /* translate kinect image */
   float hand_ty;                           /* translate kinect image */
+  float hand_alpha;                        /* alpha level for the hand */
 
   /* Mask vertices (the circular shape that we use to mask is drawn using vertices) */
   int resolution;

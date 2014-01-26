@@ -9,6 +9,7 @@ uniform float u_time;
 uniform sampler2D u_normals_tex;
 uniform sampler2D u_alpha_tex;
 uniform sampler2D u_background_tex;
+uniform float u_alpha;
 
 in vec2 v_tex;
 in vec2 v_pos;
@@ -44,7 +45,7 @@ void main() {
   //k = (k >= 0.7) ? 1.0 : 0.0;
   fragcolor.rgb = background * k;
 
-  fragcolor.a = k;
+  fragcolor.a = k * u_alpha;
 
 #else
   // based on skype chat with carlos

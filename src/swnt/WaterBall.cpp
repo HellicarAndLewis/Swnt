@@ -224,6 +224,7 @@ WaterBallDrawer::WaterBallDrawer()
   ,scene_alpha_tex(0)
   ,scene_normals_tex(0)
   ,bytes_allocated(0)
+  ,alpha(0.75f)
 {
 
 }
@@ -404,6 +405,7 @@ void WaterBallDrawer::drawParticlesWithWaterEffect() {
   glBindVertexArray(water_vao);
   glUseProgram(water_prog.id);
   glUniform1f(glGetUniformLocation(water_prog.id, "u_time"), rx_millis() * 0.1);
+  glUniform1f(glGetUniformLocation(water_prog.id, "u_alpha"), alpha);
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 

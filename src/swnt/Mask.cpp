@@ -37,6 +37,7 @@ Mask::Mask(Settings& settings, Graphics& graphics)
   ,hand_sy(1.0f)
   ,hand_tx(0.0f)
   ,hand_ty(0.0f)
+  ,hand_alpha(0.75f)
   ,perlin(4, 4, 1, 34)
   ,bytes_allocated(0)
   ,scale(1.0)
@@ -499,6 +500,7 @@ void Mask::drawHand() {
 
   glUniformMatrix4fv(glGetUniformLocation(hand_prog, "u_mm"), 1, GL_FALSE, hmm.ptr());
   glUniform3fv(glGetUniformLocation(hand_prog, "u_hand_color"), 1, settings.curr_colors.hand.ptr());
+  glUniform1f(glGetUniformLocation(hand_prog, "u_alpha"), hand_alpha);
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, thresh.output_tex);

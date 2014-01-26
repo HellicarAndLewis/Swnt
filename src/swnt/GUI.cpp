@@ -165,6 +165,8 @@ bool GUI::setup(int w, int h) {
   TwAddVarRW(bar, "Hand Height Scale", TW_TYPE_FLOAT, &swnt.mask.hand_sy, "group='Kinect' min=-2.0 max=2.0 step=0.01");
   TwAddVarRW(bar, "Hand Translate X", TW_TYPE_FLOAT, &swnt.mask.hand_tx, "group='Kinect' min=-300.0 max=300.0 step=0.1");
   TwAddVarRW(bar, "Hand Translate Y", TW_TYPE_FLOAT, &swnt.mask.hand_ty, "group='Kinect' min=-300.0 max=300.0 step=0.1");
+  TwAddVarRW(bar, "Hand Opacity", TW_TYPE_FLOAT, &swnt.mask.hand_alpha, "group='Kinect' min=0.0 max=1.0 step=0.01");
+  TwAddVarRW(bar, "Water Ball Opacity", TW_TYPE_FLOAT, &swnt.ball_drawer.alpha, "group='Kinect' min=0.0 max=1.0 step=0.01");
   TwDefine("SWNT/Kinect opened=false");
 
 #if USE_SPIRALS
