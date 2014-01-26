@@ -1,3 +1,21 @@
+/*
+---------------------------------------------------------------------------------
+ 
+                                               oooo
+                                               `888
+                oooo d8b  .ooooo.  oooo    ooo  888  oooo  oooo
+                `888""8P d88' `88b  `88b..8P'   888  `888  `888
+                 888     888   888    Y888'     888   888   888
+                 888     888   888  .o8"'88b    888   888   888
+                d888b    `Y8bod8P' o88'   888o o888o  `V88V"V8P'
+ 
+                                                  www.roxlu.com
+                                             www.apollomedia.nl
+                                          www.twitter.com/roxlu
+ 
+---------------------------------------------------------------------------------
+*/
+
 #ifndef MASK_H
 #define MASK_H
 
@@ -192,16 +210,18 @@ class Mask {
   /* Last minute change - drawing the hand */
   GLuint hand_prog;
   GLuint hand_vert;
-  GLuint hand_frag;
-  float hand_rotation;
-  bool hand_flip_x;
-  bool hand_flip_y;
+  GLuint hand_frag;                       
+  float hand_rotation;                     /* rotate the kinect image */
+  bool hand_flip_x;                        /* flip the kinect image */
+  bool hand_flip_y;                        /* flip the kinect image */
+  float hand_sx;                           /* x scaling for the thresholded hand */
+  float hand_sy;                           /* y scaling for the thresholded hand */
+  float hand_tx;                           /* translate kinect image */
+  float hand_ty;                           /* translate kinect image */
 
   /* Mask vertices (the circular shape that we use to mask is drawn using vertices) */
   int resolution;
   VertexPT center;
-  //vec2 center;
-  //  std::vector<vec2> vertices;
   std::vector<VertexPT> vertices;
   Perlin perlin;                            /* used to animate the radius of the mask */
   size_t bytes_allocated;                   /* number of bytes allocated in the vbo */

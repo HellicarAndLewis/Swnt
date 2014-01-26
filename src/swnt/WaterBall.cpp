@@ -30,7 +30,6 @@ WaterBall::WaterBall()
   ,max_drop_size(150.0f)
   ,min_drop_mass(0.1f)
   ,max_drop_mass(5.0f)
-   //,enabled(false)
 {
 }
 
@@ -344,9 +343,6 @@ void WaterBallDrawer::update(float dt) {
     glBufferSubData(GL_ARRAY_BUFFER, 0, bytes_needed, drops[0].position.ptr());
   }
 
-  //printf("We got: %ld drops, took: %f ms.\n", drops.size(), (rx_hrtime() - n)/1000000.0);
-
-  // TMP - this was enabled (?)
   drawParticlesWithAlpha();
 }
 

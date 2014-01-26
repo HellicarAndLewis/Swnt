@@ -60,7 +60,7 @@ GUI::GUI(Swnt& swnt)
 }
 
 GUI::~GUI() {
-  //TwTerminate();
+  //TwTerminate(); // causes sigterm
 }
 
 #if USE_GUI
@@ -75,11 +75,6 @@ bool GUI::setup(int w, int h) {
   TwDefine("SWNT size='300 750'");
 
   // water
-  /*
-  TwAddVarRW(bar, "Sun Position X", TW_TYPE_FLOAT, &swnt.water.sun_pos[0], "min=-1000.0 max=1000.0 step=5.0 group='Water'");
-  TwAddVarRW(bar, "Sun Position Y", TW_TYPE_FLOAT, &swnt.water.sun_pos[1], "min=-1000.0 max=1000.0 step=5.0 group='Water'");
-  TwAddVarRW(bar, "Sun Position Z", TW_TYPE_FLOAT, &swnt.water.sun_pos[2], "min=-1000.0 max=1000.0 step=5.0 group='Water'");
-  */
   TwAddVarRW(bar, "Sun Color Red", TW_TYPE_FLOAT, &swnt.water.sun_color[0], "min=-5.0 max=5.0 step=0.1 group='Water'");
   TwAddVarRW(bar, "Sun Color Green", TW_TYPE_FLOAT, &swnt.water.sun_color[1], "min=-5.0 max=5.0 step=0.1 group='Water'");
   TwAddVarRW(bar, "Sun Color Blue", TW_TYPE_FLOAT, &swnt.water.sun_color[2], "min=-5.0 max=5.0 step=0.1 group='Water'");
@@ -166,6 +161,10 @@ bool GUI::setup(int w, int h) {
   TwAddVarRW(bar, "Flip Hands Horizontally", TW_TYPE_BOOLCPP, &swnt.mask.hand_flip_y, "group='Kinect'");
   TwAddVarRW(bar, "Flip Hands Vertically", TW_TYPE_BOOLCPP, &swnt.mask.hand_flip_x, "group='Kinect'");
   TwAddVarRW(bar, "Kinect Image Rotation", TW_TYPE_FLOAT, &swnt.mask.hand_rotation, "group='Kinect' min=0.0 max=360.0 step=0.5");
+  TwAddVarRW(bar, "Hand Width Scale", TW_TYPE_FLOAT, &swnt.mask.hand_sx, "group='Kinect' min=-2.0 max=2.0 step=0.01");
+  TwAddVarRW(bar, "Hand Height Scale", TW_TYPE_FLOAT, &swnt.mask.hand_sy, "group='Kinect' min=-2.0 max=2.0 step=0.01");
+  TwAddVarRW(bar, "Hand Translate X", TW_TYPE_FLOAT, &swnt.mask.hand_tx, "group='Kinect' min=-300.0 max=300.0 step=0.1");
+  TwAddVarRW(bar, "Hand Translate Y", TW_TYPE_FLOAT, &swnt.mask.hand_ty, "group='Kinect' min=-300.0 max=300.0 step=0.1");
   TwDefine("SWNT/Kinect opened=false");
 
 #if USE_SPIRALS

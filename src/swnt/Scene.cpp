@@ -63,7 +63,6 @@ bool Scene::setup(int w, int h) {
 void Scene::draw(float* pm, float* vm) {
 
   mm.identity();
-  //  mm.translate(0, 0, .5);
   mm.scale(5.0);
 
   glBindVertexArray(vao);
@@ -72,6 +71,5 @@ void Scene::draw(float* pm, float* vm) {
   rx_uniform_mat4fv(prog, "u_vm", 1, GL_FALSE, vm);
   rx_uniform_mat4fv(prog, "u_mm", 1, GL_FALSE, mm.ptr());
 
-  //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 }

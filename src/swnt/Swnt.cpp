@@ -6,19 +6,23 @@ Swnt::Swnt(Settings& settings)
   ,mask(settings, graphics)
   ,tracking(settings, graphics)
   ,flow(settings, graphics)
+
 #if USE_WATER
   ,water(height_field, settings)
 #endif
+
 #if USE_TIDES
   ,tides_timeout(0)
   ,time_of_day(0)
 #endif
+
 #if USE_KINECT
   ,rgb_tex(0)
   ,depth_tex(0)
   ,rgb_image(NULL)
   ,depth_image(NULL)
 #endif
+
   ,state(STATE_RENDER_SCENE)
   ,draw_flow(true)
   ,draw_threshold(true)
@@ -27,15 +31,19 @@ Swnt::Swnt(Settings& settings)
   ,draw_tracking(true)
   ,draw_gui(false)
   ,override_with_gui(false)
+
 #if USE_SPIRALS
   ,spirals(settings, tracking, graphics, flow)
 #endif
+
 #if USE_GUI
   ,gui(*this)
 #endif
+
 #if USE_EFFECTS
   ,effects(*this)
 #endif
+
 #if USE_WEATHER
   ,has_weather_info(false)
 #endif
@@ -44,10 +52,6 @@ Swnt::Swnt(Settings& settings)
 }
 
 Swnt::~Swnt() {
-
-#if USE_WATER_BALLS
-  printf("Cleanup tracked balls.\n");
-#endif
 
 #if USE_KINECT
   if(rgb_image) {
@@ -159,7 +163,6 @@ bool Swnt::setup() {
 #endif
 
 #if USE_AUDIO
-  //  if(!audio.add(SOUND_OCEAN, rx_to_data_path("audio/ocean.mp2"))) {
   if(!audio.add(SOUND_WATER_FLOWING, rx_to_data_path("audio/water_flowing.wav"), FMOD_SOFTWARE | FMOD_LOOP_NORMAL)) {
     return false;
   }
@@ -306,40 +309,7 @@ void Swnt::update(float dt) {
 
 void Swnt::draw() {
 
-#if 0
-  height_field.debugDraw();
-  return ;
-#endif
-
-#if 0
-  ball_drawer.draw();
-  gui.draw();
-  return;
-#endif
-
-#if 0
-  water.draw();
-  gui.draw();
-  return;
-#endif
-
-#if 0
-  effects.drawExtraDiffuse();
-  return;
-#endif
-
-#if 0
-  effects.splashes.drawExtraDiffuse();
-  effects.splashes.drawExtraFlow();
-  gui.draw();
-  return;
-#endif
-
-#if 0
-  effects.drawExtraFlow();
-  return;
-#endif
-
+  // Special state to align the projector with the furniture
   if(state == STATE_RENDER_ALIGN) {
     glDisable(GL_DEPTH_TEST);
     vec3 red(1.0f, 0.0f, 0.0f);
@@ -353,10 +323,8 @@ void Swnt::draw() {
   
 #if USE_KINECT
 
-
 #if USE_WATER_BALLS
     // apply forces onto the water, when water balls are flushing away
-
     if(flush_points.size()) {
       height_field.beginDrawForces();
       for(std::vector<vec2>::iterator it = flush_points.begin(); it != flush_points.end(); ++it) {
@@ -393,13 +361,16 @@ void Swnt::draw() {
     }
     mask.endSceneGrab();
 
+    // perform masking and depth thresholding
     mask.maskOutDepth();
     mask.maskOutScene();
 
+    // draws the hand.
     if(draw_threshold) {
-        mask.drawHand();
+      mask.drawHand();
     }
 
+    // perform tracking of the masked and thresholded depth image.
     tracking.track(mask.masked_out_pixels);
 
     mask.draw_hand = draw_threshold;
@@ -408,14 +379,13 @@ void Swnt::draw() {
      ball_drawer.draw();
 #   endif 
 
-    #if USE_RGB_SHIFT
+#if USE_RGB_SHIFT
+     // apply rgb filmic fx
     rgb_shift.apply();
     rgb_shift.draw();
-    #endif
-
+#endif
 
 #endif  // USE_KINECT
-
 
   } // if(state == STATE_RENDER_SCENE)
 
@@ -455,12 +425,12 @@ void Swnt::drawScene() {
   if(draw_tracking) {
     tracking.draw(0.0f, 0.0f);
   }
-
 }
 
-// Updates the kinect depth and color buffers.
+
 #if USE_KINECT
 
+// Updates the kinect depth and color buffers.
 void Swnt::updateKinect() {
 #  if 1
   {
@@ -473,6 +443,7 @@ void Swnt::updateKinect() {
         new_frame = true;
       }
     }
+
     kinect.unlock();
  
     if(new_frame) {
@@ -509,10 +480,9 @@ void Swnt::print() {
 #if USE_KINECT  
   printf("swnt.rgb_tex: %d\n", rgb_tex);
   printf("swnt.depth_tex: %d\n", depth_tex);
-#endif
   printf("-\n");
+#endif
 }
-
 
 #if USE_WATER_BALLS 
 
@@ -555,14 +525,13 @@ void Swnt::updateWaterBalls() {
         tracked_ball.water_ball->flush();
         flush_points.push_back(tracked_ball.water_ball->position * flush_point_to_water);
       }
-      // printf("Found: %d, matched: %d, state: %d\n", found->id, found->matched, tracked_ball.water_ball->state);
     }
   }
 
   float scale_x = float(settings.win_w) / settings.image_processing_w;
   float scale_y = float(settings.win_h) / settings.image_processing_h;
 
-  // Step: For each tracked object, find the related water ball or create a new one, when it isn't found
+  // Step 2: For each tracked object, find the related water ball or create a new one, when it isn't found
   for(std::vector<Tracked*>::iterator it = tracked_items.begin(); it != tracked_items.end(); ++it) {
 
     Tracked* tracked = *it;
@@ -611,9 +580,7 @@ void Swnt::updateWaterBalls() {
     }
 
     found->position.set(tracked->position.x * scale_x, (tracked->position.y * scale_y)); 
-   
   }
-
 }
 #endif
 
@@ -673,7 +640,6 @@ void Swnt::setTimeOfDay(float t) {
   }
   
   updateWeatherInfo();
-
 }
 #endif // #USE_TIDES
 
@@ -696,7 +662,9 @@ void Swnt::updateWeatherInfo() {
 }
 
 void Swnt::updateActivityLevel() {
-
+  
+  // @todo - remove or use this. could be used to apply an ambient effect; represents
+  // "how many people" are interacting with the installation.
   activity_level = CLAMP(activity_level * 0.9 + float(tracking.num_tracked) * 0.1, 0.0f, 1.0f);
 
 #if USE_AUDIO

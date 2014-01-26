@@ -392,7 +392,7 @@ void HeightField::process() {
     glUseProgram(pos_prog.id);
     glUniform1f(glGetUniformLocation(pos_prog.id, "u_time"), t);
 
-    GLenum drawbufs[] = { GL_COLOR_ATTACHMENT0 } ; // , GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 } ;
+    GLenum drawbufs[] = { GL_COLOR_ATTACHMENT0 } ;
     glDrawBuffers(1, drawbufs);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
   }

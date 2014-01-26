@@ -1,6 +1,3 @@
-//#include "PCH.h"
-//#include <GLFW/glfw3.h>
-//#include <OpenGL/gl3.h>
 #include <assert.h>
 #include <stdio.h>
 #include <swnt/RGBShift.h>
@@ -15,7 +12,6 @@ RGBShift::RGBShift()
   ,vao(0)
 {
 }
-
 
 RGBShift::~RGBShift() {
   printf("Error: needs to deallocate the GL objects created in RGBShift.\n");

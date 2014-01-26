@@ -32,7 +32,11 @@ Mask::Mask(Settings& settings, Graphics& graphics)
   ,hand_frag(0)
   ,hand_rotation(0)
   ,hand_flip_x(false)
-  ,hand_flip_y(false)
+  ,hand_flip_y(true)
+  ,hand_sx(1.0f)
+  ,hand_sy(1.0f)
+  ,hand_tx(0.0f)
+  ,hand_ty(0.0f)
   ,perlin(4, 4, 1, 34)
   ,bytes_allocated(0)
   ,scale(1.0)
@@ -355,8 +359,18 @@ void Mask::maskOutDepth() {
 
   assert(masked_out_pixels);
 
-  mat4 mm;
+  mat4 hmm;
   mat4 pm;
+
+  // the next couple of lines were a last minute fix to rotate/flip/etc.. the incoming kinect depth data.
+  float hw = settings.win_w * 0.5; 
+  float hh = settings.win_h * 0.5;
+  int hand_scale_x = ((hand_flip_x) ? -1 : 1);
+  int hand_scale_y = ((hand_flip_y) ? -1 : 1);
+  hmm.identity();
+  hmm.translate(hand_tx + hw, hand_ty + hh, 0.0);
+  hmm.rotateZ(hand_rotation * DEG_TO_RAD);
+  hmm.scale(hand_sx * hw * hand_scale_x, hand_sy * hh * hand_scale_y, 1.0f);
 
   GLenum drawbufs[] = { GL_COLOR_ATTACHMENT0 } ;
   glBindFramebuffer(GL_FRAMEBUFFER, masked_out_fbo);
@@ -365,8 +379,8 @@ void Mask::maskOutDepth() {
   glViewport(0.0f, 0.0f, settings.image_processing_w, settings.image_processing_h);
   
   glUseProgram(masked_out_prog);
-  glUniformMatrix4fv(glGetUniformLocation(masked_out_prog, "u_pm"), 1, GL_FALSE, pm.ptr());
-  glUniformMatrix4fv(glGetUniformLocation(masked_out_prog, "u_mm"), 1, GL_FALSE, mm.ptr());
+  glUniformMatrix4fv(glGetUniformLocation(masked_out_prog, "u_pm"), 1, GL_FALSE, graphics.tex_pm.ptr()); // tmp
+  glUniformMatrix4fv(glGetUniformLocation(masked_out_prog, "u_mm"), 1, GL_FALSE, hmm.ptr());
   glUniform1i(glGetUniformLocation(masked_out_prog, "u_mask_tex"), 0);
   glUniform1i(glGetUniformLocation(masked_out_prog, "u_depth_tex"), 1);
 
@@ -398,7 +412,6 @@ void Mask::maskOutDepth() {
     rx_save_png(n, masked_out_pixels, 640, 480, 1);
   }
   #endif
-
 }
 
 void Mask::drawThresholded() {
@@ -456,7 +469,6 @@ void Mask::print() {
   printf("--\n");
 }
 
-
 void Mask::refresh() {
   assert(settings.color_dx < settings.colors.size());
   glUseProgram(masked_scene_prog);
@@ -481,12 +493,9 @@ void Mask::drawHand() {
   mat4 hmm;
   float hw = settings.win_w * 0.5;
   float hh = settings.win_h * 0.5;
-  int hand_scale_x = ((hand_flip_x) ? -1 : 1);
-  int hand_scale_y = ((hand_flip_y) ? -1 : 1);
   hmm.identity();
   hmm.translate(hw, hh, 0.0);
-  hmm.rotateZ(hand_rotation * DEG_TO_RAD);
-  hmm.scale(hw * hand_scale_x, hh * hand_scale_y, 1.0f);
+  hmm.scale(hw, hh,  1.0f);
 
   glUniformMatrix4fv(glGetUniformLocation(hand_prog, "u_mm"), 1, GL_FALSE, hmm.ptr());
   glUniform3fv(glGetUniformLocation(hand_prog, "u_hand_color"), 1, settings.curr_colors.hand.ptr());
@@ -499,7 +508,6 @@ void Mask::drawHand() {
 
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
   glDisable(GL_BLEND);
-
 #endif
 }
 

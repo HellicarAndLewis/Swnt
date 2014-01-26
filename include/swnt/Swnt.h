@@ -1,22 +1,20 @@
-
-// Runescape - nice water effect 
-// - http://www.youtube.com/watch?feature=player_detailpage&v=Knc_Trx_-5A#t=48
-// - http://static1.wikia.nocookie.net/__cb20120309090130/runescape/images/9/9d/Water.png
-// - http://runescape.wikia.com/wiki/Waterfall_Quest/Quick_guide
-// - http://runescape.wikia.com/wiki/Waterfall_Dungeon
-// - http://static2.wikia.nocookie.net/__cb20130921201114/runescape/images/9/91/Waterfall_dungeon_entrance.png
-// - nice: http://cache.desktopnexus.com/thumbnails/895336-bigthumbnail.jpg
-// - nice: http://i.imgur.com/JOC3F.jpg
-// - nice: http://static2.wikia.nocookie.net/__cb20110919145141/runescapeclans/images/3/30/Waterfall_1.png 
-// - google images: Runescape The Citadel Waterfall 
-// - waterfal video: http://www.youtube.com/watch?v=2PzFHPqAyWc 
-// - REALLY NICE, guild wars: http://www.youtube.com/watch?feature=player_detailpage&v=efPdUM08Xj8#t=8
-// - REALLY NICE, guild wars: http://www.youtube.com/watch?feature=player_detailpage&v=BSHNee0OAvM#t=45
-// - waterfall texture effect http://www.youtube.com/watch?v=CtujsMYzCh4 
-// - waterfall in unity http://www.youtube.com/watch?v=xysUQYfW29w
-// - toy story 3: http://www.youtube.com/watch?feature=player_detailpage&v=shr0vprXJm0#t=37
-// - animated dust texture: http://vimeo.com/26084620 
-// - Skylanders, nice circle/texture effect: http://www.youtube.com/watch?feature=player_detailpage&v=4fptHMXlWzs#t=1367
+/*
+---------------------------------------------------------------------------------
+ 
+                                               oooo
+                                               `888
+                oooo d8b  .ooooo.  oooo    ooo  888  oooo  oooo
+                `888""8P d88' `88b  `88b..8P'   888  `888  `888
+                 888     888   888    Y888'     888   888   888
+                 888     888   888  .o8"'88b    888   888   888
+                d888b    `Y8bod8P' o88'   888o o888o  `V88V"V8P'
+ 
+                                                  www.roxlu.com
+                                             www.apollomedia.nl
+                                          www.twitter.com/roxlu
+ 
+---------------------------------------------------------------------------------
+*/
 
 #ifndef SWNT_H
 #define SWNT_H
@@ -154,9 +152,9 @@ class Swnt {
 #endif
 
 #if USE_WEATHER
-  Weather weather; /* fetches weather info from yahoo */
+  Weather weather;          /* fetches weather info from yahoo */
   WeatherInfo weather_info; /* the retrieved weather info */
-  bool has_weather_info;  /* is set to true when weather_info contians valid data */
+  bool has_weather_info;    /* is set to true when weather_info contians valid data */
 #endif
 
 #if USE_AUDIO
@@ -184,3 +182,22 @@ class Swnt {
 };
 
 #endif
+
+// Some references
+// - http://www.youtube.com/watch?feature=player_detailpage&v=Knc_Trx_-5A#t=48
+// - http://static1.wikia.nocookie.net/__cb20120309090130/runescape/images/9/9d/Water.png
+// - http://runescape.wikia.com/wiki/Waterfall_Quest/Quick_guide
+// - http://runescape.wikia.com/wiki/Waterfall_Dungeon
+// - http://static2.wikia.nocookie.net/__cb20130921201114/runescape/images/9/91/Waterfall_dungeon_entrance.png
+// - http://cache.desktopnexus.com/thumbnails/895336-bigthumbnail.jpg
+// - http://i.imgur.com/JOC3F.jpg
+// - http://static2.wikia.nocookie.net/__cb20110919145141/runescapeclans/images/3/30/Waterfall_1.png 
+// - Runescape The Citadel Waterfall 
+// - Waterfal video:          http://www.youtube.com/watch?v=2PzFHPqAyWc 
+// - Guild wars:              http://www.youtube.com/watch?feature=player_detailpage&v=efPdUM08Xj8#t=8
+// - Guild wars:              http://www.youtube.com/watch?feature=player_detailpage&v=BSHNee0OAvM#t=45
+// - Waterfall texture effect http://www.youtube.com/watch?v=CtujsMYzCh4 
+// - Waterfall in unity       http://www.youtube.com/watch?v=xysUQYfW29w
+// - Toy story 3:             http://www.youtube.com/watch?feature=player_detailpage&v=shr0vprXJm0#t=37
+// - Animated dust texture:   http://vimeo.com/26084620 
+// - Skylanders:              http://www.youtube.com/watch?feature=player_detailpage&v=4fptHMXlWzs#t=1367

@@ -1,3 +1,21 @@
+/*
+---------------------------------------------------------------------------------
+ 
+                                               oooo
+                                               `888
+                oooo d8b  .ooooo.  oooo    ooo  888  oooo  oooo
+                `888""8P d88' `88b  `88b..8P'   888  `888  `888
+                 888     888   888    Y888'     888   888   888
+                 888     888   888  .o8"'88b    888   888   888
+                d888b    `Y8bod8P' o88'   888o o888o  `V88V"V8P'
+ 
+                                                  www.roxlu.com
+                                             www.apollomedia.nl
+                                          www.twitter.com/roxlu
+ 
+---------------------------------------------------------------------------------
+*/
+
 #ifndef WATER_BALL_H
 #define WATER_BALL_H
 
@@ -35,12 +53,6 @@ class WaterBall {
   void fill();                                /* start flushing the drops/waterball */
   void flush();                               /* start filling the waterball with drops */
   void addDrop(vec2 position, float mass);    /* adds a drop */
-  /*
-  void enable() { enabled = true; } 
-  void disable() { enabled = false; } 
-  bool isEnabled() { return enabled; } 
-  */
-  
 
  private:
   void addRandomDrop();                       /* adds a water drop somewhere on screen (0-win_w, 0-win_h) */
@@ -63,7 +75,6 @@ class WaterBall {
   float max_drop_size;                        /* maximum size of a water drop */
   float min_drop_mass;                        /* miminum random mass for a water drop; forces have more effect when the mass is low */
   float max_drop_mass;                        /* maximum random mass, used in addRandomDrop() */
-  //bool enabled;                               /* only update/draw when enabled */
 };
 
 class WaterBallDrawer {

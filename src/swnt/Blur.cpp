@@ -145,9 +145,6 @@ bool Blur::setupShader() {
   const char* yblur_vss = yblur_s.c_str();
   const char* xblur_vss = xblur_s.c_str();
 
-  //printf("%s\n\n", yblur_vss);
-  //printf("%s\n\n", xblur_vss);
-
   // y-blur
   vert = rx_create_shader(GL_VERTEX_SHADER, B_VS);
   frag0 = rx_create_shader(GL_FRAGMENT_SHADER, yblur_vss);
@@ -183,7 +180,6 @@ bool Blur::setupShader() {
   }
   glUniform1i(u_scene_tex, 0);
  
-  //printf("%s\n", yblur_s.c_str());
   return true;
 }
  

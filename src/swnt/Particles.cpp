@@ -46,7 +46,6 @@ Particles::~Particles() {
   }
 
   particles.clear();
-  
 }
 
 void Particles::update(const float dt) {
@@ -66,52 +65,7 @@ void Particles::update(const float dt) {
     p->vel *= drag;
     p->forces = 0;
     p->update();
-    
   }
-
-  /*
-  // PREDICT NEW LOCATIONS
-  for(Particles::iterator it = begin(); it != end(); ++it) {
-    Particle* p = *it;
-    
-    if(!p->enabled) {
-      p->tmp_pos = p->pos;
-      continue;
-    }
-
-    p->vel = p->vel + (dt * p->forces * p->inv_mass);
-    p->vel *= drag;
-
-    p->tmp_pos = p->pos + (p->vel * dt);
-
-    p->forces.set(0.0f, 0.0f, 0.0f);
-  }
-
-  // CONSTRAINTS 
-
-  const int k = 3;
-  for(int i = 0; i < k; ++i) {
-    for(std::vector<Spring*>::iterator it = springs.begin(); it != springs.end(); ++it) {
-      Spring* s = *it;
-      s->update(dt);
-    }
-  }
-
-  // UPDATE VELOCITY AND POSITIONS
-  for(Particles::iterator it = begin(); it != end(); ++it) {
-    Particle* p = *it;
-
-    if(!p->enabled) {
-      continue;
-    }
-
-    p->vel = (p->tmp_pos - p->pos) * fps;
-    p->pos = p->tmp_pos;
-    p->tmp_pos.set(0.0f, 0.0f, 0.0f);
-
-    p->update();
-  }
-  */
 }
 
 void Particles::addForce(const vec3& f) {

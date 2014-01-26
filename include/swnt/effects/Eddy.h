@@ -1,5 +1,22 @@
 /*
+---------------------------------------------------------------------------------
+ 
+                                               oooo
+                                               `888
+                oooo d8b  .ooooo.  oooo    ooo  888  oooo  oooo
+                `888""8P d88' `88b  `88b..8P'   888  `888  `888
+                 888     888   888    Y888'     888   888   888
+                 888     888   888  .o8"'88b    888   888   888
+                d888b    `Y8bod8P' o88'   888o o888o  `V88V"V8P'
+ 
+                                                  www.roxlu.com
+                                             www.apollomedia.nl
+                                          www.twitter.com/roxlu
+ 
+---------------------------------------------------------------------------------
+*/
 
+/*
   Eddy
   ----
   The Eddy class is used to render extra flow into the water simulation. The
@@ -27,7 +44,6 @@ static const char* EDDY_VS = ""
   "out float v_alpha;"
   "void main() {"
   "  gl_Position = u_pm * u_mm * a_pos; "
-//"  gl_Position = vec4(2.0 * a_tex - vec2(1.0), 0.0, 1.0);" // this will draw the texcoords; make sure to set polymode to line
   "  v_tex = a_tex;"
   "  v_alpha = a_alpha;"
   "}"
@@ -37,7 +53,6 @@ static const char* EDDY_FS = ""
   "#version 150\n"
   "uniform sampler2D u_tex;"
   "uniform float u_time;"
-  //  "uniform float u_perc;"
   "out vec4 fragcolor;"
   "in vec3 v_tex;"
   "in float v_alpha;"
@@ -45,7 +60,6 @@ static const char* EDDY_FS = ""
   "  vec2 tc = v_tex.xy / v_tex.z;"
   "  vec4 diffuse_color = texture(u_tex, vec2(tc.s - u_time, tc.t));"
   "  fragcolor.rgb = diffuse_color.rgb;"
-  //  "  fragcolor.a = pow(length((gl_FragCoord.xy - vec2(512.0, 384.0)) / vec2(512.0, 384.0)), 2.0) ;"
   "  fragcolor.a = v_alpha;"
 
 #if USE_EDDY_DEBUG
@@ -99,7 +113,6 @@ class Eddy : public BaseEffect {
   GLuint vao;
   GLuint eddy_tex;
   GLint u_time;
-  //  GLint u_perc;
   std::vector<EddyVertex> vertices;
   std::vector<GLsizei> counts;
   std::vector<GLint> offsets;

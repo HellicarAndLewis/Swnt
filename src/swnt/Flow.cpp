@@ -38,7 +38,6 @@ bool Flow::setup() {
     return false;
   }
 
-
   velocities.assign((field_size * field_size), vec2());
   heights.assign((field_size * field_size), 0.0f);
 

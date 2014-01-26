@@ -160,12 +160,11 @@ Sound* Audio::getSound(int name) {
   return NULL;
 }
 
-
+// @todo implement (we don't need this)
 void Audio::stop(int name) {
   Sound* s = getSound(name);
   if(!s) {
     printf("Warning: cannot find sound: %d\n", name);
     return;
   }
-  printf("@todo stop\n");
 }

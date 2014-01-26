@@ -22,6 +22,7 @@ uniform sampler2D u_flow_tex;           /* the texture that holds the flow direc
 uniform sampler2D u_sand_tex;           /* the bottom sand texture */
 uniform sampler2D u_depth_ramp_tex;     /* a color ramp based on depth */
 uniform sampler2D u_extra_flow_tex;     /* flow that you can add with beginGrabFlow() */
+uniform sampler2D u_vortex_tex;         /* the dark vortex in the center */
 
 out vec4 fragcolor;
 
@@ -81,6 +82,11 @@ void main() {
   r = normalize(reflect(s, n));
   vec3 spec = sdn * u_sun_color * pow(clamp(dot(r, v), 0.0, 1.0), u_sun_shininess); 
 
+  // Vortex
+  // -------------------------------------------------------------
+  float vortex_v = 1.0 - texture(u_vortex_tex, v_tex).r;
+
+
   // Refraction + depth based coloring
   // -------------------------------------------------------------
   vec3 sand_color = texture(u_sand_tex, v_tex + n.xz * 0.1).rgb;
@@ -93,6 +99,7 @@ void main() {
   fragcolor.rgb += (spec * max(u_sun_intensity, 0.0));
   fragcolor.rgb = mix(fragcolor.rgb, sand_color * depth_color.rgb, depth_color.a);
   fragcolor.rgb = fragcolor.rgb * u_final_intensity;
+  fragcolor.rgb *= vortex_v;
   
 #if 0
   fragcolor.rgb = texture(u_diffuse_tex, v_tex).rgb;

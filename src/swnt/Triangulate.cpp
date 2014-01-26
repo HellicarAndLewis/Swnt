@@ -9,13 +9,6 @@ Triangulate::Triangulate() {
 void Triangulate::add(float x, float y) {
   points.push_back(x);
   points.push_back(y);
-
-  /*
-  int num_points = points.size() / 2;
-  edges.push_back(num_points - 1);
-  edges.push_back(num_points);
-  printf("%d - %d\n", num_points - 1, num_points);
-  */
 }
 
 void Triangulate::triangulate(std::string opt, struct triangulateio& out) {
@@ -75,20 +68,6 @@ void Triangulate::triangulate(std::string opt, struct triangulateio& out) {
     in.numberofsegments = edges.size() / 2;
   }
 
-  /*
-  std::string opt;
-  opt += "z"; // use 0 as start index
-  //opt += "p"; // "for finger" like shaped
-  opt += "a1000.0";
-  */
-
-  // opt += "q";
-  //opt += "Y"; // prohibits the insertion of Steiner points on the mesh boundary
-  //  opt += "q"; 
-  //opt += "l";
-  //opt += "i";
-  //opt += "o2";
-  //  opt += "F";
   ::triangulate((char*)opt.c_str(), &in, &out, NULL);
 }
 

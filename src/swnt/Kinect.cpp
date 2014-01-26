@@ -34,7 +34,6 @@ void kinect_thread(void* user) {
     if(must_stop) {
       break;
     }
-
   }
   
   freenect_set_led(dev, LED_GREEN);
@@ -90,7 +89,6 @@ void kinect_video_callback(freenect_device* dev, void* rgb, uint32_t timestamp) 
   }
   uv_mutex_unlock(&kinect->mutex);
 }
-
 
 // -------------------------------------
 
