@@ -31,6 +31,11 @@ Swnt::Swnt(Settings& settings)
   ,draw_tracking(true)
   ,draw_gui(false)
   ,override_with_gui(false)
+  ,volume_background0(1.0f)
+  ,volume_background1(1.0f)
+  ,volume_splash0(1.0f)
+  ,volume_splash1(1.0f)
+  ,volume_splash2(1.0f)
 
 #if USE_SPIRALS
   ,spirals(settings, tracking, graphics, flow)
@@ -163,13 +168,10 @@ bool Swnt::setup() {
 #endif
 
 #if USE_AUDIO
-  if(!audio.add(SOUND_WATER_FLOWING, rx_to_data_path("audio/water_flowing.wav"), FMOD_SOFTWARE | FMOD_LOOP_NORMAL)) {
+  if(!audio.add(SOUND_BACKGROUND0, rx_to_data_path("audio/background0.wav"), FMOD_SOFTWARE | FMOD_LOOP_NORMAL)) {
     return false;
   }
-  if(!audio.add(SOUND_WAVES_CRASHING, rx_to_data_path("audio/waves_crashing.wav"), FMOD_SOFTWARE | FMOD_LOOP_NORMAL)) {
-    return false;
-  }
-  if(!audio.add(SOUND_GLOOB, rx_to_data_path("audio/gloob.mp3"), FMOD_SOFTWARE)) {
+  if(!audio.add(SOUND_BACKGROUND1, rx_to_data_path("audio/background1.mp3"), FMOD_SOFTWARE | FMOD_LOOP_NORMAL)) {
     return false;
   }
   if(!audio.add(SOUND_SPLASH0, rx_to_data_path("audio/splash0.mp3"), FMOD_SOFTWARE)) {
@@ -182,8 +184,10 @@ bool Swnt::setup() {
     return false;
   }
 
-  audio.play(SOUND_WATER_FLOWING);
-  audio.setVolume(SOUND_WATER_FLOWING, 0.5);
+  audio.play(SOUND_BACKGROUND0);
+  audio.setVolume(SOUND_BACKGROUND0, volume_background0);
+  audio.play(SOUND_BACKGROUND1);
+  audio.setVolume(SOUND_BACKGROUND1, volume_background1);
 
 #endif
 
@@ -305,6 +309,12 @@ void Swnt::update(float dt) {
   spirals.update(dt);
 #endif
 
+  // last minute change
+  audio.setVolume(SOUND_BACKGROUND0, volume_background0);
+  audio.setVolume(SOUND_BACKGROUND1, volume_background1);
+  audio.setVolume(SOUND_SPLASH0, volume_splash0);
+  audio.setVolume(SOUND_SPLASH1, volume_splash1);
+  audio.setVolume(SOUND_SPLASH2, volume_splash2);
 }
 
 void Swnt::draw() {
@@ -621,7 +631,7 @@ void Swnt::setTimeOfDay(float t) {
   float ht = fabs(t);
 
   float mt = fmod(t * 10, 1.0f);
-  printf("Time: %d:%d\n", int(ht * 24), int(mt * 60));
+  // printf("Time: %d:%d\n", int(ht * 24), int(mt * 60));
 
   // Update tides
   TidesEntry entry;
@@ -669,7 +679,7 @@ void Swnt::updateActivityLevel() {
 
 #if USE_AUDIO
   if(tracking.prev_num_tracked < tracking.num_tracked) {
-    audio.playOnce(SOUND_GLOOB);
+    audio.playOnce(SOUND_SPLASH0);
   }
   else if(tracking.prev_num_tracked > tracking.num_tracked) {
     int sounds[] = { SOUND_SPLASH0, SOUND_SPLASH1, SOUND_SPLASH2 } ;

@@ -28,7 +28,7 @@ void Sound::setLoop(bool l) {
 void Sound::setVolume(float v) {
 
   if(!channel) {
-    printf("Warning: cannot set volume because we don't have channel information.\n");
+    //printf("Warning: cannot set volume because we don't have channel information.\n");
     return;
   }
 
@@ -127,7 +127,8 @@ void Audio::playOnce(int name) {
     return ;
   }
 
-  FMOD_RESULT result = system->playSound(FMOD_CHANNEL_FREE, s->sound, false, NULL);
+  //FMOD_RESULT result = system->playSound(FMOD_CHANNEL_FREE, s->sound, false, NULL);
+  FMOD_RESULT result = system->playSound(FMOD_CHANNEL_FREE, s->sound, false, &s->channel); // last minute change
   if(result != FMOD_OK) {
     printf("Error: %s\n", FMOD_ErrorString(result));
     ::exit(EXIT_FAILURE);

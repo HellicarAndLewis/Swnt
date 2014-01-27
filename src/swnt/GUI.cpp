@@ -185,10 +185,18 @@ bool GUI::setup(int w, int h) {
   TwDefine("SWNT/Spirals opened=false");
 #endif
 
+  TwAddVarRW(bar, "Background 0 Volume", TW_TYPE_FLOAT, &swnt.volume_background0, "min=0.0 max=1.0 step=0.1 group='Audio'");
+  TwAddVarRW(bar, "Background 1 Volume", TW_TYPE_FLOAT, &swnt.volume_background1, "min=0.0 max=1.0 step=0.1 group='Audio'");
+  TwAddVarRW(bar, "High Chime Volume", TW_TYPE_FLOAT, &swnt.volume_splash0, "min=0.0 max=1.0 step=0.1 group='Audio'");
+  TwAddVarRW(bar, "Mid Chime 1 Volume", TW_TYPE_FLOAT, &swnt.volume_splash1, "min=0.0 max=1.0 step=0.1 group='Audio'");
+  TwAddVarRW(bar, "Mid Chime 2 Volume", TW_TYPE_FLOAT, &swnt.volume_splash2, "min=0.0 max=1.0 step=0.1 group='Audio'");
+  TwDefine("SWNT/Audio opened=false");
+
 #if USE_TRIANGULATION
   TwAddVarRW(bar, "Hand Scale", TW_TYPE_FLOAT, &swnt.tracking.blob_scale, "min=1.0 max=3.0 step=0.01");
   TwAddVarRW(bar, "Hand Offset", TW_TYPE_FLOAT, &swnt.tracking.blob_offset, "min=-300.0 max=300.0 step=0.5");
 #endif
+
 
 
   TwWindowSize(win_w, win_h);

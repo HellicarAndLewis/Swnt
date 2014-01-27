@@ -40,12 +40,11 @@
 #define EFFECT_EDDY 2
 #define EFFECT_SPLASHES 3
 
-#define SOUND_WATER_FLOWING 0
-#define SOUND_WAVES_CRASHING 1
-#define SOUND_GLOOB 2 /* gloob sound when someone enters his hand */
-#define SOUND_SPLASH0 3 /* played when some redraws his/hers hand */
-#define SOUND_SPLASH1 4 /* another splash */
-#define SOUND_SPLASH2 5 /* and another one */
+#define SOUND_BACKGROUND0 0
+#define SOUND_BACKGROUND1 1
+#define SOUND_SPLASH0 2 /* played when some redraws his/hers hand */
+#define SOUND_SPLASH1 3 /* another splash */
+#define SOUND_SPLASH2 4 /* and another one */
 
 #if USE_WATER_BALLS
 

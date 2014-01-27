@@ -119,6 +119,13 @@ class Swnt {
   float time_of_year;                /* is set in setTimeOfYear() */
   float ocean_roughness;             /* the roughness of the ocean; used by Water and Heightfield */
   float activity_level;              /* 0 = there is no activity, 1 = a lot of activity */
+
+  /* last minute updates for audio */
+  float volume_background0;
+  float volume_background1;
+  float volume_splash0;
+  float volume_splash1;
+  float volume_splash2;
   
 #if USE_EFFECTS
   Effects effects;
