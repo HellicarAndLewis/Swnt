@@ -345,6 +345,7 @@ void WaterBallDrawer::update(float dt) {
   }
 
   drawParticlesWithAlpha();
+
 }
 
 void WaterBallDrawer::draw() {
@@ -407,6 +408,8 @@ void WaterBallDrawer::drawParticlesWithWaterEffect() {
   glUniform1f(glGetUniformLocation(water_prog.id, "u_time"), rx_millis() * 0.1);
   glUniform1f(glGetUniformLocation(water_prog.id, "u_alpha"), alpha);
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+  glDisable(GL_BLEND);
 }
 
 void WaterBallDrawer::drawRenderBuffers() {
