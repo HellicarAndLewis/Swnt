@@ -161,7 +161,8 @@ bool Swnt::setup() {
 #endif
 
 #if USE_TIDES 
-  if(!tides.setup(rx_to_data_path("tides.txt"))) {  
+  std::string tides_file = "tides_" +rx_strftime("%Y") +".txt";
+  if(!tides.setup(rx_to_data_path(tides_file))) {  
     printf("Error: cannot load the tides information.\n");
     return false;
   }
